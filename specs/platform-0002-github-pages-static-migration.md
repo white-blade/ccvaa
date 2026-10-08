@@ -69,10 +69,10 @@ GitHub repo (main)
                                    └── actions/deploy-pages → ccvaa.ca
 ```
 
-- `next.config.ts`: `output: "export"`, `basePath: "/ccvaa-web"`, `images.unoptimized: true`,
+- `next.config.ts`: `output: "export"`, `basePath: "/ccvaa"`, `images.unoptimized: true`,
   `trailingSlash: true`
 - **No custom domain.** Served from the GitHub project page at
-  `https://white-blade.github.io/ccvaa-web/` (CEO, 2026-10-08). `public/CNAME` removed.
+  `https://white-blade.github.io/ccvaa/` (CEO, 2026-10-08). `public/CNAME` removed.
 - Zero runtime env vars. Zero secrets. Zero API routes.
 - **Pages source = GitHub Actions** (CEO, 2026-10-08). Branch-root serving was ruled
   out: the repo root has no `index.html`, and `/docs` is occupied by the agent-OS docs.
