@@ -58,10 +58,6 @@ withdrawn rather than relocated.
 
 - **No replacement** for the above via Stripe Payment Links, ESP hosted forms, or
   GitHub Actions automation. Deliberately out of scope; reopen as a new work ID if wanted.
-- **Agent-OS process docs** (`AGENTS.md`, `docs/protocols/`, `docs/product/`, `.cursor/`)
-  still describe Vercel Preview/Staging lanes and agent QA passes. Per this repo's own
-  rule, OS changes ship through an `agent-os-*` item — not folded into a product migration.
-  Tracked as follow-up `agent-os-NNNN`.
 - Visual redesign. The static render path is kept pixel-identical to today's
   `members` flag = Off output.
 
@@ -95,7 +91,8 @@ GitHub repo (main)
 | `src/lib/flags/` | Edge Config reader |
 | `drizzle/` | 5 SQL migrations + journal |
 | `scripts/` | migrate, seed, OTP test |
-| `docs/members/` | schema / ESP / Mailosaur notes |
+| `docs/` | agent-OS protocols, templates, backlogs, and feature docs — described Vercel/Neon/Stripe infrastructure that no longer exists |
+| `.cursor/` | 3-agent PM/Dev/QA definitions, rules, and skills built around the retired ship process |
 
 ### Delete — files
 
@@ -104,6 +101,7 @@ GitHub repo (main)
 | `src/proxy.ts` | middleware: flag gating + Roundcube rewrites |
 | `drizzle.config.ts` | Drizzle Kit config |
 | `.github/workflows/sync-staging.yml` | Vercel staging mirror |
+| `AGENTS.md` | multi-agent operating system; replaced by a lean `CLAUDE.md` |
 | `src/components/HeroCtas.tsx` | Subscribe/Join CTAs + counts fetch |
 | `src/components/HeroGateCtas.tsx` | hero OTP gate |
 | `src/components/HeroLoggedOut.tsx` | logged-out hero variant |
@@ -132,6 +130,7 @@ Moved out of the deployed tree (kept in the repo):
 | `src/components/Header.tsx` | drop `membersEnabled` / `showMembershipNav`; render `navigation` unfiltered |
 | `src/lib/site.ts` | drop `membershipContent`, `#membership` nav entry, hero CTA/count labels |
 | `.env.example` | reduce to a note that no env vars are required |
+| `CLAUDE.md` | was `@AGENTS.md`; now a self-contained project guide |
 | `README.md` | replace Vercel deploy + "future data storage" with Pages deploy |
 | `.github/workflows/ci.yml` | keep lint/typecheck/build (unchanged behavior) |
 
