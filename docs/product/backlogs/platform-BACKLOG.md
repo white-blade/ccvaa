@@ -3,7 +3,7 @@
 **Feature:** Platform  
 **Slug:** `platform`  
 **Owner:** Product Manager  
-**Next ID:** `0002`
+**Next ID:** `0003`
 
 Canonical work IDs: `platform-NNNN`. Schema: [`../BACKLOG.md`](../BACKLOG.md).
 
@@ -14,6 +14,35 @@ Hosting, data, and Vercel-platform infrastructure for CCVAA Web (Neon, Edge Conf
 - **Public feature switches:** Vercel Edge Config (env buckets) — keep until targeting / experiments are needed.
 
 ---
+
+## platform-0002 — Migrate to GitHub Pages (static-only)
+
+| Field | Value |
+|-------|--------|
+| **Type** | `task` |
+| **Priority** | `now` |
+| **Status** | `in-progress` |
+| **Verifier** | `ceo` |
+| **Verify passes** | `pass2` |
+| **Ship path** | `feature-branch` |
+
+### Description
+
+Host the site as a fully static GitHub Pages export. All server-dependent product
+surface (Members portal, Admin console, webmail proxy, Stripe, Neon, Resend, Edge
+Config) is **deleted** rather than relocated.
+
+Full spec, decision record, and file inventory:
+[`specs/platform-0002-github-pages-static-migration.md`](../../../specs/platform-0002-github-pages-static-migration.md)
+
+**Note:** supersedes `platform-0001` (Vercel Flags evaluation) — there is no longer a
+flag runtime to evaluate.
+
+### Links
+
+- Source: CEO (2026-10-08)
+- Spec: `specs/platform-0002-github-pages-static-migration.md`
+- Branch: `feat/platform-0002-github-pages`
 
 ## platform-0001 — Evaluate / adopt Vercel Flags (replace or wrap Edge Config)
 

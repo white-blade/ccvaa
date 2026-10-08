@@ -4,6 +4,16 @@
 > **Updated:** 2026-07-29  
 > Keep this document current whenever features ship or change. Work-to-do: [`BACKLOG.md`](BACKLOG.md).
 
+> ## ⚠️ Superseded in part — static migration (2026-10-08)
+>
+> The site moved to **GitHub Pages as a static export**. The **Members** platform,
+> the **Admin console** (`/admin`, webmail proxy, roster), Stripe, Neon, Resend, and
+> Edge Config flags were **deleted** — not disabled. The sections below describing them
+> are retained as history, not current state. Live surface is: Header → Hero → About
+> (Board, Purposes) → Contact → Footer.
+>
+> See [`specs/platform-0002-github-pages-static-migration.md`](../../specs/platform-0002-github-pages-static-migration.md).
+
 ## Product summary
 
 **Coast to Coast Visual Arts Association (CCVAA)** — BC-registered non-profit website promoting visual arts across Canada.

@@ -37,7 +37,6 @@ export const organization = {
 } as const;
 
 export const navigation = [
-  { label: "Membership", href: "#membership" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ] as const;
@@ -47,10 +46,6 @@ export const heroContent = {
   headline: "Celebrating visual arts from coast to coast",
   subheadline:
     "We bring artists, educators, and communities together to create, learn, and share the power of visual expression.",
-  subscribeLabel: "Subscribe",
-  joinLabel: "Join",
-  newsletterCountLabel: "Newsletter subscribers",
-  paidMembersCountLabel: "Paid members",
 } as const;
 
 export const aboutContent = {
@@ -147,32 +142,4 @@ export const contactContent = {
     "Interested in partnering, volunteering, or learning more about our programs? We would love to hear from you.",
   emailLabel: "Email",
   addressLabel: "Mailing address",
-} as const;
-
-export const membershipContent = {
-  gateHeadline: "Verify your email to unlock the newsletter and membership.",
-  socialProofSubscribers: "subscribers",
-  socialProofMembers: "members",
-  sendCodeLabel: "Send code",
-  verifyEmailLabel: "Verify email",
-  verifyHint: "Enter the 6-digit code we emailed you.",
-  emailPlaceholder: "you@example.com",
-  codePlaceholder: "6-digit code",
-  changeEmailLabel: "Change email",
-  emailSendCodeLabel: "Send code",
-  emailVerifyLabel: "Confirm email",
-  emailVerifyHint: "Enter the 6-digit code we sent to your new address.",
-  newsletterToggleLabel: "Newsletter",
-  newsletterToggleDescription:
-    "Occasional updates on exhibitions, programs, and community news.",
-  newsletterOnLabel: "Subscribed",
-  newsletterOffLabel: "Not subscribed",
-  perksComingSoon: "Membership perks coming soon…",
-  checkoutLabel: "Join",
-  logoutLabel: "Sign out",
-  profilePlanLabel: "Plan",
-  manageBillingLabel: "Manage billing",
-  pastDueMessage:
-    "Payment past due — update your payment method in Manage billing to restore membership perks.",
-  wontRenewMessage: "Won’t renew at period end.",
 } as const;

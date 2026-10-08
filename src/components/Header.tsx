@@ -4,24 +4,11 @@ import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { navigation } from "@/lib/site";
 
-export function Header({
-  membersEnabled,
-  showMembershipNav = false,
-}: {
-  membersEnabled: boolean;
-  /** Membership nav only after OTP verify (section exists). */
-  showMembershipNav?: boolean;
-}) {
+export function Header() {
   const [overHero, setOverHero] = useState(true);
-  const visibleNavigation = navigation.filter((item) => {
-    if (item.href !== "#membership") {
-      return true;
-    }
-    return membersEnabled && showMembershipNav;
-  });
 
   useEffect(() => {
-    // Whole sticky stage (hero + membership) so nav glass stays dark until About.
+    // Sticky hero stage so nav glass stays dark until About.
     const stage = document.getElementById("hero-stage");
     if (!stage) return;
 
@@ -55,7 +42,7 @@ export function Header({
 
         <nav aria-label="Main navigation">
           <ul className="flex items-center gap-1 sm:gap-2">
-            {visibleNavigation.map((item) => (
+            {navigation.map((item) => (
               <li key={item.href}>
                 <a
                   href={item.href}
