@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { assetPath } from "@/lib/asset";
 import { siteConfig } from "@/lib/site";
 
 type CoastToCoastLogoProps = {
@@ -16,7 +17,7 @@ export function CoastToCoastLogo({
 
   return (
     <Image
-      src={onLight ? logo.srcOnLight : logo.src}
+      src={assetPath(onLight ? logo.srcOnLight : logo.src)}
       alt={logo.alt}
       width={logo.width}
       height={logo.height}
