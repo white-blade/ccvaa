@@ -76,6 +76,9 @@ GitHub repo (main)
 - `next.config.ts`: `output: "export"`, `images.unoptimized: true`, `trailingSlash: true`
 - `public/CNAME` → `ccvaa.ca` (custom domain, so no `basePath` needed)
 - Zero runtime env vars. Zero secrets. Zero API routes.
+- **Pages source = GitHub Actions** (CEO, 2026-10-08). Branch-root serving was ruled
+  out: the repo root has no `index.html`, and `/docs` is occupied by the agent-OS docs.
+  Because `actions/deploy-pages` bypasses Jekyll, no `.nojekyll` file is needed.
 
 ## File inventory
 
@@ -112,6 +115,12 @@ GitHub repo (main)
 | `src/components/MessageBanner.tsx` | only consumed by membership UI |
 | `public/{file,globe,next,vercel,window}.svg` | unused Next.js starter assets |
 
+Moved out of the deployed tree (kept in the repo):
+
+| Path | Reason |
+|---|---|
+| `public/images/hero-background-original.jpg` → `assets/` | 1.7 MB source JPG, unreferenced by `src/`; shipping it made the payload 4.5 MB instead of 2.5 MB |
+
 ### Modify
 
 | Path | Change |
@@ -140,20 +149,6 @@ GitHub repo (main)
 `AboutSection`, `BoardSection`, `PurposesSection`, `ContactSection`, `Footer`,
 `BrandMark`, `CoastToCoastLogo`, `public/images/*`.
 
-## Required before CI will pass
-
-`package.json` dropped nine dependencies but `package-lock.json` still lists them, and
-`npm ci` **fails on an out-of-sync lockfile**. Node is not installed on the authoring
-machine, so this must be run once by hand:
-
-```bash
-npm install          # regenerates package-lock.json
-git add package-lock.json
-git commit -m "platform-0002: sync lockfile after dependency removal"
-```
-
-Then confirm locally: `npm run lint && npm run typecheck && npm run build`.
-
 ## Acceptance criteria
 
 - [ ] `npm run build` produces `out/` with `index.html` and no server-runtime warnings
@@ -168,8 +163,20 @@ Then confirm locally: `npm run lint && npm run typecheck && npm run build`.
 
 ## Verification status (2026-10-08)
 
-Node/npm are unavailable in the authoring environment, so `lint`, `typecheck`, and
-`build` were **not** run. Static checks that did pass:
+**All local checks pass.** Node 26.11.0 installed via Homebrew; `package-lock.json`
+regenerated so `npm ci` is in sync.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | pass, no output |
+| `npm run typecheck` | pass |
+| `npm run build` | pass — 4 routes, all `○ (Static)` |
+| served `out/` on `:4000` | `/` 200 · hero webp 200 · icon 200 · CNAME 200 · unknown path 404 |
+
+Build output: `out/` = **2.5 MB**, fonts self-hosted under `_next/static/media`
+(no runtime Google Fonts request), `CNAME` copied to the export root.
+
+Static checks that also passed:
 
 - `grep` over `src/`: no reference to `@/lib/members`, `@/lib/admin`, `@/lib/flags`,
   `@/db`, `drizzle`, `stripe`, `resend`, `edge-config`, or `next/headers`
@@ -179,7 +186,7 @@ Node/npm are unavailable in the authoring environment, so `lint`, `typecheck`, a
 - surviving tree is 18 files: 3 under `src/app`, 9 components, `src/lib/site.ts`,
   4 images, `public/CNAME`
 
-**Open:** the three npm checks above, plus CEO pass2 on the Pages URL.
+**Open:** CEO pass2 on the live Pages URL.
 
 ## Risks
 
