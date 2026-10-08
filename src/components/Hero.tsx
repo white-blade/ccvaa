@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { assetPath } from "@/lib/asset";
 import { heroContent } from "@/lib/site";
 
 /** Hero image is 2000×1313 — sticky background height (content scrolls over it). */
@@ -19,7 +20,7 @@ export function Hero() {
         aria-hidden="true"
       >
         <Image
-          src="/images/hero-background.webp"
+          src={assetPath("/images/hero-background.webp")}
           alt=""
           fill
           priority

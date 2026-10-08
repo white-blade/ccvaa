@@ -69,8 +69,10 @@ GitHub repo (main)
                                    └── actions/deploy-pages → ccvaa.ca
 ```
 
-- `next.config.ts`: `output: "export"`, `images.unoptimized: true`, `trailingSlash: true`
-- `public/CNAME` → `ccvaa.ca` (custom domain, so no `basePath` needed)
+- `next.config.ts`: `output: "export"`, `basePath: "/ccvaa-web"`, `images.unoptimized: true`,
+  `trailingSlash: true`
+- **No custom domain.** Served from the GitHub project page at
+  `https://white-blade.github.io/ccvaa-web/` (CEO, 2026-10-08). `public/CNAME` removed.
 - Zero runtime env vars. Zero secrets. Zero API routes.
 - **Pages source = GitHub Actions** (CEO, 2026-10-08). Branch-root serving was ruled
   out: the repo root has no `index.html`, and `/docs` is occupied by the agent-OS docs.
@@ -139,7 +141,8 @@ Moved out of the deployed tree (kept in the repo):
 | Path | Purpose |
 |---|---|
 | `.github/workflows/deploy-pages.yml` | build + `actions/deploy-pages` on push to `main` |
-| `public/CNAME` | `ccvaa.ca` |
+| `src/lib/asset.ts` | `assetPath()` — prefixes `public/` references with `basePath` |
+
 | `specs/` | this spec |
 
 ### Keep untouched
@@ -193,8 +196,33 @@ Static checks that also passed:
 |---|---|
 | Neon / Stripe / Resend data orphaned | **Out of this spec.** CEO must decide separately whether to export the Neon roster and cancel Stripe subscriptions **before** DNS cuts over. Deleting code does not refund or notify members. |
 | Members currently paying | Flag was Off in Production, so no public members exist. CEO to confirm Stripe has no live subscriptions. |
-| `ccvaa.ca` DNS cutover | Vercel and Pages cannot both serve the apex. CEO-managed, after Pages verifies on `*.github.io`. |
+| `info@ccvaa.ca` stops delivering | The Contact section's `mailto:` is the page's only call to action. `ccvaa.ca` MX currently points at Hover Mail and **is live**; dropping Hover makes that address bounce. Unresolved — see Open decisions. |
+| `ccvaa.ca` left pointing at Vercel | The domain is registered and its A record still resolves to Vercel. Decommissioning Vercel without repointing leaves a dead domain. CEO-managed. |
 | Work is hard to reverse | Lands on a feature branch; `main` untouched. Full history recoverable by revert. |
+
+## Domain / email findings (2026-10-08)
+
+Checked live rather than assumed:
+
+| Fact | Value |
+|---|---|
+| `ccvaa.ca` registration | ACTIVE, created 2026-07-08, registrar Tucows (Hover's parent) |
+| Nameservers | `ns1.hover.com` / `ns2.hover.com` |
+| A record | `216.198.79.1` → Vercel |
+| MX | `mx.hover.com.cust.hostedemail.com` → **Hover Mail live** |
+
+GitHub cannot replace either Hover function: it is not a domain registrar and hosts no
+email (no MX, no mailboxes, no forwarding). Serving from `*.github.io` removes the need
+for the domain **for hosting only** — the mailbox question is independent.
+
+## Open decisions (CEO)
+
+1. **Contact address.** `mailto:info@ccvaa.ca` only delivers while Hover Mail is paid
+   for. If Hover is dropped entirely, repoint the link to an address that receives mail
+   (one line in `src/lib/site.ts`) or remove it and leave the mailing address.
+2. **`ccvaa.ca` itself.** Keep it (≈$18/yr, no infrastructure — it would just need A
+   records pointed at Pages and `basePath` set back to `""`), or let it lapse and stay on
+   the `github.io` URL.
 
 ## Rollback
 
