@@ -1,7 +1,6 @@
 export const siteConfig = {
   name: "Coast to Coast Visual Arts Association",
   shortName: "CCVAA",
-  navTitle: "Coast to Coast",
   navSubtitle: "Visual Arts Association",
   tagline: "Connecting communities through visual arts across Canada",
   description:
@@ -19,10 +18,8 @@ export const siteConfig = {
 
 export const organization = {
   legalName: "Coast to Coast Visual Arts Association",
-  jurisdiction: "British Columbia, Canada",
   registrationNote:
     "Registered non-profit organization in British Columbia, Canada.",
-  founded: "2024", // Placeholder — update with actual year
   email: "info@ccvaa.ca",
   location: "Richmond, British Columbia, Canada",
   address: {
@@ -32,14 +29,13 @@ export const organization = {
     postalCode: "V6X 0S3",
     country: "Canada",
   },
-  formattedAddress:
-    "4 – 8800 Hazelbridge Way, Richmond, BC V6X 0S3, Canada",
 } as const;
 
 export const navigation = [
   /** Root-relative so these resolve from /membership too, not just the home page. */
   { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Events", href: "/events" },
   { label: "Membership", href: "/membership" },
 ] as const;
 
@@ -149,14 +145,55 @@ export const galleryContent = {
   previousLabel: "Previous photograph",
   nextLabel: "Next photograph",
   goToLabel: "Go to photograph",
+  viewAllLabel: "View all photographs",
+} as const;
+
+export const galleryPageContent = {
+  title: "Gallery",
+  description:
+    "Every photograph in our collection. Choose how many to show per row, and select any photograph to view it full size.",
+  eyebrow: "The collection",
+  /** Shown on hover over each tile. */
+  viewLabel: "View",
+  columnsLabel: "Per row",
+  /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
+  countNoun: "photograph",
+  countNounPlural: "photographs",
+  emptyNote: "Photographs are on their way.",
 } as const;
 
 export const eventsContent = {
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Select an event for full details.",
+    "Exhibitions, workshops, and gatherings through the year. Browse the calendar month by month, or search the listings below — select any event for full details.",
   detailsLabel: "View details",
   closeLabel: "Close",
+  searchLabel: "Search events",
+  searchPlaceholder: "Search by title, place, or date…",
+  clearSearchLabel: "Clear search",
+  perRowLabel: "Per row",
+  /** Rendered as "5 events" / "1 event" beside the search field. */
+  countNoun: "event",
+  countNounPlural: "events",
+  noResults: "No events match that search.",
+  emptyNote: "Listings for the coming season are on their way.",
+  eyebrow: "What’s on",
+  listingsTitle: "All listings",
+  calendar: {
+    eyebrow: "Calendar",
+    previousMonthLabel: "Previous month",
+    nextMonthLabel: "Next month",
+    monthsLabel: "Jump to month",
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    /** Followed by the month name: "In November". */
+    panelPrefix: "In",
+    emptyMonth: "Nothing scheduled this month.",
+    nextUpLabel: "Next up",
+    pastLabel: "Past",
+    legendEvent: "Event",
+    legendRange: "Multi-day",
+    legendToday: "Today",
+  },
 } as const;
 
 export const contactContent = {

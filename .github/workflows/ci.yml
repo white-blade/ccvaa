@@ -36,5 +36,4 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Placeholder for future env vars; keeps CI stable as secrets are added later
           NEXT_TELEMETRY_DISABLED: 1

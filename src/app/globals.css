@@ -27,6 +27,20 @@
   /* Driftwood cedar accent */
   --color-coral: #c49a6c;
   --color-coral-dark: #a87d52;
+
+  /* Calendar month change, gallery tiles: a short rise-and-fade, gated on motion-safe at use */
+  --animate-rise-in: rise-in 320ms ease-out both;
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 body {

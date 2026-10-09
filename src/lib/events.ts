@@ -1,19 +1,46 @@
 import { assetPath } from "@/lib/asset";
 
-export type CcvaaEvent = {
+/** A picture. `src` is a file name under `public/events/`, prefixed at read time. */
+export type EventPicture = { src: string; alt: string };
+
+/** One or more pictures set among the description paragraphs. */
+export type EventPictureBlock = {
+  pictures: EventPicture[];
+  caption?: string;
+};
+
+/**
+ * One block of an event's description: a paragraph, or a picture block. Plain
+ * strings keep the common case readable — most blocks are prose.
+ */
+export type EventDetail = string | EventPictureBlock;
+
+export function isPictureBlock(detail: EventDetail): detail is EventPictureBlock {
+  return typeof detail !== "string";
+}
+
+/** As authored below. `getEvents()` adds the derived fields. */
+type EventSource = {
   id: string;
   title: string;
   /** ISO 8601 — the machine-readable value for <time dateTime>. */
   startsAt: string;
+  /** ISO 8601 date of the last day, for multi-day events. Omit for one-day events. */
+  endsAt?: string;
   dateLabel: string;
   location: string;
   /** Shown on the card. */
   summary: string;
-  /** Paragraphs shown in the dialog. */
-  details: string[];
+  /** Shown in the dialog: paragraphs, optionally with pictures between them. */
+  details: EventDetail[];
   admission?: string;
   /** Optional — events without a picture render as text cards. */
-  image?: { src: string; alt: string };
+  image?: EventPicture;
+};
+
+export type CcvaaEvent = EventSource & {
+  /** Derived from `startsAt` for the card's calendar chip. */
+  dateBadge: { month: string; day: string };
 };
 
 /**
@@ -26,11 +53,12 @@ export type CcvaaEvent = {
  * pictures are downscaled copies of gallery photos. Replace both with real
  * listings — see `specs/events-0001-events-section.md`.
  */
-const events: CcvaaEvent[] = [
+const events: EventSource[] = [
   {
     id: "coastal-light-exhibition",
     title: "Coastal Light: Members’ Exhibition",
     startsAt: "2026-11-14",
+    endsAt: "2026-12-06",
     dateLabel: "November 14 – December 6, 2026",
     location: "Richmond Cultural Centre, Richmond, BC",
     summary:
@@ -38,6 +66,19 @@ const events: CcvaaEvent[] = [
     details: [
       "Coastal Light gathers work from CCVAA members responding to the landscapes, weather, and shorelines of British Columbia. The 2026 edition features more than forty pieces across painting, photography, printmaking, and mixed media.",
       "The opening reception takes place on Saturday, November 14 from 2:00 to 5:00 pm, with remarks from the jurors at 3:00 pm. Several exhibiting artists will be present.",
+      {
+        pictures: [
+          {
+            src: "detail-lakeshore-bench.jpg",
+            alt: "An empty wooden bench on a lakeshore in low golden light, framed by bare branches and dry winter grasses.",
+          },
+          {
+            src: "detail-bougainvillea-sunset.jpg",
+            alt: "Branches of magenta bougainvillea against a pink and orange sunset sky, with hills and distant town lights below.",
+          },
+        ],
+        caption: "Work from the 2025 edition.",
+      },
       "The exhibition is free to visit during Cultural Centre hours for its full three-week run.",
     ],
     admission: "Free admission · Opening reception November 14, 2–5 pm",
@@ -86,6 +127,7 @@ const events: CcvaaEvent[] = [
     id: "valley-printmaking-retreat",
     title: "Printmaking Retreat: Monotype in the Valley",
     startsAt: "2027-06-05",
+    endsAt: "2027-06-06",
     dateLabel: "June 5 – 6, 2027",
     location: "Fraser Valley · exact venue confirmed on registration",
     summary:
@@ -93,6 +135,15 @@ const events: CcvaaEvent[] = [
     details: [
       "Two days of focused studio practice in monotype, a printmaking method that rewards experiment: each plate yields a single print, so there is no safe repetition to fall back on.",
       "Saturday covers plate preparation, ink viscosity, and additive and subtractive mark-making. Sunday moves to multi-layer work and registration, finishing with a group critique.",
+      {
+        pictures: [
+          {
+            src: "detail-lakeshore-bench.jpg",
+            alt: "An empty wooden bench on a lakeshore in low golden light, framed by bare branches and dry winter grasses.",
+          },
+        ],
+        caption: "The valley in early June.",
+      },
       "Presses, inks, and paper are provided. Space is limited to twelve participants so that everyone has press time. Accommodation and meals are arranged separately; details follow registration.",
     ],
     admission: "$180 members · $240 non-members · Twelve places",
@@ -122,14 +173,50 @@ const events: CcvaaEvent[] = [
   },
 ];
 
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+/**
+ * Month and day for the card's calendar chip, read straight off the ISO string.
+ * Deliberately not `new Date()`: a date-only value parses as UTC midnight, which
+ * renders as the previous day anywhere west of Greenwich — including here.
+ */
+function toDateBadge(startsAt: string): { month: string; day: string } {
+  const [, month, day] = startsAt.split("-");
+  return {
+    month: MONTHS[Number(month) - 1] ?? "",
+    day: day ? String(Number(day)) : "",
+  };
+}
+
+function toEventSrc(picture: EventPicture): EventPicture {
+  return { ...picture, src: assetPath(`/events/${picture.src}`) };
+}
+
 /** Chronological. Past events are not filtered — see the spec for why. */
 export function getEvents(): CcvaaEvent[] {
   return [...events]
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     .map((event) => ({
       ...event,
-      image: event.image
-        ? { ...event.image, src: assetPath(`/events/${event.image.src}`) }
-        : undefined,
+      dateBadge: toDateBadge(event.startsAt),
+      image: event.image ? toEventSrc(event.image) : undefined,
+      details: event.details.map((detail) =>
+        isPictureBlock(detail)
+          ? { ...detail, pictures: detail.pictures.map(toEventSrc) }
+          : detail,
+      ),
     }));
 }

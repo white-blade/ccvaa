@@ -25,13 +25,24 @@ static export supports no middleware at all.
 ## Layout
 
 ```
-src/app/         page.tsx, layout.tsx, globals.css, icon.svg
+src/app/         page.tsx (home), gallery/, events/, membership/,
+                 layout.tsx, globals.css, icon.svg
 src/components/  Header, Hero, AboutSection, BoardSection, PurposesSection,
-                 ContactSection, Footer, BrandMark, CoastToCoastLogo
+                 GallerySection/Carousel/Grid/Lightbox, PageBanner,
+                 EventsBrowser/Calendar/Card/Dialog,
+                 MembershipSection, ContactSection, Footer, BrandMark,
+                 CoastToCoastLogo, ColumnControl
 src/lib/site.ts  ALL copy and config — edit here first
+src/lib/         events.ts, calendar.ts, event-search.ts, gallery.ts,
+                 membership.ts, asset.ts, use-dialog.ts, use-columns.ts, use-today.ts
+src/test/        shared test fixtures
 specs/           architecture specs / decision records
 assets/          source originals, not deployed
 ```
+
+Pages: `/` (hero, about, gallery carousel, contact), `/gallery`, `/events`,
+`/membership`. Gallery photos come from `public/photos/`, read at build time — adding
+one is a file drop, not a code change.
 
 **Content changes go in `src/lib/site.ts`.** Org details, navigation, hero copy, the
 board roster, the ten purposes, and contact info all live there. Components read from it
@@ -45,7 +56,13 @@ npm run dev        # http://localhost:3000
 npm run build      # static export to out/
 npm run lint
 npm run typecheck
+npm test           # Vitest, once; `npm run test:watch` to keep it running
 ```
+
+Tests live beside the code as `*.test.ts(x)` and run in jsdom, pinned to
+`America/Vancouver` so date bugs west of Greenwich show up. Logic worth testing goes
+in `src/lib/` as plain functions (see `calendar.ts`, `event-search.ts`); components
+stay presentational. Deploys run `npm test` before building.
 
 Preview a production build: `npm run build && npx serve out` (or
 `python3 -m http.server 4000 --directory out`).
@@ -53,8 +70,13 @@ Preview a production build: `npm run build && npx serve out` (or
 ## Deploy
 
 Push to `main` → `.github/workflows/deploy-pages.yml` builds and publishes to GitHub
-Pages. Pages source must be set to **GitHub Actions** in repo settings. The custom
-domain `ccvaa.ca` is pinned by `public/CNAME`.
+Pages. Pages source must be set to **GitHub Actions** in repo settings.
+
+`basePath` is `/ccvaa`, so the site serves from the project page and every local URL
+carries that prefix too (`http://localhost:3000/ccvaa/`). There is **no `public/CNAME`**
+— `ccvaa.ca` is not pinned yet, despite `siteConfig.url` naming it. Switching to the
+custom domain means adding `public/CNAME` *and* setting `basePath` to `""`; one without
+the other breaks every asset path.
 
 ## Conventions
 
@@ -62,4 +84,4 @@ domain `ccvaa.ca` is pinned by `public/CNAME`.
 - Never commit secrets. There are none to commit — keep it that way.
 - Match surrounding style: Tailwind utility classes, `@/` import alias, comments only
   where intent isn't obvious from the code.
-- Run `lint`, `typecheck`, and `build` before calling work done.
+- Run `lint`, `typecheck`, `test`, and `build` before calling work done.
