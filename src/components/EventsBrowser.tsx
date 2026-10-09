@@ -6,7 +6,8 @@ import { ColumnControl } from "@/components/ColumnControl";
 import { EventCard } from "@/components/EventCard";
 import { EventDialog } from "@/components/EventDialog";
 import { EventsCalendar } from "@/components/EventsCalendar";
-import { isPictureBlock, type CcvaaEvent } from "@/lib/events";
+import { searchEvents, searchIndex } from "@/lib/event-search";
+import type { CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 import { createColumnStore } from "@/lib/use-columns";
 
@@ -39,22 +40,6 @@ const GRID_CLASS: Record<ColumnCount, string> = {
   4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 };
 
-/** Everything a visitor might reasonably type, flattened once per event. */
-function searchableText(event: CcvaaEvent): string {
-  return [
-    event.title,
-    event.summary,
-    event.location,
-    event.dateLabel,
-    event.admission ?? "",
-    ...event.details.map((detail) =>
-      isPictureBlock(detail) ? (detail.caption ?? "") : detail,
-    ),
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
 type EventsBrowserProps = {
   events: CcvaaEvent[];
 };
@@ -67,20 +52,8 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
   /** Whatever opened the dialog — a card or a calendar day — so focus returns there. */
   const returnFocusRef = useRef<HTMLElement | null>(null);
 
-  const haystacks = useMemo(
-    () => new Map(events.map((event) => [event.id, searchableText(event)])),
-    [events],
-  );
-
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-  // Every term must appear somewhere, so "april richmond" narrows rather than widens.
-  const matches = terms.length
-    ? events.filter((event) => {
-        const haystack = haystacks.get(event.id) ?? "";
-        return terms.every((term) => haystack.includes(term));
-      })
-    : events;
+  const index = useMemo(() => searchIndex(events), [events]);
+  const { terms, matches } = searchEvents(events, index, query);
 
   // Looked up in every event, not just matches: the calendar ignores the search.
   const openEvent = events.find((event) => event.id === openEventId) ?? null;

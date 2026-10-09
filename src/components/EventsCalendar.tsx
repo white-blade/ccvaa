@@ -3,77 +3,21 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
+import {
+  defaultMonth,
+  groupEventsByDay,
+  eventsInMonth,
+  firstDay,
+  lastDay,
+  monthCells,
+  monthName,
+  monthOf,
+  seasonMonths,
+  type MonthKey,
+} from "@/lib/calendar";
 import type { CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 import { useToday } from "@/lib/use-today";
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
-
-/** Months are keyed as ISO year-month ("2026-11") throughout. */
-type MonthKey = string;
-
-function firstDay(event: CcvaaEvent): string {
-  return event.startsAt.slice(0, 10);
-}
-
-function lastDay(event: CcvaaEvent): string {
-  return (event.endsAt ?? event.startsAt).slice(0, 10);
-}
-
-function monthOf(iso: string): MonthKey {
-  return iso.slice(0, 7);
-}
-
-function shiftMonth(month: MonthKey, by: number): MonthKey {
-  const [year, monthNumber] = month.split("-").map(Number);
-  const index = year * 12 + (monthNumber - 1) + by;
-  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
-}
-
-function monthName(month: MonthKey): string {
-  return MONTH_NAMES[Number(month.slice(5, 7)) - 1] ?? "";
-}
-
-/**
- * Every day from `from` to `to` inclusive. UTC arithmetic throughout, so a daylight
- * saving change can never drop or repeat a day.
- */
-function daysBetween(from: string, to: string): string[] {
-  const days: string[] = [];
-  const cursor = new Date(`${from}T00:00:00Z`);
-  const end = new Date(`${to}T00:00:00Z`);
-  while (cursor <= end) {
-    days.push(cursor.toISOString().slice(0, 10));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-  return days;
-}
-
-/** Six full weeks, Sunday first, so the grid holds its height from month to month. */
-function monthCells(month: MonthKey): { iso: string; inMonth: boolean }[] {
-  const first = new Date(`${month}-01T00:00:00Z`);
-  const start = new Date(first);
-  start.setUTCDate(1 - first.getUTCDay());
-  return Array.from({ length: 42 }, (_, index) => {
-    const day = new Date(start);
-    day.setUTCDate(start.getUTCDate() + index);
-    const iso = day.toISOString().slice(0, 10);
-    return { iso, inMonth: iso.startsWith(month) };
-  });
-}
 
 type EventsCalendarProps = {
   events: CcvaaEvent[];
@@ -85,44 +29,15 @@ export function EventsCalendar({ events, onOpen }: EventsCalendarProps) {
   const [chosenMonth, setChosenMonth] = useState<MonthKey | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  const eventsByDay = useMemo(() => {
-    const byDay = new Map<string, CcvaaEvent[]>();
-    for (const event of events) {
-      for (const day of daysBetween(firstDay(event), lastDay(event))) {
-        byDay.set(day, [...(byDay.get(day) ?? []), event]);
-      }
-    }
-    return byDay;
-  }, [events]);
-
+  const eventsByDay = useMemo(() => groupEventsByDay(events), [events]);
   // The strip and the arrows cover the season's span, not an endless calendar.
-  const months = useMemo(() => {
-    const start = monthOf(firstDay(events[0]));
-    const end = monthOf(events.map(lastDay).sort().at(-1) ?? firstDay(events[0]));
-    const span: MonthKey[] = [];
-    for (let month = start; month <= end; month = shiftMonth(month, 1)) {
-      span.push(month);
-    }
-    return span;
-  }, [events]);
-
-  const nextUpcoming = today
-    ? events.find((event) => lastDay(event) >= today)
-    : undefined;
+  const months = useMemo(() => seasonMonths(events), [events]);
 
   // Until the visitor picks a month, open on whatever is coming up next.
-  const month =
-    chosenMonth ??
-    (today
-      ? nextUpcoming
-        ? monthOf(firstDay(nextUpcoming))
-        : months[months.length - 1]
-      : months[0]);
+  const month = chosenMonth ?? defaultMonth(events, months, today);
 
   const monthIndex = months.indexOf(month);
-  const monthEvents = events.filter(
-    (event) => monthOf(firstDay(event)) <= month && monthOf(lastDay(event)) >= month,
-  );
+  const monthEvents = eventsInMonth(events, month);
   const nextAfterMonth = events.find((event) => monthOf(firstDay(event)) > month);
   const cells = monthCells(month);
   const copy = eventsContent.calendar;
@@ -177,10 +92,7 @@ export function EventsCalendar({ events, onOpen }: EventsCalendarProps) {
         >
           {months.map((key) => {
             const selected = key === month;
-            const hasEvents = events.some(
-              (event) =>
-                monthOf(firstDay(event)) <= key && monthOf(lastDay(event)) >= key,
-            );
+            const hasEvents = eventsInMonth(events, key).length > 0;
             return (
               <button
                 key={key}
@@ -355,6 +267,14 @@ export function EventsCalendar({ events, onOpen }: EventsCalendarProps) {
                     onFocus={() => setHighlightedId(event.id)}
                     onBlur={() => setHighlightedId(null)}
                     aria-haspopup="dialog"
+                    aria-label={[
+                      event.title,
+                      event.dateLabel,
+                      event.location,
+                      past ? copy.pastLabel : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" — ")}
                     className={`group flex w-full items-center gap-4 rounded-2xl p-3 text-left ring-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
                       highlightedId === event.id
                         ? "bg-white/10 ring-coral/60"
@@ -410,6 +330,7 @@ export function EventsCalendar({ events, onOpen }: EventsCalendarProps) {
               <button
                 type="button"
                 onClick={() => setChosenMonth(monthOf(firstDay(nextAfterMonth)))}
+                aria-label={`${copy.nextUpLabel}: ${nextAfterMonth.title} — ${nextAfterMonth.dateLabel}`}
                 className="group mt-6 flex w-full items-center justify-between gap-4 rounded-2xl bg-white/5 p-4 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10 hover:ring-coral/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
               >
                 <span>

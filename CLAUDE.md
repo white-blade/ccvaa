@@ -28,12 +28,14 @@ static export supports no middleware at all.
 src/app/         page.tsx (home), gallery/, events/, membership/,
                  layout.tsx, globals.css, icon.svg
 src/components/  Header, Hero, AboutSection, BoardSection, PurposesSection,
-                 GallerySection/Carousel/Grid/Lightbox, EventsBrowser/Card/Dialog,
+                 GallerySection/Carousel/Grid/Lightbox, PageBanner,
+                 EventsBrowser/Calendar/Card/Dialog,
                  MembershipSection, ContactSection, Footer, BrandMark,
                  CoastToCoastLogo, ColumnControl
 src/lib/site.ts  ALL copy and config — edit here first
-src/lib/         events.ts, gallery.ts, membership.ts, asset.ts,
-                 use-dialog.ts, use-columns.ts
+src/lib/         events.ts, calendar.ts, event-search.ts, gallery.ts,
+                 membership.ts, asset.ts, use-dialog.ts, use-columns.ts, use-today.ts
+src/test/        shared test fixtures
 specs/           architecture specs / decision records
 assets/          source originals, not deployed
 ```
@@ -54,7 +56,13 @@ npm run dev        # http://localhost:3000
 npm run build      # static export to out/
 npm run lint
 npm run typecheck
+npm test           # Vitest, once; `npm run test:watch` to keep it running
 ```
+
+Tests live beside the code as `*.test.ts(x)` and run in jsdom, pinned to
+`America/Vancouver` so date bugs west of Greenwich show up. Logic worth testing goes
+in `src/lib/` as plain functions (see `calendar.ts`, `event-search.ts`); components
+stay presentational. Deploys run `npm test` before building.
 
 Preview a production build: `npm run build && npx serve out` (or
 `python3 -m http.server 4000 --directory out`).
@@ -76,4 +84,4 @@ the other breaks every asset path.
 - Never commit secrets. There are none to commit — keep it that way.
 - Match surrounding style: Tailwind utility classes, `@/` import alias, comments only
   where intent isn't obvious from the code.
-- Run `lint`, `typecheck`, and `build` before calling work done.
+- Run `lint`, `typecheck`, `test`, and `build` before calling work done.
