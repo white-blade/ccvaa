@@ -1,7 +1,6 @@
 export const siteConfig = {
   name: "Coast to Coast Visual Arts Association",
   shortName: "CCVAA",
-  navTitle: "Coast to Coast",
   navSubtitle: "Visual Arts Association",
   tagline: "Connecting communities through visual arts across Canada",
   description:
@@ -19,10 +18,8 @@ export const siteConfig = {
 
 export const organization = {
   legalName: "Coast to Coast Visual Arts Association",
-  jurisdiction: "British Columbia, Canada",
   registrationNote:
     "Registered non-profit organization in British Columbia, Canada.",
-  founded: "2024", // Placeholder — update with actual year
   email: "info@ccvaa.ca",
   location: "Richmond, British Columbia, Canada",
   address: {
@@ -32,14 +29,13 @@ export const organization = {
     postalCode: "V6X 0S3",
     country: "Canada",
   },
-  formattedAddress:
-    "4 – 8800 Hazelbridge Way, Richmond, BC V6X 0S3, Canada",
 } as const;
 
 export const navigation = [
   /** Root-relative so these resolve from /membership too, not just the home page. */
   { label: "About", href: "/#about" },
   { label: "Gallery", href: "/gallery" },
+  { label: "Events", href: "/events" },
   { label: "Contact", href: "/#contact" },
   { label: "Membership", href: "/membership" },
 ] as const;
@@ -167,9 +163,18 @@ export const galleryPageContent = {
 export const eventsContent = {
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Select an event for full details.",
+    "Exhibitions, workshops, and gatherings through the year. Search the listings, choose how many to show per row, and select any event for full details.",
   detailsLabel: "View details",
   closeLabel: "Close",
+  searchLabel: "Search events",
+  searchPlaceholder: "Search by title, place, or date…",
+  clearSearchLabel: "Clear search",
+  perRowLabel: "Per row",
+  /** Rendered as "5 events" / "1 event" beside the search field. */
+  countNoun: "event",
+  countNounPlural: "events",
+  noResults: "No events match that search.",
+  emptyNote: "Listings for the coming season are on their way.",
 } as const;
 
 export const contactContent = {

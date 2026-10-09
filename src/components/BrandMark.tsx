@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CoastToCoastLogo } from "@/components/CoastToCoastLogo";
 import { siteConfig } from "@/lib/site";
 
-/** Shared logo size — public header and admin sidebar must stay in sync. */
+/** Shared logo size, so every surface that shows the wordmark stays in sync. */
 export const BRAND_LOGO_CLASSNAME = "h-7 w-auto object-contain sm:h-8";
 
 type BrandMarkProps = {
@@ -15,10 +15,9 @@ type BrandMarkProps = {
 };
 
 /**
- * Logo + “Visual Arts Association” block used on the public site and admin console.
- * Logo size is shared via BRAND_LOGO_CLASSNAME so both surfaces stay in sync.
- * `align="center"` centers the whole group in its parent; logo+subtitle stay
- * start-aligned to each other (same as the public header).
+ * Logo + “Visual Arts Association” block, used in the header and on the board page.
+ * `align="center"` centres the whole group in its parent; logo and subtitle stay
+ * start-aligned to each other (same as the header).
  */
 export function BrandMark({
   priority = false,

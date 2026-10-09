@@ -3,17 +3,28 @@
 import Image from "next/image";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 
+import { ColumnControl } from "@/components/ColumnControl";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent, galleryPageContent } from "@/lib/site";
+import { createColumnStore } from "@/lib/use-columns";
 
 const COLUMN_OPTIONS = [2, 3, 4, 5] as const;
 type ColumnCount = (typeof COLUMN_OPTIONS)[number];
 
-const DEFAULT_COLUMNS: ColumnCount = 3;
+const columnStore = createColumnStore<ColumnCount>(
+  "ccvaa:gallery-columns",
+  COLUMN_OPTIONS,
+  3,
+);
 
-/** Remembers the visitor's choice between visits. Per-browser; nothing leaves the device. */
-const STORAGE_KEY = "ccvaa:gallery-columns";
+function useColumns() {
+  return useSyncExternalStore(
+    columnStore.subscribe,
+    columnStore.getSnapshot,
+    columnStore.getServerSnapshot,
+  );
+}
 
 /**
  * Written out in full because Tailwind scans source text for class names — a count
@@ -26,69 +37,6 @@ const GRID_CLASS: Record<ColumnCount, string> = {
   4: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
   5: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-5",
 };
-
-function isColumnCount(value: number): value is ColumnCount {
-  return (COLUMN_OPTIONS as readonly number[]).includes(value);
-}
-
-/**
- * The chosen column count lives outside React, in `localStorage`, read through
- * `useSyncExternalStore` — the same shape as the carousel's reduced-motion hook.
- *
- * The prerendered HTML is built once with no visitor and no storage, so the server
- * snapshot is the default and React swaps in the stored value right after hydration.
- * `current` mirrors it in memory so the control still works when storage is blocked.
- */
-let current: ColumnCount | null = null;
-const listeners = new Set<() => void>();
-
-function readStoredColumns(): ColumnCount {
-  try {
-    const stored = Number(window.localStorage.getItem(STORAGE_KEY));
-    if (isColumnCount(stored)) {
-      return stored;
-    }
-  } catch {
-    // Storage blocked or unavailable — the default stands.
-  }
-  return DEFAULT_COLUMNS;
-}
-
-function getColumns(): ColumnCount {
-  current ??= readStoredColumns();
-  return current;
-}
-
-function getColumnsOnServer(): ColumnCount {
-  return DEFAULT_COLUMNS;
-}
-
-function subscribeToColumns(onChange: () => void) {
-  listeners.add(onChange);
-  return () => {
-    listeners.delete(onChange);
-  };
-}
-
-function storeColumns(next: ColumnCount) {
-  current = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, String(next));
-  } catch {
-    // Not worth surfacing: the layout still changed for this visit.
-  }
-  for (const listener of listeners) {
-    listener();
-  }
-}
-
-function useColumns() {
-  return useSyncExternalStore(
-    subscribeToColumns,
-    getColumns,
-    getColumnsOnServer,
-  );
-}
 
 type GalleryGridProps = {
   photos: GalleryPhoto[];
@@ -136,35 +84,13 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
           {countLabel}
         </p>
 
-        <div className="flex items-center gap-3">
-          <span
-            id="gallery-columns-label"
-            className="text-xs font-medium uppercase tracking-wider text-ocean-500"
-          >
-            {galleryPageContent.columnsLabel}
-          </span>
-          <div
-            role="group"
-            aria-labelledby="gallery-columns-label"
-            className="flex items-center gap-1 rounded-full border border-ocean-200 bg-white p-1"
-          >
-            {COLUMN_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => storeColumns(option)}
-                aria-pressed={columns === option}
-                className={`h-8 w-8 rounded-full text-sm font-semibold lining-nums tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
-                  columns === option
-                    ? "bg-ocean-900 text-cream"
-                    : "text-ocean-600 hover:bg-ocean-50"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
+        <ColumnControl
+          id="gallery-columns"
+          label={galleryPageContent.columnsLabel}
+          options={COLUMN_OPTIONS}
+          value={columns}
+          onChange={columnStore.choose}
+        />
       </div>
 
       <ul className={`mt-6 grid gap-3 sm:gap-4 ${GRID_CLASS[columns]}`}>
