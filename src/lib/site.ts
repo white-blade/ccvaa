@@ -153,8 +153,8 @@ export const membershipContent = {
   register: {
     title: "Become a member",
     description:
-      "Register with your email to receive news on exhibitions, programs, and community events. Free, and you can unsubscribe at any time.",
-    cta: "Register",
+      "Free membership. Share your name and email to receive news on exhibitions, programs, and community events — and tell us how you would like to take part.",
+    cta: "Become a member",
   },
   paid: {
     heading: "Support our work",

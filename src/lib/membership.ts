@@ -22,7 +22,14 @@ export const membershipLinks = {
   annual: "https://buy.stripe.com/00w8wPgcF2M63xBeLm0Jq00",
   /** Stripe customer-portal login page — member enters email, Stripe mails a link. */
   portal: `https://billing.stripe.com/p/login/${PLACEHOLDER}`,
-  /** ESP-hosted signup form for free membership (provider-agnostic). */
+  /**
+   * Google Form for free membership signup.
+   *
+   * The static page cannot write to a Google Sheet — that needs credentials, and
+   * anything shipped to the browser is public. Google Forms is the write path:
+   * the visitor submits to Google, Google appends the row to the linked Sheet.
+   * Paste the form's share link ("Send" → link icon) here.
+   */
   register: PLACEHOLDER,
 } as const;
 

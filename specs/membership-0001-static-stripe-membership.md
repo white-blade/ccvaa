@@ -17,7 +17,7 @@ Two independent tiers, matching the old product's Newsletter ⊥ Membership spli
 
 | Tier | What it is | Where it is handled |
 |------|-----------|---------------------|
-| **Free member** | register with an email, no payment | hosted form at an ESP |
+| **Free member** | register with an email, no payment | **Google Form → Google Sheet** |
 | **Paid member** | Founding / Lifetime / Annual | Stripe Payment Links |
 
 A person can be either, both, or neither. Neither tier is gated by the other.
@@ -40,7 +40,7 @@ they are SaaS with their own auth, compliance, and admin UIs.
 | Who | System | Admin view | Export |
 |-----|--------|-----------|--------|
 | Paid members | **Stripe** | Dashboard → Customers / Subscriptions | CSV |
-| Free members | **ESP** | ESP dashboard → audience | CSV |
+| Free members | **Google Sheet** (fed by a Google Form) | the Sheet itself, shared with named board accounts | CSV / native |
 
 Properties this buys us:
 
@@ -60,7 +60,7 @@ build artifact** (not a commit) — still no server, still nothing in git. Out o
 
 ```
 Static page (GitHub Pages)
-  ├── "Register"      → ESP hosted form        → ESP audience
+  ├── "Become a member" → Google Form           → Google Sheet
   ├── "Join" × 3      → buy.stripe.com/…       → Stripe Customer + Subscription
   └── "Manage billing"→ billing.stripe.com/p/login/… → Stripe-hosted portal
 ```
@@ -110,7 +110,12 @@ real URLs are pasted in — a one-line change per link, no structural edits.
 - **Automatic Founding → Lifetime swap at cap.** The old `getJoinPlans()` did this
   server-side. Payment Links cannot: when the cap fills, Stripe shows an error page.
   Removing the Founding card then is a manual one-line edit.
-- ESP selection. The register link is provider-agnostic — any hosted form URL works.
+- ESP / newsletter sending. The Sheet is a roster, not a mailing tool. When CCVAA
+  actually wants to send a campaign, import the Sheet into a free ESP tier — that
+  handles unsubscribe links and CASL consent tracking, which a Sheet cannot.
+- **Member login.** A Sheet is a data store, not an auth system; verifying a member
+  client-side would require publishing the whole list. Admin access is Google account
+  sharing on the Sheet; paid members self-serve through the Stripe portal.
 
 ## Acceptance criteria
 
@@ -130,7 +135,7 @@ real URLs are pasted in — a one-line change per link, no structural edits.
 | Lifetime Payment Link | **live** (`$500 CAD`, live mode) |
 | Annual Payment Link | **live** (`$36 CAD/yr`, live mode) |
 | Customer-portal login | **placeholder** — Settings → Billing → Customer portal |
-| ESP register form | **placeholder** — ESP not yet chosen |
+| Google Form (free membership) | **placeholder** — form not yet created |
 
 The three Stripe links are live-mode and take real payments. The two outstanding
 entries render as disabled "Coming soon" until their URLs are pasted into
