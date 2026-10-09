@@ -11,6 +11,7 @@ import {
 
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
+import { useDialog } from "@/lib/use-dialog";
 
 const ADVANCE_MS = 5000;
 
@@ -53,8 +54,6 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
   const [interacting, setInteracting] = useState(false);
   const [zoomed, setZoomed] = useState(false);
 
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLButtonElement>(null);
 
   const wantsPlay = playOverride ?? !prefersReducedMotion;
@@ -72,56 +71,21 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
     return () => clearInterval(timer);
   }, [isPlaying, step]);
 
-  // Lightbox: Escape to close, arrows to move, Tab kept inside, scroll locked.
-  useEffect(() => {
-    if (!zoomed) return;
-
-    closeButtonRef.current?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setZoomed(false);
-        return;
-      }
-      if (event.key === "ArrowRight") {
-        step(1);
-        return;
-      }
-      if (event.key === "ArrowLeft") {
-        step(-1);
-        return;
-      }
-      if (event.key !== "Tab") return;
-
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        "button:not([disabled])",
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [zoomed, step]);
-
-  function closeZoom() {
+  const closeZoom = useCallback(() => {
     setZoomed(false);
     returnFocusRef.current?.focus();
-  }
+  }, []);
+
+  const goNext = useCallback(() => step(1), [step]);
+  const goPrevious = useCallback(() => step(-1), [step]);
+
+  // Escape / arrows / focus trap / scroll lock, shared with the events dialog.
+  const { dialogRef, initialFocusRef } = useDialog({
+    open: zoomed,
+    onClose: closeZoom,
+    onNext: goNext,
+    onPrevious: goPrevious,
+  });
 
   const active = photos[index];
   const position = `${index + 1} / ${photos.length}`;
@@ -246,7 +210,7 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
             <p className="text-sm lining-nums tabular-nums">{position}</p>
             <button
               type="button"
-              ref={closeButtonRef}
+              ref={initialFocusRef}
               onClick={closeZoom}
               aria-label={galleryContent.closeLabel}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10"
