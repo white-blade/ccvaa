@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -9,9 +10,9 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { GalleryLightbox } from "@/components/GalleryLightbox";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
-import { useDialog } from "@/lib/use-dialog";
 
 const ADVANCE_MS = 5000;
 
@@ -79,19 +80,11 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
   const goNext = useCallback(() => step(1), [step]);
   const goPrevious = useCallback(() => step(-1), [step]);
 
-  // Escape / arrows / focus trap / scroll lock, shared with the events dialog.
-  const { dialogRef, initialFocusRef } = useDialog({
-    open: zoomed,
-    onClose: closeZoom,
-    onNext: goNext,
-    onPrevious: goPrevious,
-  });
-
   const active = photos[index];
   const position = `${index + 1} / ${photos.length}`;
 
   const controlClass =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full border border-ocean-200 bg-white text-ocean-700 transition-colors hover:border-ocean-400 hover:bg-ocean-50";
+    "inline-flex h-10 w-10 items-center justify-center rounded-full border border-ocean-200 bg-white text-ocean-700 transition-colors hover:border-ocean-400 hover:bg-ocean-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2";
 
   return (
     <div
@@ -104,7 +97,7 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
         role="group"
         aria-roledescription="carousel"
         aria-label={galleryContent.title}
-        className="relative h-[22rem] overflow-hidden rounded-3xl border border-ocean-100 bg-ocean-100 sm:h-[30rem]"
+        className="relative h-[24rem] overflow-hidden rounded-3xl border border-ocean-100 bg-ocean-900 shadow-sm sm:h-[32rem]"
       >
         {photos.map((photo, photoIndex) => (
           <div
@@ -114,6 +107,19 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
             }`}
             aria-hidden={photoIndex !== index}
           >
+            {/* The same file, blurred and cropped to fill: the photographs mix
+                portrait with landscape, and this mats the empty sides instead of
+                leaving flat bars. No extra request — the browser already has it. */}
+            <Image
+              src={photo.src}
+              alt=""
+              aria-hidden="true"
+              fill
+              unoptimized
+              className="scale-110 object-cover opacity-40 blur-2xl"
+              sizes="(min-width: 1024px) 64rem, 100vw"
+              loading="lazy"
+            />
             <Image
               src={photo.src}
               alt={photo.alt}
@@ -129,11 +135,27 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
           </div>
         ))}
 
+        <p className="pointer-events-none absolute right-4 top-4 rounded-full bg-ocean-950/60 px-3 py-1 text-xs font-medium lining-nums tabular-nums text-cream">
+          {position}
+        </p>
+
+        {/* Overlaid rather than set below the stage, so the caption changing
+            length as photos advance cannot shift the page. The image's own alt
+            carries this text for assistive tech. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ocean-950/85 via-ocean-950/45 to-transparent px-5 pb-5 pt-12 sm:px-7 sm:pb-7">
+          <p
+            aria-hidden="true"
+            className="line-clamp-3 text-sm leading-relaxed text-cream/90"
+          >
+            {active.alt}
+          </p>
+        </div>
+
         <button
           type="button"
           ref={returnFocusRef}
           onClick={() => setZoomed(true)}
-          className="absolute inset-0 h-full w-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+          className="absolute inset-0 h-full w-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
         >
           <span className="sr-only">{galleryContent.zoomLabel}</span>
         </button>
@@ -143,7 +165,7 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => step(-1)}
+            onClick={goPrevious}
             aria-label={galleryContent.previousLabel}
             className={controlClass}
           >
@@ -163,92 +185,63 @@ export function GalleryCarousel({ photos }: GalleryCarouselProps) {
 
           <button
             type="button"
-            onClick={() => step(1)}
+            onClick={goNext}
             aria-label={galleryContent.nextLabel}
             className={controlClass}
           >
             <span aria-hidden="true">›</span>
           </button>
-
-          <p className="ml-2 text-sm lining-nums tabular-nums text-ocean-500">
-            {position}
-          </p>
         </div>
 
-        <ul className="flex items-center gap-2">
+        {/* Thumbnails instead of dots: they say which photograph you are picking.
+            Same URLs as the slides, so they add no bytes to the page. */}
+        <ul className="-mx-1 flex max-w-full items-center gap-2 overflow-x-auto px-1 py-1">
           {photos.map((photo, photoIndex) => (
-            <li key={photo.file}>
+            <li key={photo.file} className="shrink-0">
               <button
                 type="button"
                 onClick={() => setIndex(photoIndex)}
                 aria-label={`${galleryContent.goToLabel} ${photoIndex + 1}`}
                 aria-current={photoIndex === index}
-                className={`block h-2.5 w-2.5 rounded-full transition-colors ${
+                className={`relative block h-12 w-12 overflow-hidden rounded-xl border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 ${
                   photoIndex === index
-                    ? "bg-coral-dark"
-                    : "bg-ocean-200 hover:bg-ocean-400"
+                    ? "border-coral-dark ring-2 ring-coral-dark/40"
+                    : "border-ocean-200 opacity-60 hover:opacity-100"
                 }`}
-              />
+              >
+                <Image
+                  src={photo.src}
+                  alt=""
+                  fill
+                  unoptimized
+                  loading="lazy"
+                  sizes="48px"
+                  className="object-cover"
+                />
+              </button>
             </li>
           ))}
         </ul>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-ocean-600">
-        {active.alt}
+      <p className="mt-5">
+        <Link
+          href="/gallery"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-ocean-800 transition-colors hover:text-coral-dark"
+        >
+          {galleryContent.viewAllLabel}
+          <span aria-hidden="true">→</span>
+        </Link>
       </p>
 
       {zoomed && (
-        <div
-          ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={active.alt}
-          className="fixed inset-0 z-[100] flex flex-col bg-ocean-950/95 p-4 backdrop-blur-sm sm:p-8"
-        >
-          <div className="flex items-center justify-between gap-4 text-cream">
-            <p className="text-sm lining-nums tabular-nums">{position}</p>
-            <button
-              type="button"
-              ref={initialFocusRef}
-              onClick={closeZoom}
-              aria-label={galleryContent.closeLabel}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10"
-            >
-              <span aria-hidden="true">✕</span>
-            </button>
-          </div>
-
-          <div className="relative min-h-0 flex-1">
-            <Image
-              src={active.src}
-              alt={active.alt}
-              fill
-              unoptimized
-              className="object-contain"
-              sizes="100vw"
-            />
-          </div>
-
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => step(-1)}
-              aria-label={galleryContent.previousLabel}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => step(1)}
-              aria-label={galleryContent.nextLabel}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10"
-            >
-              <span aria-hidden="true">›</span>
-            </button>
-          </div>
-        </div>
+        <GalleryLightbox
+          photos={photos}
+          index={index}
+          onClose={closeZoom}
+          onNext={goNext}
+          onPrevious={goPrevious}
+        />
       )}
     </div>
   );

@@ -39,6 +39,7 @@ export const organization = {
 export const navigation = [
   /** Root-relative so these resolve from /membership too, not just the home page. */
   { label: "About", href: "/#about" },
+  { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/#contact" },
   { label: "Membership", href: "/membership" },
 ] as const;
@@ -149,6 +150,18 @@ export const galleryContent = {
   previousLabel: "Previous photograph",
   nextLabel: "Next photograph",
   goToLabel: "Go to photograph",
+  viewAllLabel: "View all photographs",
+} as const;
+
+export const galleryPageContent = {
+  title: "Gallery",
+  description:
+    "Every photograph in our collection. Choose how many to show per row, and select any photograph to view it full size.",
+  columnsLabel: "Per row",
+  /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
+  countNoun: "photograph",
+  countNounPlural: "photographs",
+  emptyNote: "Photographs are on their way.",
 } as const;
 
 export const eventsContent = {
