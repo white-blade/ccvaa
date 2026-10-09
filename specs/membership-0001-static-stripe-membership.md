@@ -135,7 +135,7 @@ real URLs are pasted in — a one-line change per link, no structural edits.
 | Lifetime Payment Link | **live** (`$500 CAD`, live mode) |
 | Annual Payment Link | **live** (`$36 CAD/yr`, live mode) |
 | Customer-portal login | **placeholder** — Settings → Billing → Customer portal |
-| Google Form (free membership) | **placeholder** — form not yet created |
+| Google Form (free membership) | **live** — verified publicly submittable, no sign-in required |
 
 The three Stripe links are live-mode and take real payments. The two outstanding
 entries render as disabled "Coming soon" until their URLs are pasted into

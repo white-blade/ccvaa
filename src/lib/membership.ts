@@ -30,7 +30,8 @@ export const membershipLinks = {
    * the visitor submits to Google, Google appends the row to the linked Sheet.
    * Paste the form's share link ("Send" → link icon) here.
    */
-  register: PLACEHOLDER,
+  register:
+    "https://docs.google.com/forms/d/e/1FAIpQLSd4JMPgG0atCTUiUtsejsCknZhSNgXp0D6-SRH0JroVR8EoMw/viewform",
 } as const;
 
 export type MembershipLinkKey = keyof typeof membershipLinks;
