@@ -138,6 +138,19 @@ export const boardContent = {
   ],
 } as const;
 
+export const galleryContent = {
+  title: "Gallery",
+  description:
+    "A selection of work and moments from our community. Photographs play automatically — pause at any time, or select one to view it larger.",
+  zoomLabel: "View this photograph larger",
+  closeLabel: "Close",
+  playLabel: "Play slideshow",
+  pauseLabel: "Pause slideshow",
+  previousLabel: "Previous photograph",
+  nextLabel: "Next photograph",
+  goToLabel: "Go to photograph",
+} as const;
+
 export const contactContent = {
   title: "Contact",
   description:

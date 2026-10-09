@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `not-started` — spec only, awaiting approval |
+| **Status** | `in-progress` — implemented, awaiting review |
 | **Depends on** | [`platform-0002`](platform-0002-github-pages-static-migration.md) |
 | **Source** | CEO (2026-10-08) |
 
@@ -118,16 +118,26 @@ count at zero), `loading="lazy"` on every slide but the first, and `decoding="as
 - Automatic resizing or thumbnail generation. Could be added later as a build step or
   a GitHub Action, but it introduces a dependency and is not needed at this volume.
 
-## Open question — there are no photos yet
+## Photos as delivered (2026-10-08)
 
-`public/photos/` does not exist and the repo contains no photographs. I can scaffold the
-folder with generated placeholders so the feature is reviewable, **but I cannot supply
-real images** — I can't invent CCVAA's artwork, and pulling stock photography raises
-licensing questions for a non-profit's public site.
+Six photographs supplied by CEO — a deliberate mix of JPEG and AVIF, mostly portrait
+with one landscape. Two needed work before they could ship:
 
-**Needed from CCVAA:** 5–10 photographs the association holds the rights to, pre-sized
-per the table above. Until then, implementation can proceed against placeholders and the
-real files dropped in afterwards with no code change.
+| File | Before | After |
+|------|--------|-------|
+| `5.avif` | 5760×8640, 832KB | → `5.jpg` 1066×1600, 312KB |
+| `3.jpg` | 1616×2267, 2.1MB | 1140×1600, 628KB |
+
+`5.avif` was the serious one: at ~50 megapixels a browser must allocate roughly 200MB to
+decode it, which stalls or crashes mobile Safari regardless of the modest file size. File
+size alone is a misleading metric — **pixel count is what costs memory.**
+
+Originals are preserved in `assets/photos-original/`, outside the deployed tree.
+Folder total: **3.4MB → 1.4MB**; whole site 2.5MB → 4.0MB.
+
+Alt text for all six is written in `src/lib/gallery.ts`. These read as generic landscape
+photography rather than CCVAA's own work — swap in the association's photographs when
+available; no code change needed, and add matching `PHOTO_ALT` entries.
 
 ## Acceptance criteria
 
