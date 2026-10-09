@@ -37,6 +37,7 @@ export const organization = {
 } as const;
 
 export const navigation = [
+  { label: "Membership", href: "#membership" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ] as const;
@@ -142,4 +143,56 @@ export const contactContent = {
     "Interested in partnering, volunteering, or learning more about our programs? We would love to hear from you.",
   emailLabel: "Email",
   addressLabel: "Mailing address",
+} as const;
+
+export const membershipContent = {
+  title: "Membership",
+  description:
+    "Join a community of artists, educators, and supporters advancing visual arts across Canada.",
+  comingSoonLabel: "Coming soon",
+  register: {
+    title: "Become a member",
+    description:
+      "Register with your email to receive news on exhibitions, programs, and community events. Free, and you can unsubscribe at any time.",
+    cta: "Register",
+  },
+  paid: {
+    heading: "Support our work",
+    description:
+      "Paid memberships fund exhibitions, education, and community programming.",
+  },
+  plans: [
+    {
+      id: "founding",
+      name: "Founding",
+      price: "$360",
+      cadence: "one-time",
+      description:
+        "A limited founding membership recognizing our earliest supporters. Available while seats remain.",
+      featured: true,
+    },
+    {
+      id: "lifetime",
+      name: "Lifetime",
+      price: "$500",
+      cadence: "one-time",
+      description:
+        "Lifelong membership with a single contribution — no renewals to track.",
+      featured: false,
+    },
+    {
+      id: "annual",
+      name: "Annual",
+      price: "$36",
+      cadence: "per year",
+      description:
+        "Renews yearly. Cancel or update your payment details at any time.",
+      featured: false,
+    },
+  ],
+  manageBilling: {
+    text: "Already a paid member?",
+    cta: "Manage your billing",
+  },
+  currencyNote: "All amounts in CAD. Payments are processed securely by Stripe.",
 } as const;
