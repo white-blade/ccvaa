@@ -1,14 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { navigation } from "@/lib/site";
 
-export function Header() {
-  const [overHero, setOverHero] = useState(true);
+type HeaderProps = {
+  /**
+   * True on routes that render the hero, where the header floats over the image
+   * as dark glass until the page scrolls past it. Routes without a hero must leave
+   * this false, or the dark header sits unreadably over a cream background.
+   */
+  overlayHero?: boolean;
+};
+
+export function Header({ overlayHero = false }: HeaderProps) {
+  const [overHero, setOverHero] = useState(overlayHero);
 
   useEffect(() => {
-    // Sticky hero stage so nav glass stays dark until About.
+    if (!overlayHero) return;
+
+    // Watch the whole sticky hero stage so the glass stays dark until About.
     const stage = document.getElementById("hero-stage");
     if (!stage) return;
 
@@ -19,7 +31,7 @@ export function Header() {
 
     observer.observe(stage);
     return () => observer.disconnect();
-  }, []);
+  }, [overlayHero]);
 
   return (
     <header
@@ -44,7 +56,7 @@ export function Header() {
           <ul className="flex items-center gap-1 sm:gap-2">
             {navigation.map((item) => (
               <li key={item.href}>
-                <a
+                <Link
                   href={item.href}
                   className={`rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
                     overHero
@@ -53,7 +65,7 @@ export function Header() {
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
