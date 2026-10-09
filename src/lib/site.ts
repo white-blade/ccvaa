@@ -151,6 +151,14 @@ export const galleryContent = {
   goToLabel: "Go to photograph",
 } as const;
 
+export const eventsContent = {
+  title: "Events",
+  description:
+    "Exhibitions, workshops, and gatherings through the year. Select an event for full details.",
+  detailsLabel: "View details",
+  closeLabel: "Close",
+} as const;
+
 export const contactContent = {
   title: "Contact",
   description:
