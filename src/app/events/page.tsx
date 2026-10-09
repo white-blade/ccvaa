@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { EventsBrowser } from "@/components/EventsBrowser";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { PageBanner } from "@/components/PageBanner";
+import { assetPath } from "@/lib/asset";
 import { getEvents } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 
@@ -12,7 +14,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Every listing, searchable, in a grid the visitor sizes. Listings resolve at build
+ * A month calendar over every listing, then the listings themselves, searchable, in a
+ * grid the visitor sizes. Listings resolve at build
  * time from `src/lib/events.ts`; the search and the layout control are client-side,
  * which is all a static host can offer — and all this volume needs.
  */
@@ -22,23 +25,23 @@ export default function EventsPage() {
   return (
     <>
       <Header />
-      {/* pt clears the fixed header — this page has no hero to sit beneath it. */}
+      {/* pt clears the fixed header; the banner is not a full hero, so the header
+          stays in its light state rather than overlaying it. */}
       <main className="pt-16 sm:pt-20">
-        <section className="bg-cream py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="max-w-3xl">
-              <h1 className="font-display text-3xl font-semibold tracking-tight text-ocean-900 sm:text-4xl">
-                {eventsContent.title}
-              </h1>
-              <p className="mt-6 text-base leading-relaxed text-ocean-700">
-                {eventsContent.description}
-              </p>
-            </div>
+        <PageBanner
+          eyebrow={eventsContent.eyebrow}
+          title={eventsContent.title}
+          description={eventsContent.description}
+          imageSrc={assetPath("/events/coastal-light-exhibition.jpg")}
+        />
 
+        <section className="bg-cream pb-16 sm:pb-20">
+          {/* Pulled up so the calendar card straddles the banner's lower edge. */}
+          <div className="relative mx-auto -mt-28 max-w-6xl px-6 sm:-mt-32">
             {events.length > 0 ? (
               <EventsBrowser events={events} />
             ) : (
-              <p className="mt-10 text-sm text-ocean-500">
+              <p className="rounded-3xl bg-white p-10 text-sm text-ocean-500 shadow-xl ring-1 ring-ocean-100">
                 {eventsContent.emptyNote}
               </p>
             )}

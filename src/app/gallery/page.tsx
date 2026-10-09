@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { Header } from "@/components/Header";
+import { PageBanner } from "@/components/PageBanner";
 import { readGalleryPhotos } from "@/lib/gallery";
 import { galleryPageContent } from "@/lib/site";
 
@@ -21,23 +22,23 @@ export default async function GalleryPage() {
   return (
     <>
       <Header />
-      {/* pt clears the fixed header — this page has no hero to sit beneath it. */}
+      {/* pt clears the fixed header; the banner is not a full hero, so the header
+          stays in its light state rather than overlaying it. */}
       <main className="pt-16 sm:pt-20">
-        <section className="bg-cream py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="max-w-3xl">
-              <h1 className="font-display text-3xl font-semibold tracking-tight text-ocean-900 sm:text-4xl">
-                {galleryPageContent.title}
-              </h1>
-              <p className="mt-6 text-base leading-relaxed text-ocean-700">
-                {galleryPageContent.description}
-              </p>
-            </div>
+        <PageBanner
+          eyebrow={galleryPageContent.eyebrow}
+          title={galleryPageContent.title}
+          description={galleryPageContent.description}
+          imageSrc={photos[0]?.src}
+        />
 
+        <section className="bg-cream pb-16 sm:pb-20">
+          {/* Pulled up so the toolbar and lead photograph straddle the banner's edge. */}
+          <div className="relative mx-auto -mt-28 max-w-6xl px-6 sm:-mt-32">
             {photos.length > 0 ? (
               <GalleryGrid photos={photos} />
             ) : (
-              <p className="mt-10 text-sm text-ocean-500">
+              <p className="rounded-3xl bg-white p-10 text-sm text-ocean-500 shadow-xl ring-1 ring-ocean-100">
                 {galleryPageContent.emptyNote}
               </p>
             )}

@@ -52,7 +52,7 @@ export function Header({ overlayHero = false }: HeaderProps) {
           }
         />
 
-        {/* Five items no longer fit a narrow phone beside the wordmark, so the row
+        {/* The items do not fit a narrow phone beside the wordmark, so the row
             scrolls rather than wraps under it or clips. */}
         <nav
           aria-label="Main navigation"

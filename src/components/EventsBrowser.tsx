@@ -5,6 +5,7 @@ import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "re
 import { ColumnControl } from "@/components/ColumnControl";
 import { EventCard } from "@/components/EventCard";
 import { EventDialog } from "@/components/EventDialog";
+import { EventsCalendar } from "@/components/EventsCalendar";
 import { isPictureBlock, type CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 import { createColumnStore } from "@/lib/use-columns";
@@ -63,8 +64,8 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
   const [query, setQuery] = useState("");
   const [openEventId, setOpenEventId] = useState<string | null>(null);
 
-  /** Which card opened the dialog, so focus can go back to it on close. */
-  const triggerRefs = useRef(new Map<string, HTMLButtonElement | null>());
+  /** Whatever opened the dialog — a card or a calendar day — so focus returns there. */
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const haystacks = useMemo(
     () => new Map(events.map((event) => [event.id, searchableText(event)])),
@@ -81,15 +82,18 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
       })
     : events;
 
-  const openEvent = matches.find((event) => event.id === openEventId) ?? null;
+  // Looked up in every event, not just matches: the calendar ignores the search.
+  const openEvent = events.find((event) => event.id === openEventId) ?? null;
+
+  const openDialog = useCallback((eventId: string) => {
+    returnFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setOpenEventId(eventId);
+  }, []);
 
   const closeDialog = useCallback(() => {
-    setOpenEventId((previous) => {
-      if (previous) {
-        triggerRefs.current.get(previous)?.focus();
-      }
-      return null;
-    });
+    setOpenEventId(null);
+    returnFocusRef.current?.focus();
   }, []);
 
   const noun =
@@ -100,7 +104,13 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
 
   return (
     <>
-      <div className="mt-10 flex flex-wrap items-center gap-4">
+      <EventsCalendar events={events} onOpen={openDialog} />
+
+      <h2 className="mt-16 font-display text-2xl font-semibold tracking-tight text-ocean-900 sm:text-3xl">
+        {eventsContent.listingsTitle}
+      </h2>
+
+      <div className="mt-6 flex flex-wrap items-center gap-4">
         <div className="relative min-w-0 flex-1 basis-64">
           <label htmlFor="events-search" className="sr-only">
             {eventsContent.searchLabel}
@@ -148,10 +158,7 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
             <li key={event.id}>
               <EventCard
                 event={event}
-                onOpen={() => setOpenEventId(event.id)}
-                triggerRef={(node) => {
-                  triggerRefs.current.set(event.id, node);
-                }}
+                onOpen={() => openDialog(event.id)}
               />
             </li>
           ))}

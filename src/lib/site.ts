@@ -36,7 +36,6 @@ export const navigation = [
   { label: "About", href: "/#about" },
   { label: "Gallery", href: "/gallery" },
   { label: "Events", href: "/events" },
-  { label: "Contact", href: "/#contact" },
   { label: "Membership", href: "/membership" },
 ] as const;
 
@@ -153,6 +152,9 @@ export const galleryPageContent = {
   title: "Gallery",
   description:
     "Every photograph in our collection. Choose how many to show per row, and select any photograph to view it full size.",
+  eyebrow: "The collection",
+  /** Shown on hover over each tile. */
+  viewLabel: "View",
   columnsLabel: "Per row",
   /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
   countNoun: "photograph",
@@ -163,7 +165,7 @@ export const galleryPageContent = {
 export const eventsContent = {
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Search the listings, choose how many to show per row, and select any event for full details.",
+    "Exhibitions, workshops, and gatherings through the year. Browse the calendar month by month, or search the listings below — select any event for full details.",
   detailsLabel: "View details",
   closeLabel: "Close",
   searchLabel: "Search events",
@@ -175,6 +177,23 @@ export const eventsContent = {
   countNounPlural: "events",
   noResults: "No events match that search.",
   emptyNote: "Listings for the coming season are on their way.",
+  eyebrow: "What’s on",
+  listingsTitle: "All listings",
+  calendar: {
+    eyebrow: "Calendar",
+    previousMonthLabel: "Previous month",
+    nextMonthLabel: "Next month",
+    monthsLabel: "Jump to month",
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    /** Followed by the month name: "In November". */
+    panelPrefix: "In",
+    emptyMonth: "Nothing scheduled this month.",
+    nextUpLabel: "Next up",
+    pastLabel: "Past",
+    legendEvent: "Event",
+    legendRange: "Multi-day",
+    legendToday: "Today",
+  },
 } as const;
 
 export const contactContent = {

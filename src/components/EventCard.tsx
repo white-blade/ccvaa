@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import type { Ref } from "react";
 
 import type { CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
@@ -9,15 +8,12 @@ import { eventsContent } from "@/lib/site";
 type EventCardProps = {
   event: CcvaaEvent;
   onOpen: () => void;
-  /** Set by the browser so focus can return here when the dialog closes. */
-  triggerRef: Ref<HTMLButtonElement>;
 };
 
-export function EventCard({ event, onOpen, triggerRef }: EventCardProps) {
+export function EventCard({ event, onOpen }: EventCardProps) {
   return (
     <button
       type="button"
-      ref={triggerRef}
       onClick={onOpen}
       aria-haspopup="dialog"
       className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-ocean-100 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-ocean-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"

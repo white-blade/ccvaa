@@ -25,6 +25,8 @@ type EventSource = {
   title: string;
   /** ISO 8601 — the machine-readable value for <time dateTime>. */
   startsAt: string;
+  /** ISO 8601 date of the last day, for multi-day events. Omit for one-day events. */
+  endsAt?: string;
   dateLabel: string;
   location: string;
   /** Shown on the card. */
@@ -56,6 +58,7 @@ const events: EventSource[] = [
     id: "coastal-light-exhibition",
     title: "Coastal Light: Members’ Exhibition",
     startsAt: "2026-11-14",
+    endsAt: "2026-12-06",
     dateLabel: "November 14 – December 6, 2026",
     location: "Richmond Cultural Centre, Richmond, BC",
     summary:
@@ -124,6 +127,7 @@ const events: EventSource[] = [
     id: "valley-printmaking-retreat",
     title: "Printmaking Retreat: Monotype in the Valley",
     startsAt: "2027-06-05",
+    endsAt: "2027-06-06",
     dateLabel: "June 5 – 6, 2027",
     location: "Fraser Valley · exact venue confirmed on registration",
     summary:
