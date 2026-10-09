@@ -37,10 +37,10 @@ export const organization = {
 } as const;
 
 export const navigation = [
-  { label: "Membership", href: "/membership" },
   /** Root-relative so these resolve from /membership too, not just the home page. */
   { label: "About", href: "/#about" },
   { label: "Contact", href: "/#contact" },
+  { label: "Membership", href: "/membership" },
 ] as const;
 
 export const heroContent = {
