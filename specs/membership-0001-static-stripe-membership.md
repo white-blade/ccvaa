@@ -98,8 +98,13 @@ real URLs are pasted in — a one-line change per link, no structural edits.
 - `src/lib/membership.ts` — link constants + `isLinkConfigured()`
 - `membershipContent` in `src/lib/site.ts` — all copy and plan metadata
 - `src/components/MembershipSection.tsx` — the section (server component, no `"use client"`)
-- `#membership` restored to the header nav
-- Section placed between Hero and About
+- `src/app/membership/page.tsx` — membership lives on its own route at `/membership`,
+  not as a home-page section
+- Header nav links become root-relative (`/membership`, `/#about`, `/#contact`) and
+  render through `next/link` so `basePath` is applied — a plain `<a>` would not be
+  prefixed and would 404 on the project page
+- `Header` takes `overlayHero`: the dark glass treatment is opt-in, since a route
+  without the hero would otherwise render an unreadable dark header over cream
 
 ### Out
 

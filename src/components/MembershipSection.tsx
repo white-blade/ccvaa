@@ -65,9 +65,9 @@ export function MembershipSection() {
     >
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-3xl">
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-ocean-900 sm:text-4xl">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-ocean-900 sm:text-4xl">
             {membershipContent.title}
-          </h2>
+          </h1>
           <p className="mt-6 text-base leading-relaxed text-ocean-700">
             {membershipContent.description}
           </p>
