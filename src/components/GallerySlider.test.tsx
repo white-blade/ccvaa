@@ -291,6 +291,49 @@ describe("GallerySlider: the viewer", () => {
     expect(openViewer()).toHaveFocus();
   });
 
+  it("expands the photograph to the whole screen and back, from its button or the photograph", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={photos} />);
+    await user.click(openViewer());
+    const dialog = screen.getByRole("dialog", { name: "Photograph number 1" });
+    const expand = within(dialog).getByRole("button", { name: "Expand photograph" });
+    expect(expand).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(expand);
+    expect(dialog).toHaveAttribute("data-expanded");
+    const collapse = within(dialog).getByRole("button", { name: "Exit full view" });
+    expect(collapse).toHaveAttribute("aria-pressed", "true");
+    // Only the photograph: caption, credits, and thumbnails step aside.
+    expect(within(dialog).queryByText("Caption one")).toBeNull();
+    expect(within(dialog).queryByRole("list", { name: "All photographs" })).toBeNull();
+    expect(within(dialog).getByRole("img", { name: "Photograph number 1" })).toHaveClass("object-contain");
+
+    await user.click(collapse);
+    expect(dialog).not.toHaveAttribute("data-expanded");
+    expect(within(dialog).getByText("Caption one")).toBeVisible();
+
+    // A click on the photograph itself toggles it too.
+    await user.click(within(dialog).getByRole("img", { name: "Photograph number 1" }));
+    expect(dialog).toHaveAttribute("data-expanded");
+  });
+
+  it("steps through photographs in full view, and Escape leaves full view before closing", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={photos} />);
+    await user.click(openViewer());
+    await user.click(screen.getByRole("button", { name: "Expand photograph" }));
+
+    await user.keyboard("{ArrowRight}");
+    const dialog = screen.getByRole("dialog", { name: "Photograph number 2" });
+    expect(dialog).toHaveAttribute("data-expanded");
+
+    await user.keyboard("{Escape}");
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).not.toHaveAttribute("data-expanded");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("keeps Tab inside the open viewer", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);

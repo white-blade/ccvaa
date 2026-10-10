@@ -810,6 +810,38 @@ test.describe("photo viewer", () => {
   });
 });
 
+test.describe("photo viewer: full view", () => {
+  test("expand gives the photograph the whole screen; Escape steps back, then closes", async ({ page }) => {
+    await pauseSlideshow(page);
+    await page.getByRole("button", { name: /View full size/ }).click();
+    const viewer = page.getByRole("dialog", { name: /^A wooden dock/ });
+    const image = viewer.getByRole("img", { name: /^A wooden dock/ });
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    const framed = (await image.boundingBox())!;
+
+    await viewer.getByRole("button", { name: "Expand photograph" }).click();
+    await expect(viewer).toHaveAttribute("data-expanded", "");
+    await expect(viewer.getByText(/^First frost on the lake/)).toBeHidden();
+    await expect(viewer.getByRole("list", { name: "All photographs" })).toHaveCount(0);
+    // The photograph's box now spans the whole screen, and is still contained, not cropped.
+    const viewport = page.viewportSize()!;
+    await expect.poll(async () => (await image.boundingBox())!.height).toBeGreaterThan(framed.height);
+    // Polled: the photograph's own entrance (a slight scale) may still be settling.
+    await expect.poll(async () => (await image.boundingBox())!.width).toBeGreaterThanOrEqual(viewport.width - 1);
+    await expect.poll(async () => (await image.boundingBox())!.height).toBeGreaterThanOrEqual(viewport.height - 1);
+    expect(await image.evaluate((img) => getComputedStyle(img).objectFit)).toBe("contain");
+    // The controls stay reachable over the photograph.
+    await expect(viewer.getByRole("button", { name: "Exit full view" })).toBeInViewport();
+    await expect(viewer.getByRole("button", { name: "Close" })).toBeInViewport();
+
+    await page.keyboard.press("Escape");
+    await expect(viewer).not.toHaveAttribute("data-expanded", "");
+    await expect(viewer.getByText(/^First frost on the lake/)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(viewer).toBeHidden();
+  });
+});
+
 test.describe("gallery slideshow", () => {
   test("advances on its own, every six seconds", async ({ page }) => {
     await page.clock.install();

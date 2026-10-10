@@ -228,6 +228,9 @@ export const galleryContent = {
   /** Read before the date: "Taken October 19, 2024". */
   takenPrefix: "Taken",
   closeLabel: "Close",
+  /** The viewer's toggle between the framed view and the photograph alone, full screen. */
+  expandLabel: "Expand photograph",
+  collapseLabel: "Exit full view",
   previousLabel: "Previous photograph",
   nextLabel: "Next photograph",
   /** The slideshow's dots and the viewer's thumbnails, and each one: "Show photograph 3". */

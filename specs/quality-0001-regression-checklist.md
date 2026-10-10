@@ -83,6 +83,7 @@ a Vitest file under `src/`.
 | G4 | Swipe down closes it on touch; left/right step | Auto — e2e › photo viewer › a swipe down…; e2e › touch › …swipes…; unit:use-dialog |
 | G5 | Keyboard hint for mouse users only | Auto — unit:GallerySlider |
 | G6 | The photograph is shown whole (contained, inside the screen); author and date sit above the caption when present; focus returns to the photograph on close | Auto — e2e › photo viewer › shows the whole photograph…; unit:GallerySlider |
+| G7 | Expand (the button beside close, or a click on the photograph) gives the photograph the whole screen, still contained; caption, counter, and thumbnails step aside; arrows and swipes still step; Escape leaves full view, then closes | Auto — e2e › photo viewer: full view › expand gives…; unit:GallerySlider |
 
 ## Motion
 

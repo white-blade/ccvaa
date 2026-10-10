@@ -96,6 +96,19 @@ last seen, with focus back on it.
   unfold, `fx-tile-image` zoom), on separate wrappers so it composes with the slide
   and the hover zoom.
 
+### Viewer: full view
+
+Feedback on the first build: the viewer shows the photograph whole but small, with
+the counter, caption, and thumbnails taking much of the screen. An expand button
+beside close (⤢, "Expand photograph", `aria-pressed`) and a click on the photograph
+switch to **full view**: the photograph alone on the whole screen, still contained
+(never cropped), with only the exit-full-view and close buttons floating top right.
+Arrows and swipes still step, staying in full view. Escape and a downward swipe
+leave full view first and close on the next press, so nobody loses the viewer by
+reaching for the way out of full view. The browser Fullscreen API is not used:
+iPhone Safari does not support it for elements, and an in-page full view behaves
+the same everywhere.
+
 ## Decisions
 
 | Question | Decision | Why |
