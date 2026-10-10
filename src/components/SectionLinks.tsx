@@ -35,6 +35,7 @@ export function SectionLinks() {
     const previousRestoration = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
     const onPopState = () => {
+      console.log(`GLIDE popstate y=${Math.round(window.scrollY)} hash=${window.location.hash}`);
       scrollToSection(window.location.hash, { history: "none" });
     };
 

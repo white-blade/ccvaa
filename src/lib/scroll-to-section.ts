@@ -63,6 +63,7 @@ function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   const from = window.scrollY;
   const distance = to() - from;
 
+  console.log(`GLIDE start from=${Math.round(from)} to=${Math.round(to())} dur? reduced=${prefersReducedMotion()}`);
   if (prefersReducedMotion() || Math.abs(distance) < 2) {
     window.scrollTo({ top: to(), behavior: "instant" });
     onArrive();
@@ -91,7 +92,9 @@ function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   const step = (now: number) => {
     startedAt ??= now;
     const progress = Math.min(1, (now - startedAt) / duration);
+    const before = window.scrollY;
     window.scrollTo({ top: from + (to() - from) * easeInOutCubic(progress), behavior: "instant" });
+    console.log(`GLIDE now=${Math.round(now)} perf=${Math.round(performance.now())} p=${progress.toFixed(2)} from=${Math.round(from)} to=${Math.round(to())} before=${Math.round(before)} after=${Math.round(window.scrollY)}`);
     if (progress < 1) {
       frame = requestAnimationFrame(step);
     } else {

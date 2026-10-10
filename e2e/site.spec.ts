@@ -509,6 +509,10 @@ test.describe("moving between sections", () => {
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#contact");
     await page.waitForTimeout(1300);
 
+    const logs: string[] = [];
+    page.on("console", (message) => {
+      if (message.text().startsWith("GLIDE")) logs.push(message.text());
+    });
     const start = await page.evaluate(() => window.scrollY);
     // Record every frame inside the page: sampling from the test, one round trip at
     // a time, can miss a whole glide on a slow machine.
@@ -526,7 +530,7 @@ test.describe("moving between sections", () => {
     const end = await page.evaluate(() => window.scrollY);
     const samples = await page.evaluate(() => (window as unknown as { seen: number[] }).seen);
     // A glide passes through positions in between; a snap would not.
-    expect(samples.some((y) => y < start - 20 && y > end + 20)).toBe(true);
+    expect(samples.some((y) => y < start - 20 && y > end + 20), `start=${start} end=${end}\nsamples=${samples.slice(0, 60).map(Math.round).join(",")}\n${logs.slice(0, 40).join("\n")}`).toBe(true);
     expect(await page.evaluate(() => window.location.hash)).toBe("#gallery");
   });
 
