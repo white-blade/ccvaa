@@ -46,7 +46,10 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
     if (!card) return;
     const header = document.querySelector("header")?.offsetHeight ?? 0;
     const rail = railRef.current?.offsetHeight ?? 0;
-    glideTo(card, header + rail + 12);
+    // Mark the chosen event on arrival rather than waiting for its card to cross
+    // the middle of the screen: on a slow device a glide can step right past it,
+    // and on a tall one the last card never reaches it.
+    glideTo(card, header + rail + 12, () => setInViewId(eventId));
   };
 
   const index = useMemo(() => searchIndex(events), [events]);

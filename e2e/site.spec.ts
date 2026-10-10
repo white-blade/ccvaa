@@ -438,11 +438,13 @@ test.describe("moving between sections", () => {
   });
 
   test("the last section is marked at the end of the page, on every screen", async ({ page }) => {
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await expect((await sectionNav(page)).getByRole("link", { name: "Contact" })).toHaveAttribute(
-      "aria-current",
-      "true",
-    );
+    const contact = (await sectionNav(page)).getByRole("link", { name: "Contact" });
+    // Re-scroll on each attempt: images loading below can grow the page after the
+    // first scroll, so "the end" moves.
+    await expect(async () => {
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expect(contact).toHaveAttribute("aria-current", "true", { timeout: 1000 });
+    }).toPass({ timeout: 10_000 });
   });
 
   test("Back glides to the previous section instead of snapping", async ({ page }) => {
@@ -454,15 +456,22 @@ test.describe("moving between sections", () => {
     await page.waitForTimeout(1300);
 
     const start = await page.evaluate(() => window.scrollY);
+    // Record every frame inside the page: sampling from the test, one round trip at
+    // a time, can miss a whole glide on a slow machine.
+    await page.evaluate(() => {
+      const seen: number[] = [];
+      (window as unknown as { seen: number[] }).seen = seen;
+      const record = () => {
+        seen.push(window.scrollY);
+        if (seen.length < 600) requestAnimationFrame(record);
+      };
+      requestAnimationFrame(record);
+    });
     await page.goBack();
-    // A glide passes through positions in between; a snap would not.
-    const samples: number[] = [];
-    for (let i = 0; i < 8; i++) {
-      samples.push(await page.evaluate(() => window.scrollY));
-      await page.waitForTimeout(60);
-    }
     await expect.poll(async () => Math.abs(await landingGap(page, "gallery"))).toBeLessThan(3);
     const end = await page.evaluate(() => window.scrollY);
+    const samples = await page.evaluate(() => (window as unknown as { seen: number[] }).seen);
+    // A glide passes through positions in between; a snap would not.
     expect(samples.some((y) => y < start - 20 && y > end + 20)).toBe(true);
     expect(await page.evaluate(() => window.location.hash)).toBe("#gallery");
   });

@@ -75,9 +75,15 @@ export function useActiveSection(ids: readonly string[]): string | null {
       }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
+    // The page can grow after the scroll stops (images loading below): re-check
+    // the end-of-page and top rules whenever its size changes, not only on scroll.
+    const resizes =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => onScroll());
+    resizes?.observe(document.body);
 
     return () => {
       observer?.disconnect();
+      resizes?.disconnect();
       window.removeEventListener("scroll", onScroll);
     };
   }, [key]);
