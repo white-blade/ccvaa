@@ -87,6 +87,7 @@
   --animate-photo-from-left: photo-from-left 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   /* Slideshow captions move only — text never fades, so contrast holds mid-change. */
   --animate-caption-in: caption-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slow-zoom: slow-zoom 12s cubic-bezier(0.2, 0.6, 0.3, 1) both;
 
   @keyframes viewer-in {
     from {
@@ -112,6 +113,26 @@
     from {
       opacity: 0;
       transform: translateX(-6%);
+    }
+  }
+
+  /* The slideshow's current work drifts slowly closer while it is shown. */
+  @keyframes slow-zoom {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.06);
+    }
+  }
+
+  /* The thin line that fills as the slideshow counts down to the next work. */
+  @keyframes slide-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
     }
   }
 

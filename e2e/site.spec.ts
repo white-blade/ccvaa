@@ -1,5 +1,8 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
+import { MAX_DOTS, MAX_DOTS_NARROW } from "../src/lib/dot-window";
+import { galleryPhotoDetails } from "../src/lib/gallery-photos";
+
 /**
  * Every project runs every test; some only make sense for some devices. Decided by
  * what the device is — touch, and how wide — not by its name, so a new device in
@@ -85,7 +88,11 @@ async function entranceFinished(page: Page) {
     document.getAnimations().every((animation) => {
       const timing = animation.effect?.getComputedTiming();
       const timeBased = animation.timeline === document.timeline;
-      return !timeBased || timing?.iterations === Infinity || animation.playState === "finished";
+      // The slideshow's own motion runs as long as the slideshow does: the countdown
+      // line restarts with every work and the picture drifts. Neither touches text.
+      const target = (animation.effect as KeyframeEffect | null)?.target;
+      const slideshow = target instanceof Element && target.closest("[data-slow-zoom], [data-slide-progress]");
+      return !timeBased || slideshow || timing?.iterations === Infinity || animation.playState === "finished";
     }),
   );
 }
@@ -170,7 +177,7 @@ async function swipe(page: Page, selector: string, dx: number, dy = 0) {
   );
 }
 
-/** The gallery slide on screen, named "3 / 6". */
+/** The gallery slide on screen, named "3 / 19". */
 const currentSlide = (page: Page) => page.locator("#gallery [aria-roledescription=slide]");
 
 /** Stop the gallery slideshow, so a test reads the slide it expects. */
@@ -281,7 +288,7 @@ test.describe("touch", () => {
     const sizes = await page.evaluate(() =>
       [
         ...document.querySelectorAll<HTMLElement>(
-          "#gallery button, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
+          "#gallery button, #gallery a, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
         ),
       ]
         .filter((el) => el.offsetParent !== null)
@@ -304,13 +311,13 @@ test.describe("touch", () => {
   test("swiping the slideshow changes the photograph; a scroll does not", async ({ page }) => {
     await pauseSlideshow(page);
     const slide = currentSlide(page);
-    await expect(slide).toHaveAccessibleName("1 / 6");
+    await expect(slide).toHaveAccessibleName("1 / 19");
     await swipe(page, "#gallery .fx-tile", -150);
-    await expect(slide).toHaveAccessibleName("2 / 6");
+    await expect(slide).toHaveAccessibleName("2 / 19");
     await swipe(page, "#gallery .fx-tile", 150);
-    await expect(slide).toHaveAccessibleName("1 / 6");
+    await expect(slide).toHaveAccessibleName("1 / 19");
     await swipe(page, "#gallery .fx-tile", 10, 200);
-    await expect(slide).toHaveAccessibleName("1 / 6");
+    await expect(slide).toHaveAccessibleName("1 / 19");
   });
 
   test("the photo viewer opens on tap and swipes between photographs", async ({ page }) => {
@@ -446,8 +453,8 @@ test.describe("device layouts (specs/home-0003)", () => {
     await expect(page.locator("#gallery [data-veil]")).toBeHidden();
     const photo = (await page.getByRole("button", { name: /View full size/ }).boundingBox())!;
     const credits = page.locator("#gallery [data-credits]");
-    await expect(credits.getByText("Mira Hollis")).toBeVisible();
-    await expect(credits.getByText("October 19, 2024")).toBeVisible();
+    await expect(credits.getByText("Chensiyuan")).toBeVisible();
+    await expect(credits.getByText("June 16, 2019")).toBeVisible();
     const box = (await credits.boundingBox())!;
     expect(box.y).toBeGreaterThanOrEqual(photo.y + photo.height - 1);
   });
@@ -465,31 +472,33 @@ test.describe("device layouts (specs/home-0003)", () => {
 
     await expect(page.locator("#gallery [data-veil]")).toBeVisible();
     const credits = page.locator("#gallery [data-credits]");
-    await expect(credits.getByText("Mira Hollis")).toBeVisible();
-    await expect(credits.getByText("October 19, 2024")).toBeVisible();
+    await expect(credits.getByText("Chensiyuan")).toBeVisible();
+    await expect(credits.getByText("June 16, 2019")).toBeVisible();
     const box = (await credits.boundingBox())!;
     expect(box.x).toBeGreaterThan(stage.x + stage.width / 2);
     expect(box.y - stage.y).toBeLessThan(5);
   });
 
-  test("every device: a dot jumps to its photograph and is the one marked", async ({ page }) => {
+  test("every device: a dot jumps to its photograph and is the one marked", async ({ page }, testInfo) => {
     await pauseSlideshow(page);
-    const dots = page.getByRole("list", { name: "Choose a photograph" }).getByRole("button");
-    await expect(dots).toHaveCount(6);
-    await dots.nth(3).click();
-    await expect(currentSlide(page)).toHaveAccessibleName("4 / 6");
-    await expect(dots.nth(3)).toHaveAttribute("aria-current", "true");
+    const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
+    await expect(dots).toHaveCount(widthOf(testInfo) < 640 ? MAX_DOTS_NARROW : MAX_DOTS);
+    await page.getByRole("button", { name: "Show work 4", exact: true }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`4 / ${galleryPhotoDetails.length}`);
+    await expect(page.getByRole("button", { name: "Show work 4", exact: true })).toHaveAttribute("aria-current", "true");
     await expect(page.locator("#gallery [aria-current=true]")).toHaveCount(1);
+    // The window keeps one work back: work 3 is now the first dot.
+    await expect(dots.first()).toHaveAccessibleName("Show work 3");
     // Highlighted, not just announced: once the change settles, the current dot is
     // drawn wider than the rest.
-    const widest = () =>
+    const widestIsCurrent = () =>
       dots.evaluateAll((buttons) => {
         const widths = buttons.map((button) => button.firstElementChild!.getBoundingClientRect().width);
-        return widths.filter((width) => width === Math.max(...widths)).length === 1
-          ? widths.indexOf(Math.max(...widths))
-          : -1;
+        const widest = Math.max(...widths);
+        const current = buttons.findIndex((button) => button.getAttribute("aria-current") === "true");
+        return widths.filter((width) => width === widest).length === 1 && widths.indexOf(widest) === current;
       });
-    await expect.poll(widest).toBe(3);
+    await expect.poll(widestIsCurrent).toBe(true);
   });
 
   test("below lg: a date rail stands in for the timeline, and a chip glides to its card", async ({
@@ -806,13 +815,13 @@ test.describe("board profiles", () => {
 test.describe("photo viewer", () => {
   test("thumbnails show the set and jump to any photograph", async ({ page }) => {
     await page.getByRole("button", { name: /View full size/ }).click();
-    const strip = page.getByRole("list", { name: "All photographs" });
-    await expect(strip.getByRole("button")).toHaveCount(await page.locator("#gallery li").count());
+    const strip = page.getByRole("list", { name: "All works" });
+    await expect(strip.getByRole("button")).toHaveCount(galleryPhotoDetails.length);
     const dialog = page.getByRole("dialog");
     const first = await dialog.getAttribute("aria-label");
-    await strip.getByRole("button", { name: "Show photograph 4" }).click();
+    await strip.getByRole("button", { name: "Show work 4" }).click();
     await expect(dialog).not.toHaveAttribute("aria-label", first!);
-    await expect(strip.getByRole("button", { name: "Show photograph 4" })).toHaveAttribute("aria-current", "true");
+    await expect(strip.getByRole("button", { name: "Show work 4" })).toHaveAttribute("aria-current", "true");
   });
 
   test("a swipe down closes it on touch screens", async ({ page }, testInfo) => {
@@ -830,9 +839,9 @@ test.describe("photo viewer", () => {
     const opener = page.getByRole("button", { name: /View full size/ });
     await opener.focus();
     await page.keyboard.press("Enter");
-    const viewer = page.getByRole("dialog", { name: /^A wooden dock/ });
+    const viewer = page.getByRole("dialog", { name: /^Lake Louise from high above/ });
     await expect(viewer).toBeVisible();
-    const image = viewer.getByRole("img", { name: /^A wooden dock/ });
+    const image = viewer.getByRole("img", { name: /^Lake Louise from high above/ });
     await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
     expect(await image.evaluate((img) => getComputedStyle(img).objectFit)).toBe("contain");
     const box = (await image.boundingBox())!;
@@ -840,10 +849,10 @@ test.describe("photo viewer", () => {
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
 
-    const credit = viewer.getByText("Mira Hollis");
-    const caption = viewer.getByText(/^First frost on the lake/);
+    const credit = viewer.getByText("Chensiyuan");
+    const caption = viewer.getByText(/^Lake Louise from the ridge above/);
     await expect(credit).toBeVisible();
-    await expect(viewer.getByText("October 19, 2024")).toBeVisible();
+    await expect(viewer.getByText("June 16, 2019")).toBeVisible();
     expect((await credit.boundingBox())!.y).toBeLessThan((await caption.boundingBox())!.y);
 
     await page.keyboard.press("Escape");
@@ -856,15 +865,15 @@ test.describe("photo viewer: full view", () => {
   test("expand gives the photograph the whole screen; Escape steps back, then closes", async ({ page }) => {
     await pauseSlideshow(page);
     await page.getByRole("button", { name: /View full size/ }).click();
-    const viewer = page.getByRole("dialog", { name: /^A wooden dock/ });
-    const image = viewer.getByRole("img", { name: /^A wooden dock/ });
+    const viewer = page.getByRole("dialog", { name: /^Lake Louise from high above/ });
+    const image = viewer.getByRole("img", { name: /^Lake Louise from high above/ });
     await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
     const framed = (await image.boundingBox())!;
 
-    await viewer.getByRole("button", { name: "Expand photograph" }).click();
+    await viewer.getByRole("button", { name: "Expand image" }).click();
     await expect(viewer).toHaveAttribute("data-expanded", "");
-    await expect(viewer.getByText(/^First frost on the lake/)).toBeHidden();
-    await expect(viewer.getByRole("list", { name: "All photographs" })).toHaveCount(0);
+    await expect(viewer.getByText(/^Lake Louise from the ridge above/)).toBeHidden();
+    await expect(viewer.getByRole("list", { name: "All works" })).toHaveCount(0);
     // The photograph's box now spans the whole screen, and is still contained, not cropped.
     const viewport = page.viewportSize()!;
     await expect.poll(async () => (await image.boundingBox())!.height).toBeGreaterThan(framed.height);
@@ -878,9 +887,116 @@ test.describe("photo viewer: full view", () => {
 
     await page.keyboard.press("Escape");
     await expect(viewer).not.toHaveAttribute("data-expanded", "");
-    await expect(viewer.getByText(/^First frost on the lake/)).toBeVisible();
+    await expect(viewer.getByText(/^Lake Louise from the ridge above/)).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(viewer).toBeHidden();
+  });
+});
+
+test.describe("gallery works", () => {
+  test("a phone downloads a phone-sized file; every device a prepared size", async ({ page }, testInfo) => {
+    await pauseSlideshow(page);
+    const image = page.locator("#gallery [data-credits]").locator("..").getByRole("img").first();
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    const chosen = await image.evaluate((img: HTMLImageElement) => img.currentSrc);
+    expect(chosen).toMatch(/\/photos\/lake-louise-panorama-(sm|md|lg)\.avif$/);
+    if (isPhone(testInfo)) expect(chosen, "a phone should not fetch the 1920px file").not.toMatch(/-lg\.avif$/);
+    // Uncovered once loaded: the blurred preview is gone.
+    await expect(image.locator("..")).toHaveAttribute("data-picture-loaded", "");
+  });
+
+  test("the dots stay a fixed number (seven, five below 640), sliding with the works", async ({ page }, testInfo) => {
+    await pauseSlideshow(page);
+    const shown = widthOf(testInfo) < 640 ? MAX_DOTS_NARROW : MAX_DOTS;
+    const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
+    await expect(dots).toHaveCount(shown);
+    const next = page.getByRole("button", { name: "Next work" });
+    for (let step = 0; step < 9; step++) await next.click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`10 / ${galleryPhotoDetails.length}`);
+    await expect(dots).toHaveCount(shown);
+    await expect(page.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
+    // The row fits beside the arrows even on the narrowest screen.
+    const row = (await page.getByRole("list", { name: "Choose a work" }).boundingBox())!;
+    expect(row.x).toBeGreaterThanOrEqual(0);
+    expect(row.x + row.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  });
+
+  test("first and last jump to either end; the dots window follows", async ({ page }) => {
+    await pauseSlideshow(page);
+    const total = galleryPhotoDetails.length;
+    await page.getByRole("button", { name: "Last work" }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`${total} / ${total}`);
+    await expect(page.getByRole("button", { name: `Show work ${total}` })).toHaveAttribute("aria-current", "true");
+    await expect(page.getByRole("button", { name: "Last work" })).toHaveAttribute("aria-disabled", "true");
+    await page.getByRole("button", { name: "First work" }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`1 / ${total}`);
+    await expect(page.getByRole("button", { name: "First work" })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("the controls fit in one row on every screen: first, previous, dots, next, last", async ({ page }) => {
+    const dots = page.getByRole("list", { name: "Choose a work" });
+    await dots.scrollIntoViewIfNeeded();
+    const viewport = page.viewportSize()!;
+    const box = async (name: string) => (await page.getByRole("button", { name, exact: true }).boundingBox())!;
+    const [first, previous, next, last] = await Promise.all(
+      ["First work", "Previous work", "Next work", "Last work"].map(box),
+    );
+    const row = (await dots.boundingBox())!;
+    const middle = (b: { y: number; height: number }) => b.y + b.height / 2;
+    for (const b of [first, previous, next, last]) {
+      expect(Math.abs(middle(b) - middle(row)), "all on the dots' row").toBeLessThan(3);
+      expect(b.height, "tap target").toBeGreaterThanOrEqual(40);
+    }
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(first.x + first.width).toBeLessThanOrEqual(previous.x + 1);
+    expect(previous.x + previous.width).toBeLessThanOrEqual(row.x + 1);
+    expect(next.x).toBeGreaterThanOrEqual(row.x + row.width - 1);
+    expect(last.x).toBeGreaterThanOrEqual(next.x + next.width - 1);
+    expect(last.x + last.width).toBeLessThanOrEqual(viewport.width);
+  });
+
+  test("at 320px the controls still fit in one row", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "one width sweep is enough");
+    await page.setViewportSize({ width: 320, height: 700 });
+    const dots = page.getByRole("list", { name: "Choose a work" });
+    await dots.scrollIntoViewIfNeeded();
+    await expect(dots.getByRole("button")).toHaveCount(MAX_DOTS_NARROW);
+    const first = (await page.getByRole("button", { name: "First work" }).boundingBox())!;
+    const last = (await page.getByRole("button", { name: "Last work" }).boundingBox())!;
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(last.x + last.width).toBeLessThanOrEqual(320);
+    expect(Math.abs(first.y - last.y)).toBeLessThan(2);
+  });
+
+  test("a thin line fills as the slideshow counts down to the next work", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("./");
+    await page.getByRole("region", { name: "Gallery of works" }).scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    const line = page.locator("#gallery [data-slide-progress]");
+    await expect(line).toHaveCount(1);
+    expect(await line.evaluate((el) => getComputedStyle(el).animationName)).toBe("slide-progress");
+    await pauseSlideshow(page);
+    await expect(line).toHaveCount(0);
+  });
+
+  test("the credit links the licence and the source, and can be clicked over the veil", async ({ page }) => {
+    await pauseSlideshow(page);
+    const credits = page.locator("#gallery [data-credits]");
+    const licence = credits.getByRole("link", { name: "CC BY-SA 4.0" });
+    await expect(licence).toHaveAttribute("href", "https://creativecommons.org/licenses/by-sa/4.0/");
+    await expect(credits.getByRole("link", { name: /^Source/ })).toHaveAttribute(
+      "href",
+      /commons\.wikimedia\.org\/wiki\/File:1_lake_louise_pano_2019\.jpg$/,
+    );
+    // Nothing (the veil, the photograph's button) sits over the link where it is drawn.
+    await licence.scrollIntoViewIfNeeded();
+    const box = (await licence.boundingBox())!;
+    const onTop = await page.evaluate(
+      ({ x, y }) => document.elementFromPoint(x, y)?.closest("a")?.textContent ?? null,
+      { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+    );
+    expect(onTop).toBe("CC BY-SA 4.0");
   });
 });
 
@@ -889,10 +1005,10 @@ test.describe("gallery slideshow", () => {
     await page.clock.install();
     await page.goto("./");
     const slide = currentSlide(page);
-    await expect(slide).toHaveAccessibleName("1 / 6");
+    await expect(slide).toHaveAccessibleName("1 / 19");
     await page.clock.runFor(6_100);
-    await expect(slide).toHaveAccessibleName("2 / 6");
-    await expect(page.getByRole("button", { name: "Show photograph 2" })).toHaveAttribute("aria-current", "true");
+    await expect(slide).toHaveAccessibleName("2 / 19");
+    await expect(page.getByRole("button", { name: "Show work 2" })).toHaveAttribute("aria-current", "true");
   });
 
   test("the pause button stops it, and play starts it again", async ({ page }) => {
@@ -902,12 +1018,12 @@ test.describe("gallery slideshow", () => {
     await pauseSlideshow(page);
     await page.mouse.move(0, 0); // and away, so hovering does not hold it instead
     await page.clock.runFor(20_000);
-    await expect(slide).toHaveAccessibleName("1 / 6");
+    await expect(slide).toHaveAccessibleName("1 / 19");
     await page.getByRole("button", { name: "Play slideshow" }).click();
     await page.mouse.move(0, 0);
     await page.locator("body").evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
     await page.clock.runFor(6_100);
-    await expect(slide).toHaveAccessibleName("2 / 6");
+    await expect(slide).toHaveAccessibleName("2 / 19");
   });
 
   test("holds while the mouse rests on it", async ({ page }, testInfo) => {
@@ -916,7 +1032,7 @@ test.describe("gallery slideshow", () => {
     await page.goto("./");
     await page.getByRole("button", { name: /View full size/ }).hover();
     await page.clock.runFor(20_000);
-    await expect(currentSlide(page)).toHaveAccessibleName("1 / 6");
+    await expect(currentSlide(page)).toHaveAccessibleName("1 / 19");
   });
 
   test("reduced motion: never plays on its own", async ({ page }) => {
@@ -925,7 +1041,7 @@ test.describe("gallery slideshow", () => {
     await page.goto("./");
     await expect(page.getByRole("button", { name: "Play slideshow" })).toBeVisible();
     await page.clock.runFor(20_000);
-    await expect(currentSlide(page)).toHaveAccessibleName("1 / 6");
+    await expect(currentSlide(page)).toHaveAccessibleName("1 / 19");
   });
 });
 

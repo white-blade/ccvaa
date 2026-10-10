@@ -65,7 +65,12 @@ a Vitest file under `src/`.
 | S1 | One photograph at a time; previous/next wrap at the ends | Auto — unit:GallerySlider; e2e › device layouts › md and up… |
 | S2 | A dot per photograph jumps to it; the current dot is marked (`aria-current`) and drawn wider; dots are named "Show photograph n" | Auto — e2e › device layouts › every device: a dot jumps…; unit:GallerySlider |
 | S3 | Author and date show when present; without them nothing is empty and the alt text stands in as caption; dates never shift a day | Auto — unit:GallerySlider; unit:text; unit:gallery |
-| S4 | Every file in `public/photos/` has an entry in `gallery-photos.ts` and every entry a file; dates are real and past; no blank fields | Auto — unit:gallery-photos |
+| S4 | Every work in `gallery-photos.ts` has three prepared sizes on disk, each ≤ 1920px and ≤ 300 KB, and a blurred preview; no file in `public/photos/` is unused; dates are real and past; a licensed work names its creator, licence, and source; no blank fields | Auto — unit:gallery-photos |
+| S11 | At most 7 dots show, a window starting one before the current work (11th → dots 10–16), stopping at the ends; edge dots with more beyond are smaller, never the current one; the row fits at 320px | Auto — unit:dot-window; unit:GallerySlider › a large gallery; e2e › gallery works › the dots stay seven wide… |
+| S11b | First and last buttons jump to either end; the button for the end reached is `aria-disabled`, still focusable; ⏮ ‹ dots › ⏭ in one row on every screen down to 320px (five dots below 640, seven from 640), every button ≥ 40px | Auto — unit:GallerySlider › first and last; unit:dot-window › narrows to five…; e2e › gallery works › first and last…; …one row on every screen…; …at 320px… |
+| S11c | While the slideshow runs, a countdown line fills to the next work and the work drifts slowly closer; neither under reduced motion; the line stops on pause | Auto — unit:GallerySlider › the slideshow's countdown and drift; e2e › gallery works › a thin line fills… |
+| S12 | Progressive pictures: a blurred preview shows until the picture loads, then it fades in; a phone fetches a phone-sized file (`srcset`), never the 1920px one; a failed picture still uncovers its alt text | Auto — unit:GallerySlider › progressive pictures…; e2e › gallery works › a phone downloads… |
+| S13 | Each licensed work shows its licence and source as links (new tab), clickable over the veil, ≥ 40px tall on touch | Auto — unit:GallerySlider › progressive pictures and credits; e2e › gallery works › the credit links…; e2e › touch › controls are big enough to tap |
 | S5 | The slideshow advances every `galleryContent.autoplaySeconds` (6s); a step by hand restarts the count | Auto — e2e › gallery slideshow › advances on its own…; unit:GallerySlider |
 | S6 | It holds on mouse hover, keyboard focus inside, while the viewer is open, and while the tab is hidden; a visible button pauses and plays it (WCAG 2.2.2) | Auto — e2e › gallery slideshow › …; unit:GallerySlider |
 | S7 | Reduced motion: it never starts on its own (play still works if pressed) | Auto — e2e › gallery slideshow › reduced motion…; unit:GallerySlider |
@@ -147,7 +152,7 @@ a Vitest file under `src/`.
 |----|-----------|-------|
 | C1 | Event listings: chronological, unique ids, valid dates, every picture exists and is described; every place reads "City, Country" or "Online"; the founding (June 27, 2026) comes first | Auto — unit:events |
 | C2 | Board photographs exist, are ≤ 300 KB, and are described; bios hold no "lorem ipsum" or "TODO" | Auto — unit:site |
-| C3 | Gallery reads `public/photos/` at build, image files only, numeric order | Auto — unit:gallery |
+| C3 | The gallery lists the works in `gallery-photos.ts` order, each joined with its prepared sizes; a work with none is left out | Auto — unit:gallery |
 | C4 | Dates are never shifted a day by the time zone (tests run in America/Vancouver) | Auto — unit:events |
 | C6 | Every board member has a bio (none shows "Bio coming soon.") | Auto — unit:site; unit:BoardSection |
 | C7 | Every event picture, cover or in the details, opens whole in the photo viewer | Auto — unit:EventsBrowser; e2e › event pictures › a cropped picture opens whole… |

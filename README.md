@@ -94,8 +94,8 @@ src/
 │   ├── site.ts             ALL copy and config — edit here first
 │   ├── events.ts           event listings (content, not data)
 │   ├── timeline.ts         where each event sits on the timeline
-│   ├── gallery.ts          build-time read of public/photos/
-│   ├── gallery-photos.ts   each photograph's alt text, caption, author, date
+│   ├── gallery.ts          joins each work with its prepared sizes
+│   ├── gallery-photos.ts   each work's alt text, caption, author, date, medium, licence
 │   ├── scroll-to-section.ts  the section glide
 │   ├── use-active-section.ts which section is being read
 │   ├── use-dialog.ts       shared dialog behaviour (keys, focus, swipe)
@@ -120,16 +120,25 @@ specs/                      specs and decision records
 | Board bios, roles, website  | `boardContent` in `src/lib/site.ts` — no personal email addresses, ever |
 | Board photographs           | files in `public/board/`, named in `boardContent` |
 | Event listings              | `src/lib/events.ts`                              |
-| Gallery photographs         | add or remove files in `public/photos/`          |
-| Gallery credits and captions | `src/lib/gallery-photos.ts`, one entry per file  |
+| Gallery works               | `npm run photos -- <originals>`, then an entry in `src/lib/gallery-photos.ts` |
+| Gallery credits and captions | `src/lib/gallery-photos.ts`, one entry per work  |
 
-**Adding a photograph takes no code change.** `src/lib/gallery.ts` reads
-`public/photos/` at build time, so dropping a file in the folder and pushing is enough
-— then add its entry to `src/lib/gallery-photos.ts` (alt text, caption, author, date
-taken); a unit test fails until every file has one. The current credits are
-**placeholders** and must be replaced with the real ones. Pre-size it first:
-WebP/AVIF/JPEG, longest edge ≤1920px, ≤300KB. `images.unoptimized` is required on
-Pages, so nothing resizes at build — whatever is committed is what visitors download.
+**Adding a work to the gallery** takes two steps and no component change:
+
+1. `npm run photos -- <folder of originals>` — writes `<name>-sm/md/lg.avif` into
+   `public/photos/` (longest side about 640 / 1280 / 1920px, each within budget,
+   the large one ≤ 300 KB) and records their sizes and a tiny blurred preview in
+   `src/lib/gallery-photo-sizes.json`. `<name>` is the file name without its
+   extension or a leading `NN-`. Keep the originals outside the repo (they are
+   megabytes each); run it again to regenerate.
+2. Add an entry to `src/lib/gallery-photos.ts` with that `name`: alt text, caption,
+   author, date, medium, and — for work that is not the association's own — its
+   licence and source. Its order is the slideshow's order.
+
+Unit tests fail if a work has no sizes, a file belongs to no work, a size is over
+budget, or a licensed work lacks its creator, licence, or source. The current set is
+landscape photography from Wikimedia Commons, credited to its real creators under CC
+BY / BY-SA / public domain — replace it with members' work as it arrives.
 
 Event pictures and board photographs work the same way, except their file names are
 referenced from `src/lib/events.ts` and `boardContent` respectively. An event's

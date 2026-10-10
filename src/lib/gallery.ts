@@ -1,74 +1,58 @@
-import { readdir } from "node:fs/promises";
-import path from "node:path";
-
 import { assetPath } from "@/lib/asset";
-import { galleryPhotoDetails } from "@/lib/gallery-photos";
+import photoSizes from "@/lib/gallery-photo-sizes.json";
+import { galleryPhotoDetails, type GalleryPhotoDetails } from "@/lib/gallery-photos";
 
-/** Folder under `public/` that holds gallery photos. */
+/** Folder under `public/` that holds the gallery's web-sized images. */
 export const PHOTO_DIR = "photos";
 
-/**
- * Raster formats browsers can display. AVIF and WebP are included deliberately —
- * the folder is expected to hold a mix.
- */
-export const SUPPORTED_FORMATS = /\.(jpe?g|png|webp|avif|gif)$/i;
+/** One prepared size of a work, as `npm run photos` wrote it. */
+type PhotoVariant = { file: string; width: number; height: number };
+type PhotoSizes = Record<string, { variants: PhotoVariant[]; blurDataURL: string }>;
 
-export type GalleryPhoto = {
-  /** File name, used as the React key and the details lookup. */
+export type GalleryPhoto = Omit<GalleryPhotoDetails, "name"> & {
+  /** The work's name, used as the React key. */
   file: string;
-  /** Base-path-prefixed URL. */
+  /** The largest size, base-path-prefixed: the fallback where `srcSet` is not read. */
   src: string;
-  alt: string;
-  /** The caption shown beside the photograph; the alt text when none is given. */
-  description?: string;
-  author?: string;
-  /** When it was taken, YYYY-MM-DD. */
-  takenAt?: string;
+  /** Every prepared size, so the browser fetches the smallest that is sharp enough. */
+  srcSet?: string;
+  /** The largest size's dimensions, so the frame is reserved before it loads. */
+  width?: number;
+  height?: number;
+  /** A tiny blurred preview, shown while the real image arrives. */
+  blurDataURL?: string;
 };
 
-const FALLBACK_ALT = "A photograph from the Coast to Coast Visual Arts Association gallery.";
-
-const DETAILS = new Map(galleryPhotoDetails.map((details) => [details.file, details]));
+const SIZES = photoSizes as PhotoSizes;
 
 /**
- * Reads `public/photos/` at **build time** and joins each file with its entry in
- * `gallery-photos.ts`.
+ * The gallery's works, in the order `gallery-photos.ts` lists them, each joined with
+ * the sizes `npm run photos` prepared. Everything is known at build time — a static
+ * export has no server to ask — so this is plain data, not a directory read.
  *
- * A static export has no server, so nothing can list a directory per request.
- * This runs once during `next build` and the file names are baked into the HTML,
- * which is what makes "drop a photo in the folder and it appears" work without a
- * backend. A file without an entry still shows, with a generic description. Returns
- * an empty list when the folder is missing or unreadable so a fresh clone still
- * builds.
+ * An entry with no prepared sizes is left out rather than shown broken; the
+ * gallery-photos tests fail on it first, so it never reaches the site unnoticed.
  */
-export async function readGalleryPhotos(): Promise<GalleryPhoto[]> {
-  let fileNames: string[];
-
-  try {
-    const directory = path.join(process.cwd(), "public", PHOTO_DIR);
-    const entries = await readdir(directory, { withFileTypes: true });
-    fileNames = entries
-      .filter((entry) => entry.isFile() && SUPPORTED_FORMATS.test(entry.name))
-      .map((entry) => entry.name);
-  } catch {
-    return [];
-  }
-
-  return fileNames
-    // Numeric collation so "10.jpg" sorts after "9.jpg", not after "1.jpg".
-    .sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
-    )
-    .map((file) => {
-      const details = DETAILS.get(file);
-      return {
-        file,
-        src: assetPath(`/${PHOTO_DIR}/${file}`),
-        alt: details?.alt ?? FALLBACK_ALT,
-        // Left out rather than undefined, so the props stay plain JSON.
-        ...(details?.description ? { description: details.description } : {}),
-        ...(details?.author ? { author: details.author } : {}),
-        ...(details?.takenAt ? { takenAt: details.takenAt } : {}),
-      };
-    });
+export function readGalleryPhotos(
+  details: GalleryPhotoDetails[] = galleryPhotoDetails,
+  sizes: PhotoSizes = SIZES,
+): GalleryPhoto[] {
+  return details.flatMap(({ name, ...rest }) => {
+    const prepared = sizes[name];
+    if (!prepared || prepared.variants.length === 0) return [];
+    const variants = [...prepared.variants].sort((a, b) => a.width - b.width);
+    const largest = variants[variants.length - 1];
+    const url = (file: string) => assetPath(`/${PHOTO_DIR}/${file}`);
+    return [
+      {
+        ...rest,
+        file: name,
+        src: url(largest.file),
+        srcSet: variants.map((variant) => `${url(variant.file)} ${variant.width}w`).join(", "),
+        width: largest.width,
+        height: largest.height,
+        blurDataURL: prepared.blurDataURL,
+      },
+    ];
+  });
 }
