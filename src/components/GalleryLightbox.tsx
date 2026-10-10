@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 
 import { GalleryCredit } from "@/components/GalleryCredit";
 import { GalleryPicture } from "@/components/GalleryPicture";
+import { StepIcon } from "@/components/StepIcon";
 import { roundButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
@@ -270,7 +271,7 @@ export function GalleryLightbox({
             aria-label={galleryContent.previousLabel}
             className={roundButtonClass}
           >
-            <span aria-hidden="true">‹</span>
+            <StepIcon to="previous" />
           </button>
 
           <ol
@@ -307,7 +308,7 @@ export function GalleryLightbox({
             aria-label={galleryContent.nextLabel}
             className={roundButtonClass}
           >
-            <span aria-hidden="true">›</span>
+            <StepIcon to="next" />
           </button>
         </div>
       )}

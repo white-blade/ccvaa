@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
-import { MAX_DOTS } from "../src/lib/dot-window";
+import { MAX_DOTS, MAX_DOTS_NARROW } from "../src/lib/dot-window";
 import { galleryPhotoDetails } from "../src/lib/gallery-photos";
 
 /**
@@ -88,7 +88,11 @@ async function entranceFinished(page: Page) {
     document.getAnimations().every((animation) => {
       const timing = animation.effect?.getComputedTiming();
       const timeBased = animation.timeline === document.timeline;
-      return !timeBased || timing?.iterations === Infinity || animation.playState === "finished";
+      // The slideshow's own motion runs as long as the slideshow does: the countdown
+      // line restarts with every work and the picture drifts. Neither touches text.
+      const target = (animation.effect as KeyframeEffect | null)?.target;
+      const slideshow = target instanceof Element && target.closest("[data-slow-zoom], [data-slide-progress]");
+      return !timeBased || slideshow || timing?.iterations === Infinity || animation.playState === "finished";
     }),
   );
 }
@@ -475,24 +479,26 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(box.y - stage.y).toBeLessThan(5);
   });
 
-  test("every device: a dot jumps to its photograph and is the one marked", async ({ page }) => {
+  test("every device: a dot jumps to its photograph and is the one marked", async ({ page }, testInfo) => {
     await pauseSlideshow(page);
     const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
-    await expect(dots).toHaveCount(MAX_DOTS);
-    await dots.nth(3).click();
-    await expect(currentSlide(page)).toHaveAccessibleName("4 / 19");
-    await expect(dots.nth(3)).toHaveAttribute("aria-current", "true");
+    await expect(dots).toHaveCount(widthOf(testInfo) < 640 ? MAX_DOTS_NARROW : MAX_DOTS);
+    await page.getByRole("button", { name: "Show work 4", exact: true }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`4 / ${galleryPhotoDetails.length}`);
+    await expect(page.getByRole("button", { name: "Show work 4", exact: true })).toHaveAttribute("aria-current", "true");
     await expect(page.locator("#gallery [aria-current=true]")).toHaveCount(1);
+    // The window keeps one work back: work 3 is now the first dot.
+    await expect(dots.first()).toHaveAccessibleName("Show work 3");
     // Highlighted, not just announced: once the change settles, the current dot is
     // drawn wider than the rest.
-    const widest = () =>
+    const widestIsCurrent = () =>
       dots.evaluateAll((buttons) => {
         const widths = buttons.map((button) => button.firstElementChild!.getBoundingClientRect().width);
-        return widths.filter((width) => width === Math.max(...widths)).length === 1
-          ? widths.indexOf(Math.max(...widths))
-          : -1;
+        const widest = Math.max(...widths);
+        const current = buttons.findIndex((button) => button.getAttribute("aria-current") === "true");
+        return widths.filter((width) => width === widest).length === 1 && widths.indexOf(widest) === current;
       });
-    await expect.poll(widest).toBe(3);
+    await expect.poll(widestIsCurrent).toBe(true);
   });
 
   test("below lg: a date rail stands in for the timeline, and a chip glides to its card", async ({
@@ -899,19 +905,79 @@ test.describe("gallery works", () => {
     await expect(image.locator("..")).toHaveAttribute("data-picture-loaded", "");
   });
 
-  test("the dots stay seven wide, sliding with the works, on every screen", async ({ page }) => {
+  test("the dots stay a fixed number (seven, five below 640), sliding with the works", async ({ page }, testInfo) => {
     await pauseSlideshow(page);
+    const shown = widthOf(testInfo) < 640 ? MAX_DOTS_NARROW : MAX_DOTS;
     const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
-    await expect(dots).toHaveCount(MAX_DOTS);
+    await expect(dots).toHaveCount(shown);
     const next = page.getByRole("button", { name: "Next work" });
     for (let step = 0; step < 9; step++) await next.click();
     await expect(currentSlide(page)).toHaveAccessibleName(`10 / ${galleryPhotoDetails.length}`);
-    await expect(dots).toHaveCount(MAX_DOTS);
+    await expect(dots).toHaveCount(shown);
     await expect(page.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
     // The row fits beside the arrows even on the narrowest screen.
     const row = (await page.getByRole("list", { name: "Choose a work" }).boundingBox())!;
     expect(row.x).toBeGreaterThanOrEqual(0);
     expect(row.x + row.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  });
+
+  test("first and last jump to either end; the dots window follows", async ({ page }) => {
+    await pauseSlideshow(page);
+    const total = galleryPhotoDetails.length;
+    await page.getByRole("button", { name: "Last work" }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`${total} / ${total}`);
+    await expect(page.getByRole("button", { name: `Show work ${total}` })).toHaveAttribute("aria-current", "true");
+    await expect(page.getByRole("button", { name: "Last work" })).toHaveAttribute("aria-disabled", "true");
+    await page.getByRole("button", { name: "First work" }).click();
+    await expect(currentSlide(page)).toHaveAccessibleName(`1 / ${total}`);
+    await expect(page.getByRole("button", { name: "First work" })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("the controls fit in one row on every screen: first, previous, dots, next, last", async ({ page }) => {
+    const dots = page.getByRole("list", { name: "Choose a work" });
+    await dots.scrollIntoViewIfNeeded();
+    const viewport = page.viewportSize()!;
+    const box = async (name: string) => (await page.getByRole("button", { name, exact: true }).boundingBox())!;
+    const [first, previous, next, last] = await Promise.all(
+      ["First work", "Previous work", "Next work", "Last work"].map(box),
+    );
+    const row = (await dots.boundingBox())!;
+    const middle = (b: { y: number; height: number }) => b.y + b.height / 2;
+    for (const b of [first, previous, next, last]) {
+      expect(Math.abs(middle(b) - middle(row)), "all on the dots' row").toBeLessThan(3);
+      expect(b.height, "tap target").toBeGreaterThanOrEqual(40);
+    }
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(first.x + first.width).toBeLessThanOrEqual(previous.x + 1);
+    expect(previous.x + previous.width).toBeLessThanOrEqual(row.x + 1);
+    expect(next.x).toBeGreaterThanOrEqual(row.x + row.width - 1);
+    expect(last.x).toBeGreaterThanOrEqual(next.x + next.width - 1);
+    expect(last.x + last.width).toBeLessThanOrEqual(viewport.width);
+  });
+
+  test("at 320px the controls still fit in one row", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "one width sweep is enough");
+    await page.setViewportSize({ width: 320, height: 700 });
+    const dots = page.getByRole("list", { name: "Choose a work" });
+    await dots.scrollIntoViewIfNeeded();
+    await expect(dots.getByRole("button")).toHaveCount(MAX_DOTS_NARROW);
+    const first = (await page.getByRole("button", { name: "First work" }).boundingBox())!;
+    const last = (await page.getByRole("button", { name: "Last work" }).boundingBox())!;
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(last.x + last.width).toBeLessThanOrEqual(320);
+    expect(Math.abs(first.y - last.y)).toBeLessThan(2);
+  });
+
+  test("a thin line fills as the slideshow counts down to the next work", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("./");
+    await page.getByRole("region", { name: "Gallery of works" }).scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    const line = page.locator("#gallery [data-slide-progress]");
+    await expect(line).toHaveCount(1);
+    expect(await line.evaluate((el) => getComputedStyle(el).animationName)).toBe("slide-progress");
+    await pauseSlideshow(page);
+    await expect(line).toHaveCount(0);
   });
 
   test("the credit links the licence and the source, and can be clicked over the veil", async ({ page }) => {

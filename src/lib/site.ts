@@ -235,6 +235,8 @@ export const galleryContent = {
   /** The viewer's toggle between the framed view and the work alone, full screen. */
   expandLabel: "Expand image",
   collapseLabel: "Exit full view",
+  firstLabel: "First work",
+  lastLabel: "Last work",
   previousLabel: "Previous work",
   nextLabel: "Next work",
   /** The slideshow's dots and the viewer's thumbnails, and each one: "Show work 3". */

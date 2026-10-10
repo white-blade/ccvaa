@@ -416,10 +416,23 @@ describe("GallerySlider: a large gallery", () => {
     for (let i = 0; i < 9; i++) await user.click(screen.getByRole("button", { name: "Next work" }));
     expect(slide()).toHaveAccessibleName("10 / 20");
     expect(dots()).toHaveLength(7);
+    // One work back, the rest ahead: on the 10th, the dots run 9 to 15.
     expect(dots().map((dot) => dot.getAttribute("aria-label"))).toEqual(
-      [7, 8, 9, 10, 11, 12, 13].map((n) => `Show work ${n}`),
+      [9, 10, 11, 12, 13, 14, 15].map((n) => `Show work ${n}`),
     );
     expect(screen.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("keeps a narrower window of five for small screens, hiding the rest there", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    for (let i = 0; i < 10; i++) await user.click(screen.getByRole("button", { name: "Next work" }));
+    // On the 11th: the wide window runs 10-16, the narrow one 10-14.
+    const narrow = dots().map((dot) => dot.closest("li")!);
+    expect(narrow.map((li) => li.getAttribute("data-dot-narrow"))).toEqual([
+      "small", "full", "full", "medium", "small", "hidden", "hidden",
+    ]);
+    expect(narrow.filter((li) => li.classList.contains("max-sm:hidden"))).toHaveLength(2);
   });
 
   it("draws the edge dots smaller where more works lie beyond", async () => {
@@ -428,7 +441,8 @@ describe("GallerySlider: a large gallery", () => {
     await user.click(screen.getByRole("button", { name: "Show work 4" }));
     await user.click(screen.getByRole("button", { name: "Show work 7" }));
     const scales = dots().map((dot) => dot.closest("li")!.getAttribute("data-dot-scale"));
-    expect(scales).toEqual(["small", "medium", "full", "full", "full", "medium", "small"]);
+    // On the 7th: the 6th (with more behind it) small, the current full, the far end tapering.
+    expect(scales).toEqual(["small", "full", "full", "full", "full", "medium", "small"]);
   });
 
   it("wraps from the last work to the first, the window following", async () => {
@@ -526,5 +540,85 @@ describe("GallerySlider: progressive pictures and credits", () => {
   it("has no detectable accessibility problems with credits and links", async () => {
     const { container } = render(<GallerySlider photos={prepared} />);
     await expectNoAxeViolations(container);
+  });
+});
+
+describe("GallerySlider: first and last", () => {
+  const many: GalleryPhoto[] = Array.from({ length: 12 }, (_, i) => ({
+    file: `w${i + 1}`,
+    src: `/ccvaa/photos/w${i + 1}-lg.avif`,
+    alt: `Work number ${i + 1}`,
+  }));
+
+  it("jumps to the last work and back to the first", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    await user.click(screen.getByRole("button", { name: "Last work" }));
+    expect(slide()).toHaveAccessibleName("12 / 12");
+    expect(screen.getByRole("button", { name: "Show work 12" })).toHaveAttribute("aria-current", "true");
+
+    await user.click(screen.getByRole("button", { name: "First work" }));
+    expect(slide()).toHaveAccessibleName("1 / 12");
+    expect(screen.getByRole("button", { name: "Show work 1" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("marks the button for the end already reached as unavailable, and does nothing on it", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    const first = screen.getByRole("button", { name: "First work" });
+    const last = screen.getByRole("button", { name: "Last work" });
+    expect(first).toHaveAttribute("aria-disabled", "true");
+    expect(last).toHaveAttribute("aria-disabled", "false");
+
+    await user.click(first);
+    expect(slide()).toHaveAccessibleName("1 / 12");
+    // Still focusable, so focus is not lost when an end is reached.
+    expect(first).not.toBeDisabled();
+
+    await user.click(last);
+    expect(last).toHaveAttribute("aria-disabled", "true");
+    expect(first).toHaveAttribute("aria-disabled", "false");
+  });
+
+  it("orders the controls first, previous, dots, next, last", () => {
+    render(<GallerySlider photos={many} />);
+    const row = screen.getByRole("list", { name: "Choose a work" }).parentElement!;
+    const names = [...row.querySelectorAll(":scope > button, :scope > ol")].map(
+      (el) => el.getAttribute("aria-label"),
+    );
+    expect(names).toEqual(["First work", "Previous work", "Choose a work", "Next work", "Last work"]);
+  });
+
+  it("has no buttons to step with for a single work", () => {
+    render(<GallerySlider photos={many.slice(0, 1)} />);
+    expect(screen.queryByRole("button", { name: "First work" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Last work" })).toBeNull();
+  });
+});
+
+describe("GallerySlider: the slideshow's countdown and drift", () => {
+  it("shows a progress line, restarted for each work, only while the slideshow runs", () => {
+    vi.useFakeTimers();
+    preferReducedMotion(false);
+    render(<GallerySlider photos={photos} />);
+    const line = () => document.querySelector("[data-slide-progress]");
+    expect(line()).toHaveStyle({ animationDuration: "6s" });
+    const first = line();
+
+    act(() => {
+      vi.advanceTimersByTime(INTERVAL);
+    });
+    expect(slide()).toHaveAccessibleName("2 / 3");
+    // A new line for the new work: the count starts again from empty.
+    expect(line()).not.toBe(first);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause slideshow" }));
+    expect(line()).toBeNull();
+  });
+
+  it("drifts the current work slowly closer, only where motion is welcome", () => {
+    render(<GallerySlider photos={photos} />);
+    const drift = within(slide()).getByRole("img").closest("[data-slow-zoom]")!;
+    expect(drift).toHaveClass("motion-safe:animate-slow-zoom");
   });
 });

@@ -71,11 +71,33 @@ shows. The next work is prefetched at the size this screen will use.
 ## A gallery of any size
 
 A dot per work stops working long before 20. The slideshow now shows **at most 7
-dots**: a window that slides to keep the current work near its middle, with the dots
-at an edge that has more beyond drawn smaller (the page indicator phones use). The
-row is the same width for 7 works or 700. Where you are is said exactly by the
-counter ("10 / 19"); to jump far, the viewer's thumbnail strip holds every work and
-scrolls. Logic: `lib/dot-window.ts`.
+dots**: a window that starts **one before the current work** — the one just seen
+stays in reach, the rest lie ahead (on the 11th work the dots run 10–16, CEO's
+call) — and stops at the ends (1–7 at the start, the last seven at the end). Dots
+at an edge with more beyond are drawn smaller (the page indicator phones use), never
+the current one. The row is the same width for 7 works or 700. Where you are is said
+exactly by the counter ("10 / 19"); to jump far, the viewer's thumbnail strip holds
+every work. Logic: `lib/dot-window.ts`.
+
+**First and last** buttons sit outside previous and next: ⏮ ‹ dots › ⏭, one row on
+every screen (CEO's call: the arrows always flank the dots). At an end the button for
+that end is `aria-disabled` and dimmed but stays focusable, so focus is never lost.
+To fit 320px (272px of content), below `sm` the buttons are 40px (the tap-target
+floor), the dots' hit areas 20px wide, and a narrower window of **five** dots shows —
+same rule, always inside the seven, so the extra two are simply hidden there. The
+gap grows from 2px at 320 to 8px from 360. All four use one set of stroked icons
+(`StepIcon`), shared with the viewer.
+
+## Two touches of motion
+
+- **A slow drift**: the current work eases 6% closer over 12s (`slow-zoom`).
+- **A countdown line**: a 2px coral line along the bottom of the stage fills over
+  the 6s until the next work. It shows only while the slideshow runs; a hold (hover,
+  focus, the viewer) restarts the count, so the line starts again with it.
+
+Both are `motion-safe`: with reduced motion neither runs. The page-wide "entrance
+finished" wait in the browser tests ignores these two, which run as long as the
+slideshow does and never touch text.
 
 Not built: a "View all" grid. Worth adding if the gallery reaches many dozens.
 
@@ -104,4 +126,7 @@ pointers); the dot row fits beside the arrows at 320px.
 - unit:GallerySlider — a 20-work gallery's dots; srcset, preview, fade-in, error;
   credit links; viewer credit; axe.
 - e2e › gallery works — size chosen per device (phones never the 1920px file); the
-  dots stay seven wide and fit; the credit links are clickable over the veil.
+  dots stay seven wide and fit; first/last jump to either end; the controls fit (two
+  rows below 640, one from 640); the countdown line fills and stops on pause; the
+  credit links are clickable over the veil.
+- unit:GallerySlider › first and last; › the slideshow's countdown and drift.
