@@ -24,10 +24,10 @@ page movement.
 
 ## Purpose cards
 
-The component measures each card's untransformed content height and applies the
-largest height as a shared minimum. It remeasures when the viewport reflows and when
-an accordion finishes opening or closing. Every purpose card therefore aligns to
-the tallest visible card across both columns and in the one-column phone layout.
+*Superseded by [`home-0008`](home-0008-purposes-events-rail-founding.md).* The first
+pass gave every card, open or closed, the height of the tallest card, so opening one
+purpose turned the other nine into tall empty boxes. home-0008 aligns open cards with
+open and closed with closed instead.
 
 ## Regression guards
 

@@ -35,6 +35,12 @@ describe("boardContent", () => {
     }
   });
 
+  it("has a bio for every board member", () => {
+    for (const member of boardContent.members) {
+      expect(member.bio.length, member.name).toBeGreaterThan(0);
+    }
+  });
+
   it("has no placeholder filler left in the bios", () => {
     for (const member of boardContent.members) {
       for (const paragraph of member.bio) {

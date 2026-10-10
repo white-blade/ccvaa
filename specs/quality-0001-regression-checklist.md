@@ -44,6 +44,8 @@ a Vitest file under `src/`.
 | L5b | Below 640: dialog sheets enter with a gradual, eased slide and fade | Auto — e2e › device layouts › small phones: dialogs are bottom sheets… |
 | L6 | 640 and up: dialogs are centred | Auto — e2e › device layouts › tablets and up: dialogs stay centred |
 | L7 | Below 1024: the date rail replaces the side timeline; a chip glides its card to just below the rail | Auto — e2e › device layouts › below lg: a date rail…; unit:EventsDateRail |
+| L7b | Below 1024: each rail chip shows the full date with its year and the city and country (or "Online"), not the title; the title is still in its accessible name | Auto — e2e › device layouts › below lg: each chip shows the full date…; unit:EventsDateRail |
+| L7c | The event listings have no search or filter, on any device | Auto — e2e › device layouts › every device: the listings have no search…; unit:EventsBrowser |
 | L8 | 1024 and up: the side timeline, no rail | Auto — e2e › device layouts › lg and up… |
 | L9 | The side timeline and the date rail stay pinned while the listings scroll (never `overflow-hidden` above a sticky element) | Auto — e2e › device layouts › … stays pinned while the listings scroll |
 | L9b | The date rail marks the card read past, and clears a stale mark after jumping back up | Auto — e2e › device layouts › below lg: a date rail…; …jumping back up to Events… |
@@ -82,7 +84,7 @@ a Vitest file under `src/`.
 | ID | Behaviour | Guard |
 |----|-----------|-------|
 | T1 | Tap targets are at least 40px tall | Auto — e2e › touch › controls are big enough to tap |
-| T2 | The search field is 16px, so iOS does not zoom into it | Auto — e2e › touch › the search field is 16px… |
+| T2 | *Retired in home-0008: the events search was removed, and with it the only text field.* | — |
 | T3 | Nothing depends on hover: gallery labels show on touch screens | Auto — e2e › touch › gallery labels show without hover |
 | T4 | A tap never strands a hover highlight | Auto — unit:hover-focus; unit:EventsBrowser (touch) |
 | T5 | Timeline on touch: first tap previews, a second tap (or a tap on the preview) opens | Auto — e2e › touch › timeline: first tap…; …tapping the open preview card… |
@@ -113,8 +115,9 @@ a Vitest file under `src/`.
 | A3 | Skip link is the first Tab stop and lands on the content | Auto — e2e › accessibility › keyboard… |
 | A4 | Dialogs: focus in on open, back to the opener on close, Tab trapped, Escape closes, arrows step | Auto — unit:GalleryGrid, unit:BoardSection, unit:EventsBrowser |
 | A5 | Timeline dots step with the arrow keys | Auto — unit:EventsBrowser |
+| A4b | Stacked dialogs (an event's picture viewer over the event): keys go to the top one only; Escape closes the viewer and leaves the event open | Auto — unit:use-dialog; unit:EventsBrowser; e2e › event pictures |
 | A6 | Purposes: each opens on its own; closed descriptions are inert; Expand/Collapse all | Auto — unit:PurposesSection; e2e › purposes |
-| A6b | All purpose cards have equal height, set by the tallest card, as descriptions open and close | Auto — e2e › purposes › all purpose cards align… |
+| A6b | Open purpose cards share one height (tallest heading + longest description); closed cards share another (tallest heading); an open card never stretches a closed neighbour | Auto — e2e › purposes › open cards share one height…; unit:PurposesSection › card alignment |
 | A7 | Visible text and accessible names agree (timeline dots, date chips) | Auto — A1 (axe `label-content-name-mismatch`) |
 | A8 | A real screen reader reads the page sensibly | **Manual** — VoiceOver (Cmd+F5) |
 
@@ -122,10 +125,12 @@ a Vitest file under `src/`.
 
 | ID | Behaviour | Guard |
 |----|-----------|-------|
-| C1 | Event listings: chronological, unique ids, valid dates, every picture exists and is described | Auto — unit:events |
+| C1 | Event listings: chronological, unique ids, valid dates, every picture exists and is described; every place reads "City, Country" or "Online"; the founding (June 27, 2026) comes first | Auto — unit:events |
 | C2 | Board photographs exist, are ≤ 300 KB, and are described; bios hold no "lorem ipsum" or "TODO" | Auto — unit:site |
 | C3 | Gallery reads `public/photos/` at build, image files only, numeric order | Auto — unit:gallery |
 | C4 | Dates are never shifted a day by the time zone (tests run in America/Vancouver) | Auto — unit:events |
+| C6 | Every board member has a bio (none shows "Bio coming soon.") | Auto — unit:site; unit:BoardSection |
+| C7 | Every event picture, cover or in the details, opens whole in the photo viewer | Auto — unit:EventsBrowser; e2e › event pictures › a cropped picture opens whole… |
 | C5 | **No personal email addresses anywhere on the page** — `info@ccvaa.ca` is the only address shown; board members are reached through it | Auto — unit:site › email policy; e2e › content policy |
 
 ## Pipeline

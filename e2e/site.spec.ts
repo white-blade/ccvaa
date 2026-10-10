@@ -232,7 +232,7 @@ test.describe("touch", () => {
     const sizes = await page.evaluate(() =>
       [
         ...document.querySelectorAll<HTMLElement>(
-          "#gallery [role=group] button, #events-search, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
+          "#gallery [role=group] button, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
         ),
       ]
         .filter((el) => el.offsetParent !== null)
@@ -241,11 +241,6 @@ test.describe("touch", () => {
     for (const { label, height } of sizes) {
       expect(height, `${label} is ${height}px tall`).toBeGreaterThanOrEqual(40);
     }
-  });
-
-  test("the search field is 16px, so phones do not zoom into it", async ({ page }) => {
-    const size = await page.locator("#events-search").evaluate((el) => getComputedStyle(el).fontSize);
-    expect(parseFloat(size)).toBeGreaterThanOrEqual(16);
   });
 
   test("gallery labels show without hover", async ({ page }) => {
@@ -393,7 +388,7 @@ test.describe("device layouts (specs/home-0003)", () => {
     const rail = page.getByRole("navigation", { name: "Event dates" });
     await expect(rail).toBeVisible();
 
-    await rail.getByRole("button", { name: /^Annual General Meeting/ }).click();
+    await rail.getByRole("button", { name: /— Annual General Meeting/ }).click();
     const card = page.locator("li[data-event-id=annual-general-meeting] > button");
     await expect(card).toBeFocused();
     // The card lands just below the sticky rail, not underneath it.
@@ -402,10 +397,25 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(cardBox.y).toBeGreaterThanOrEqual(railBox.y + railBox.height);
     expect(cardBox.y - (railBox.y + railBox.height)).toBeLessThan(30);
     // …and the rail marks it.
-    await expect(rail.getByRole("button", { name: /^Annual General Meeting/ })).toHaveAttribute(
+    await expect(rail.getByRole("button", { name: /— Annual General Meeting/ })).toHaveAttribute(
       "aria-current",
       "true",
     );
+  });
+
+  test("below lg: each chip shows the full date and the city and country, not the title", async ({
+    page,
+  }, testInfo) => {
+    test.skip(hasTimeline(testInfo), "below lg only");
+    const rail = page.getByRole("navigation", { name: "Event dates" });
+    await expect(rail.getByRole("button", { name: /CCVAA Is Founded$/ })).toHaveText(/^Jun 27, 2026\s*Victoria, Canada/i);
+    await expect(rail.getByRole("button", { name: /Artist Talk: Photographing Pacific Light$/ })).toHaveText(
+      /^Feb 11, 2027\s*Online/i,
+    );
+    const visible = await rail.evaluate((nav) =>
+      [...nav.querySelectorAll("button > span:not(.sr-only)")].map((span) => span.textContent).join(" "),
+    );
+    expect(visible).not.toContain("Annual General Meeting");
   });
 
   test("below lg: jumping back up to Events leaves no stale chip marked", async ({ page }, testInfo) => {
@@ -415,10 +425,15 @@ test.describe("device layouts (specs/home-0003)", () => {
     await followNav(page, "Events");
     await expect.poll(async () => Math.abs(await landingGap(page, "events"))).toBeLessThan(3);
     const rail = page.getByRole("navigation", { name: "Event dates" });
-    await expect(rail.getByRole("button", { name: /^Annual General Meeting/ })).not.toHaveAttribute(
+    await expect(rail.getByRole("button", { name: /— Annual General Meeting/ })).not.toHaveAttribute(
       "aria-current",
       "true",
     );
+  });
+
+  test("every device: the listings have no search or filter", async ({ page }) => {
+    await expect(page.locator("#events input")).toHaveCount(0);
+    await expect(page.locator("#events li[data-event-id]")).toHaveCount(6);
   });
 
   test("lg and up: the side timeline, no rail", async ({ page }, testInfo) => {
@@ -552,35 +567,60 @@ test.describe("purposes", () => {
     await expect(page.getByRole("button", { name: "Cultural Exchange" })).toHaveAttribute("aria-expanded", "false");
   });
 
-  test("all purpose cards align to the tallest card, including when one expands", async ({ page }) => {
+  test("open cards share one height, closed cards another, set by the tallest", async ({ page }) => {
     const cards = page.locator("#about ol").last().locator(":scope > li");
-    const tallest = page.getByRole("button", { name: "Advancement of Visual Arts" });
-    const region = page.getByRole("region", { name: "Advancement of Visual Arts" });
-    await tallest.scrollIntoViewIfNeeded();
-    const opening = waitForTransitionEnd(region, "grid-template-rows");
-    await tallest.click();
-    await expect(tallest).toHaveAttribute("aria-expanded", "true");
-    await opening;
-    await expect.poll(async () => {
-      const heights = await cards.evaluateAll((items) =>
-        items.map((item) => (item as HTMLElement).offsetHeight),
-      );
-      return new Set(heights).size;
-    }).toBe(1);
+    const heights = () => cards.evaluateAll((items) => items.map((item) => (item as HTMLElement).offsetHeight));
+    const longest = page.getByRole("button", { name: "Advancement of Visual Arts" });
+    const other = page.getByRole("button", { name: "Education" });
+    await longest.scrollIntoViewIfNeeded();
+    await expect.poll(async () => new Set(await heights()).size).toBe(1);
+    const [closed] = await heights();
 
-    const expandedHeight = await cards.first().evaluate((item) => (item as HTMLElement).offsetHeight);
-    const closing = waitForTransitionEnd(region, "grid-template-rows");
-    await tallest.click();
-    await expect(tallest).toHaveAttribute("aria-expanded", "false");
+    // Two purposes with descriptions of different lengths open to the same height.
+    for (const name of ["Advancement of Visual Arts", "Education"]) {
+      const opening = waitForTransitionEnd(page.getByRole("region", { name }), "grid-template-rows");
+      await page.getByRole("button", { name }).click();
+      await opening;
+    }
+    const open = await heights();
+    const tall = open.filter((height) => height > closed);
+    expect(tall).toHaveLength(2);
+    expect(new Set(tall).size).toBe(1);
+    // Closed cards keep their own height: an open neighbour does not stretch them.
+    expect(open.filter((height) => height === closed)).toHaveLength(open.length - 2);
+
+    // Each closes on its own, back to the closed height.
+    const closing = waitForTransitionEnd(page.getByRole("region", { name: "Education" }), "grid-template-rows");
+    await other.click();
     await closing;
-    await expect.poll(async () => {
-      const heights = await cards.evaluateAll((items) =>
-        items.map((item) => (item as HTMLElement).offsetHeight),
-      );
-      return new Set(heights).size;
-    }).toBe(1);
-    const collapsedHeight = await cards.first().evaluate((item) => (item as HTMLElement).offsetHeight);
-    expect(collapsedHeight).toBeLessThan(expandedHeight);
+    await expect(longest).toHaveAttribute("aria-expanded", "true");
+    const after = await heights();
+    expect(after.filter((height) => height > closed)).toEqual([tall[0]]);
+  });
+});
+
+test.describe("event pictures", () => {
+  test("a cropped picture opens whole in the viewer, over the event", async ({ page }) => {
+    await page.locator("li[data-event-id=ccvaa-founded] > button").click();
+    const event = page.getByRole("dialog", { name: /CCVAA Is Founded/ });
+    await expect(event).toBeVisible();
+    await page.waitForTimeout(600); // let the sheet or dialog finish arriving
+    await event.getByRole("button", { name: /^View the full picture: The British Columbia/ }).click();
+
+    const viewer = page.getByRole("dialog", { name: /^The British Columbia Societies Act Certificate/ });
+    await expect(viewer).toBeVisible();
+    const image = viewer.getByRole("img", { name: /^The British Columbia/ });
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    // Shown whole: contained, not cropped, and inside the screen.
+    expect(await image.evaluate((img) => getComputedStyle(img).objectFit)).toBe("contain");
+    const box = (await image.boundingBox())!;
+    const viewport = page.viewportSize()!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+
+    await page.keyboard.press("Escape");
+    await expect(viewer).toBeHidden();
+    await expect(event).toBeVisible();
   });
 });
 

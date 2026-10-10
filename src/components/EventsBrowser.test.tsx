@@ -16,7 +16,10 @@ const events = [
     dateLabel: "November 14 – December 6, 2026",
     location: "Richmond Cultural Centre",
     summary: "Annual juried members’ exhibition.",
-    details: ["The opening reception is on Saturday."],
+    details: [
+      "The opening reception is on Saturday.",
+      { pictures: [{ src: "/ccvaa/events/b.jpg", alt: "A bench" }] },
+    ],
     image: { src: "/ccvaa/events/a.jpg", alt: "A dock" },
   }),
   makeEvent({
@@ -63,31 +66,12 @@ afterEach(() => {
 });
 
 describe("EventsBrowser list", () => {
-  it("lists every event with a count", () => {
+  it("lists every event, with no search or filter to narrow them", () => {
     renderOn("2026-10-09");
     expect(card("Coastal Light")).toBeInTheDocument();
     expect(card("Artist Talk")).toBeInTheDocument();
-    expect(screen.getByText("2 events")).toBeInTheDocument();
-  });
-
-  it("narrows the cards as the visitor searches", async () => {
-    const user = renderOn("2026-10-09");
-    await user.type(screen.getByRole("searchbox", { name: "Search events" }), "zoom");
-
-    expect(screen.queryByText("Coastal Light", { selector: "h3" })).toBeNull();
-    expect(card("Artist Talk")).toBeInTheDocument();
-    expect(screen.getByText("1 of 2 events")).toBeInTheDocument();
-  });
-
-  it("offers to clear a search that matches nothing", async () => {
-    const user = renderOn("2026-10-09");
-    await user.type(screen.getByRole("searchbox"), "sculpture");
-    expect(screen.getByText("No events match that search.")).toBeInTheDocument();
-
-    // Two clear buttons now: the ✕ in the field and the one under the message.
-    await user.click(screen.getAllByRole("button", { name: "Clear search" })[1]);
-    expect(screen.getByRole("searchbox")).toHaveValue("");
-    expect(screen.getByText("2 events")).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
   it("opens a card's details and returns focus to it on Escape", async () => {
@@ -100,6 +84,34 @@ describe("EventsBrowser list", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(card("Coastal Light")).toHaveFocus();
+  });
+
+  it("opens an event's picture whole, and Escape closes only the picture", async () => {
+    const user = renderOn("2026-10-09");
+    await user.click(card("Coastal Light"));
+    const event = screen.getByRole("dialog", { name: "Coastal Light" });
+    const cover = within(event).getByRole("button", { name: "View the full picture: A dock" });
+
+    await user.click(cover);
+    expect(screen.getByRole("dialog", { name: "A dock" })).toBeInTheDocument();
+    // Every picture in the event is a step away, cover first.
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("dialog", { name: "A bench" })).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "A bench" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Coastal Light" })).toBeInTheDocument();
+    expect(cover).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("opens a picture from among the details, too", async () => {
+    const user = renderOn("2026-10-09");
+    await user.click(card("Coastal Light"));
+    await user.click(screen.getByRole("button", { name: "View the full picture: A bench" }));
+    expect(screen.getByRole("dialog", { name: "A bench" })).toBeInTheDocument();
   });
 
   it("marks events that have ended as past", () => {
@@ -155,18 +167,6 @@ describe("EventsBrowser timeline", () => {
     expect(exhibitionDot).toHaveFocus();
   });
 
-  it("dims, but keeps, the dots of events the search hides", async () => {
-    const user = renderOn("2026-10-09");
-    await user.type(screen.getByRole("searchbox"), "zoom");
-
-    const exhibitionDot = dot("Coastal Light — November 14 – December 6, 2026");
-    expect(exhibitionDot.closest("li")).toHaveClass("opacity-30");
-    expect(dot("Artist Talk — February 11, 2027").closest("li")).not.toHaveClass("opacity-30");
-
-    await user.click(exhibitionDot);
-    expect(screen.getByRole("dialog", { name: "Coastal Light" })).toBeInTheDocument();
-  });
-
   it("marks today on the timeline only while the season is running", () => {
     renderOn("2027-01-01");
     expect(timeline().getByText("Today")).toBeInTheDocument();
@@ -201,7 +201,7 @@ describe("EventsBrowser date rail (below lg)", () => {
   it("glides a chosen chip's card into view below the header and the rail", async () => {
     const user = renderOn("2026-10-09");
     vi.mocked(glideTo).mockClear();
-    await user.click(rail().getByRole("button", { name: /^Artist Talk/ }));
+    await user.click(rail().getByRole("button", { name: /Artist Talk$/ }));
     expect(glideTo).toHaveBeenCalledTimes(1);
     const [target, offset] = vi.mocked(glideTo).mock.calls[0];
     expect(target).toBe(card("Artist Talk"));
@@ -211,14 +211,9 @@ describe("EventsBrowser date rail (below lg)", () => {
   it("marks the chip of the event highlighted on the timeline", async () => {
     const user = renderOn("2026-10-09");
     await user.hover(dot("Artist Talk — February 11, 2027"));
-    expect(rail().getByRole("button", { name: /^Artist Talk/ })).toHaveAttribute("aria-current", "true");
+    expect(rail().getByRole("button", { name: /Artist Talk$/ })).toHaveAttribute("aria-current", "true");
   });
 
-  it("dims the chips of events the search hides", async () => {
-    const user = renderOn("2026-10-09");
-    await user.type(screen.getByRole("searchbox"), "zoom");
-    expect(rail().getByRole("button", { name: /^Coastal Light/ })).toHaveClass("opacity-40");
-  });
 });
 
 describe("EventsBrowser on touch screens", () => {
@@ -258,7 +253,7 @@ describe("EventsBrowser on touch screens", () => {
 
     fireEvent.pointerDown(talkDot, { pointerType: "touch" });
     expect(talkDot).toHaveAttribute("aria-current", "true");
-    fireEvent.pointerDown(screen.getByRole("searchbox"), { pointerType: "touch" });
+    fireEvent.pointerDown(card("Coastal Light"), { pointerType: "touch" });
     expect(talkDot).not.toHaveAttribute("aria-current");
   });
 

@@ -7,25 +7,32 @@ import { expectNoAxeViolations } from "@/test/axe";
 import { makeEvent } from "@/test/fixtures";
 
 const events = [
-  makeEvent({ id: "exhibition", title: "Coastal Light", startsAt: "2026-11-14", dateLabel: "November 14, 2026" }),
-  makeEvent({ id: "talk", title: "Artist Talk", startsAt: "2027-02-11", dateLabel: "February 11, 2027" }),
+  makeEvent({ id: "exhibition", title: "Coastal Light", startsAt: "2026-11-14", placeLabel: "Richmond, Canada" }),
+  makeEvent({ id: "talk", title: "Artist Talk", startsAt: "2027-02-11", placeLabel: "Online" }),
 ];
 
 function renderRail(props: Partial<Parameters<typeof EventsDateRail>[0]> = {}) {
   const onSelect = vi.fn();
   render(
-    <EventsDateRail events={events} activeId={null} dimmedIds={new Set()} onSelect={onSelect} {...props} />,
+    <EventsDateRail events={events} activeId={null} onSelect={onSelect} {...props} />,
   );
   return { onSelect, rail: within(screen.getByRole("navigation", { name: "Event dates" })) };
 }
 
 describe("EventsDateRail", () => {
-  it("has a chip per event, in order, named by title and date", () => {
+  it("shows each chip's full date, year included, and its city and country", () => {
     const { rail } = renderRail();
     const [first, second] = rail.getAllByRole("button");
-    expect(first).toHaveAccessibleName("Coastal Light, November 14, 2026");
-    expect(second).toHaveAccessibleName("Artist Talk, February 11, 2027");
-    expect(rail.getAllByRole("button")[0]).toHaveTextContent(/Nov\s*14/);
+    expect(first).toHaveTextContent(/^Nov 14, 2026 Richmond, Canada/);
+    expect(second).toHaveTextContent(/^Feb 11, 2027 Online/);
+  });
+
+  it("leaves the title off the chip, but names it for screen readers after what is seen", () => {
+    const { rail } = renderRail();
+    const [first, second] = rail.getAllByRole("button");
+    expect(first).toHaveAccessibleName("Nov 14, 2026 Richmond, Canada — Coastal Light");
+    expect(second).toHaveAccessibleName("Feb 11, 2027 Online — Artist Talk");
+    expect(rail.getByText("Coastal Light", { exact: false })).toHaveClass("sr-only");
   });
 
   it("marks the chip for the event being read", () => {
@@ -50,15 +57,9 @@ describe("EventsDateRail", () => {
     expect(onSelect).toHaveBeenCalledWith("talk");
   });
 
-  it("dims, but keeps, chips for events the search hides", () => {
-    const { rail } = renderRail({ dimmedIds: new Set(["exhibition"]) });
-    expect(rail.getByRole("button", { name: /Coastal Light/ })).toHaveClass("opacity-40");
-    expect(rail.getByRole("button", { name: /Artist Talk/ })).not.toHaveClass("opacity-40");
-  });
-
   it("has no detectable accessibility problems", async () => {
     const { container } = render(
-      <EventsDateRail events={events} activeId="talk" dimmedIds={new Set()} onSelect={() => {}} />,
+      <EventsDateRail events={events} activeId="talk" onSelect={() => {}} />,
     );
     await expectNoAxeViolations(container);
   });

@@ -198,8 +198,11 @@ export const boardContent = {
       portrait: "albert-zang.jpg" as string | undefined,
       portraitAlt:
         "Albert Zang, Secretary, in a grey knit hoodie, facing the camera against a warm brown backdrop.",
-      // Bio not yet written — shows `bioPlaceholder` until it is.
-      bio: [] as readonly string[],
+      bio: [
+        "Albert Zang is the Secretary of the Coast to Coast Visual Arts Association. A Vancouver-based entrepreneur and hobbyist photographer, he brings a unique blend of technical precision, creative curiosity, and collaborative spirit to the association.",
+        "With over a decade of experience as a full-stack software engineer, including technical leadership, Albert has built a career grounded in thoughtful problem-solving, attention to detail, and a strong sense of ownership. Today, he is focused on empowering local small businesses through tailored technology solutions, including custom application development, IT consulting, and technical support.",
+        "Alongside his passion for technology, Albert sees photography as a form of creative expression and connection. Through his involvement with CCVAA, he hopes to contribute to a welcoming community where artists can connect, share their work, and inspire one another.",
+      ] as readonly string[],
       website: undefined as { label: string; href: string } | undefined,
     },
   ],
@@ -233,20 +236,17 @@ export const eventsContent = {
   eyebrow: "What’s on",
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Follow the timeline, or search the listings — select any event for full details.",
+    "Exhibitions, workshops, and gatherings through the year. Follow the timeline, and select any event for full details.",
   detailsLabel: "View details",
+  /** An event picture's button, before its description: opens it whole. */
+  viewPictureLabel: "View the full picture",
   closeLabel: "Close",
-  searchLabel: "Search events",
-  searchPlaceholder: "Search by title, place, or date…",
-  clearSearchLabel: "Clear search",
-  /** Rendered as "5 events" / "1 event" beside the search field. */
-  countNoun: "event",
-  countNounPlural: "events",
-  noResults: "No events match that search.",
   pastLabel: "Past",
   timelineLabel: "Event timeline",
   /** The phone and portrait-tablet strip that stands in for the timeline. */
   dateRailLabel: "Event dates",
+  /** A date-rail chip's place for an event with no venue. */
+  onlineLabel: "Online",
   todayLabel: "Today",
 } as const;
 

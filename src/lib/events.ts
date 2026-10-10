@@ -1,4 +1,5 @@
 import { assetPath } from "@/lib/asset";
+import { eventsContent } from "@/lib/site";
 
 /** A picture. `src` is a file name under `public/events/`, prefixed at read time. */
 export type EventPicture = { src: string; alt: string };
@@ -29,6 +30,8 @@ type EventSource = {
   endsAt?: string;
   dateLabel: string;
   location: string;
+  /** Where it happens, for the date rail's chip. Omit for events held online. */
+  place?: { city: string; country: string };
   /** Shown on the card. */
   summary: string;
   /** Shown in the dialog: paragraphs, optionally with pictures between them. */
@@ -39,8 +42,10 @@ type EventSource = {
 };
 
 export type CcvaaEvent = EventSource & {
-  /** Derived from `startsAt` for the card's calendar chip. */
-  dateBadge: { month: string; day: string };
+  /** Derived from `startsAt` for the card's calendar chip and the date rail. */
+  dateBadge: { year: string; month: string; day: string };
+  /** "City, Country", or "Online" — derived from `place`. */
+  placeLabel: string;
 };
 
 /**
@@ -49,11 +54,29 @@ export type CcvaaEvent = EventSource & {
  * Content, not data: there is no backend to query, and at this volume a typed
  * array is clearer than a CMS. Edit this file to add or remove an event.
  *
- * NOTE: these five are invented placeholders for the initial build, and their
- * pictures are downscaled copies of gallery photos. Replace both with real
- * listings — see `specs/events-0001-events-section.md`.
+ * NOTE: apart from the founding, these are invented placeholders for the initial
+ * build, and their pictures are downscaled copies of gallery photos. Replace both
+ * with real listings — see `specs/events-0001-events-section.md`.
  */
 const events: EventSource[] = [
+  {
+    id: "ccvaa-founded",
+    title: "Our Birthday: CCVAA Is Founded",
+    startsAt: "2026-06-27",
+    dateLabel: "June 27, 2026",
+    location: "Victoria, BC · BC Registry Services",
+    place: { city: "Victoria", country: "Canada" },
+    summary:
+      "The Coast to Coast Visual Arts Association was incorporated under British Columbia’s Societies Act — the day we count as our birthday.",
+    details: [
+      "On June 27, 2026, the Registrar of Companies certified the incorporation of the Coast to Coast Visual Arts Association under British Columbia’s Societies Act, as society number S0085619.",
+      "Every exhibition, workshop, and gathering on this page begins here.",
+    ],
+    image: {
+      src: "certificate-of-incorporation.jpg",
+      alt: "The British Columbia Societies Act Certificate of Incorporation for Coast to Coast Visual Arts Association, dated June 27, 2026, beneath the provincial coat of arms, with a red seal.",
+    },
+  },
   {
     id: "coastal-light-exhibition",
     title: "Coastal Light: Members’ Exhibition",
@@ -61,6 +84,7 @@ const events: EventSource[] = [
     endsAt: "2026-12-06",
     dateLabel: "November 14 – December 6, 2026",
     location: "Richmond Cultural Centre, Richmond, BC",
+    place: { city: "Richmond", country: "Canada" },
     summary:
       "Our annual juried members’ exhibition, bringing together painting, photography, and printmaking from across the province.",
     details: [
@@ -93,6 +117,7 @@ const events: EventSource[] = [
     startsAt: "2027-04-18",
     dateLabel: "April 18, 2027 · 9:00 am – 12:00 pm",
     location: "Minoru Park, Richmond, BC",
+    place: { city: "Richmond", country: "Canada" },
     summary:
       "A guided outdoor painting and sketching session among the spring plantings. All levels welcome; bring your own materials.",
     details: [
@@ -130,6 +155,7 @@ const events: EventSource[] = [
     endsAt: "2027-06-06",
     dateLabel: "June 5 – 6, 2027",
     location: "Fraser Valley · exact venue confirmed on registration",
+    place: { city: "Fraser Valley", country: "Canada" },
     summary:
       "A two-day residential workshop in monotype printing, from inking and plate preparation to pulling a finished edition.",
     details: [
@@ -158,6 +184,7 @@ const events: EventSource[] = [
     startsAt: "2027-09-19",
     dateLabel: "September 19, 2027 · 1:00 pm",
     location: "Richmond, BC · venue to be announced",
+    place: { city: "Richmond", country: "Canada" },
     summary:
       "The association’s AGM, followed by an open showcase where any member may present one recent work.",
     details: [
@@ -193,9 +220,10 @@ const MONTHS = [
  * Deliberately not `new Date()`: a date-only value parses as UTC midnight, which
  * renders as the previous day anywhere west of Greenwich — including here.
  */
-function toDateBadge(startsAt: string): { month: string; day: string } {
-  const [, month, day] = startsAt.split("-");
+function toDateBadge(startsAt: string): CcvaaEvent["dateBadge"] {
+  const [year = "", month, day] = startsAt.split("-");
   return {
+    year,
     month: MONTHS[Number(month) - 1] ?? "",
     day: day ? String(Number(day)) : "",
   };
@@ -212,6 +240,9 @@ export function getEvents(): CcvaaEvent[] {
     .map((event) => ({
       ...event,
       dateBadge: toDateBadge(event.startsAt),
+      placeLabel: event.place
+        ? `${event.place.city}, ${event.place.country}`
+        : eventsContent.onlineLabel,
       image: event.image ? toEventSrc(event.image) : undefined,
       details: event.details.map((detail) =>
         isPictureBlock(detail)
