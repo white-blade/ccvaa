@@ -318,8 +318,12 @@ test.describe("device layouts (specs/home-0003)", () => {
     await page.getByRole("button", { name: /Zhong Liu/ }).click();
     const dialog = page.getByRole("dialog", { name: "Zhong Liu" });
     await expect(dialog).toBeVisible();
-    // Wait out the slide-up, then check it meets the bottom edge at full width.
-    await page.waitForTimeout(500);
+    // The bottom sheet uses a longer eased entrance so it does not pop in.
+    const animationDuration = await dialog.evaluate((el) =>
+      parseFloat(getComputedStyle(el).animationDuration),
+    );
+    expect(animationDuration).toBeGreaterThanOrEqual(0.5);
+    await page.waitForTimeout(650);
     const box = (await dialog.boundingBox())!;
     const viewport = page.viewportSize()!;
     expect(Math.round(box.y + box.height)).toBe(viewport.height);
@@ -511,6 +515,34 @@ test.describe("purposes", () => {
     await expect(region).toBeVisible();
     await expect.poll(async () => (await region.boundingBox())?.height ?? 0).toBeGreaterThan(40);
     await expect(page.getByRole("button", { name: "Cultural Exchange" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("all purpose cards align to the tallest card, including when one expands", async ({ page }) => {
+    const cards = page.locator("#about ol").last().locator(":scope > li");
+    const tallest = page.getByRole("button", { name: "Advancement of Visual Arts" });
+    await tallest.scrollIntoViewIfNeeded();
+    await tallest.click();
+    await expect(tallest).toHaveAttribute("aria-expanded", "true");
+    await page.waitForTimeout(500);
+    await expect.poll(async () => {
+      const heights = await cards.evaluateAll((items) =>
+        items.map((item) => (item as HTMLElement).offsetHeight),
+      );
+      return new Set(heights).size;
+    }).toBe(1);
+
+    const expandedHeight = await cards.first().evaluate((item) => (item as HTMLElement).offsetHeight);
+    await tallest.click();
+    await expect(tallest).toHaveAttribute("aria-expanded", "false");
+    await page.waitForTimeout(400);
+    await expect.poll(async () => {
+      const heights = await cards.evaluateAll((items) =>
+        items.map((item) => (item as HTMLElement).offsetHeight),
+      );
+      return new Set(heights).size;
+    }).toBe(1);
+    const collapsedHeight = await cards.first().evaluate((item) => (item as HTMLElement).offsetHeight);
+    expect(collapsedHeight).toBeLessThan(expandedHeight);
   });
 });
 

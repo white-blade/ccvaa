@@ -41,6 +41,7 @@ a Vitest file under `src/`.
 | L3 | Tablets and up (≥ 768): header links, no tab bar | Auto — e2e › device layouts › tablets and up: header links, no tab bar |
 | L4 | Nothing at the end of the page hides behind the tab bar | Auto — e2e › device layouts › phones: the end of the page is not hidden… |
 | L5 | Below 640: dialogs are bottom sheets, full width, flush with the bottom; a swipe down on the handle dismisses | Auto — e2e › device layouts › small phones: dialogs are bottom sheets…; unit:Modal |
+| L5b | Below 640: dialog sheets enter with a gradual, eased slide and fade | Auto — e2e › device layouts › small phones: dialogs are bottom sheets… |
 | L6 | 640 and up: dialogs are centred | Auto — e2e › device layouts › tablets and up: dialogs stay centred |
 | L7 | Below 1024: the date rail replaces the side timeline; a chip glides its card to just below the rail | Auto — e2e › device layouts › below lg: a date rail…; unit:EventsDateRail |
 | L8 | 1024 and up: the side timeline, no rail | Auto — e2e › device layouts › lg and up… |
@@ -113,6 +114,7 @@ a Vitest file under `src/`.
 | A4 | Dialogs: focus in on open, back to the opener on close, Tab trapped, Escape closes, arrows step | Auto — unit:GalleryGrid, unit:BoardSection, unit:EventsBrowser |
 | A5 | Timeline dots step with the arrow keys | Auto — unit:EventsBrowser |
 | A6 | Purposes: each opens on its own; closed descriptions are inert; Expand/Collapse all | Auto — unit:PurposesSection; e2e › purposes |
+| A6b | All purpose cards have equal height, set by the tallest card, as descriptions open and close | Auto — e2e › purposes › all purpose cards align… |
 | A7 | Visible text and accessible names agree (timeline dots, date chips) | Auto — A1 (axe `label-content-name-mismatch`) |
 | A8 | A real screen reader reads the page sensibly | **Manual** — VoiceOver (Cmd+F5) |
 

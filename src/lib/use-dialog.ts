@@ -43,13 +43,17 @@ export function useDialog({
     if (!open) return;
     const opener =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    return () => opener?.focus();
+    // The opener may be inside a section whose position changed while the dialog
+    // was open. Restore keyboard focus without making the browser scroll the page.
+    return () => opener?.focus({ preventScroll: true });
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
 
-    initialFocusRef.current?.focus();
+    // The close button is inside a fixed, portalled sheet. Letting focus scroll
+    // its ancestors can move the document underneath the newly opened dialog.
+    initialFocusRef.current?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
