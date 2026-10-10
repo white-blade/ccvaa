@@ -76,6 +76,29 @@ describe("useDialog", () => {
     swipe(dialog, [200, 100], [380, 220]); // more sideways than down
     expect(onSwipeDown).toHaveBeenCalledTimes(1);
   });
+
+  it("sends Escape to the dialog on top only, then to the one beneath", () => {
+    const outer = vi.fn();
+    const inner = vi.fn();
+    const { rerender } = render(
+      <>
+        <Dialog key="outer" onClose={outer} />
+        <Dialog key="inner" onClose={inner} />
+      </>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(outer).not.toHaveBeenCalled();
+
+    rerender(
+      <>
+        <Dialog key="outer" onClose={outer} />
+      </>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(outer).toHaveBeenCalledTimes(1);
+    expect(inner).toHaveBeenCalledTimes(1);
+  });
 });
 
 function SwipeDownDialog(props: { onClose: () => void; onSwipeDown: () => void }) {

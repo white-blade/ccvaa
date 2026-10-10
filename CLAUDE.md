@@ -35,8 +35,8 @@ Nav: About · Gallery · Events · Contact
   (portrait, bio, website) — and the ten purposes as an accordion.
 - **Gallery**: every photograph in `public/photos/`, read at build time (adding one is
   a file drop), 2–5 per row, full-size viewer.
-- **Events**: listings with search, beside a date-scaled **timeline** (≥ 1024px) or a
-  sticky **date rail** (below).
+- **Events**: listings, beside a date-scaled **timeline** (≥ 1024px) or a sticky
+  **date rail** (below) whose chips show the date with its year and the city and country.
 - **Contact**: the email, set large, and the postal address.
 
 **Devices** are told apart by CSS media features — width for layout, `pointer-coarse:`
@@ -58,7 +58,7 @@ on text move by transform or clip only — never opacity or colour — so contra
 wherever the scroll stops. All of it is `motion-safe` and progressive — reduced motion, or a browser
 without scroll timelines, gets the page as is, nothing hidden.
 
-History of the design decisions: `specs/home-0001` … `home-0006`.
+History of the design decisions: `specs/home-0001` … `home-0008`.
 
 ## Layout
 
@@ -74,7 +74,7 @@ src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoas
                  shell; a bottom sheet on phones), SectionLinks, styles.ts
                  (shared class strings: subsection heading, round buttons)
 src/lib/site.ts  ALL copy and config — edit here first
-src/lib/         events.ts, event-search.ts, timeline.ts, gallery.ts, asset.ts,
+src/lib/         events.ts, timeline.ts, gallery.ts, asset.ts,
                  scroll-to-section.ts, use-active-section.ts (one shared store),
                  use-dialog.ts, use-columns.ts, use-today.ts, hover-focus.ts,
                  swipe.ts, strip.ts, text.ts

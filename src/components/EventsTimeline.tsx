@@ -12,8 +12,6 @@ type EventsTimelineProps = {
   layout: TimelineLayout;
   /** The event shown zoomed in: the hovered one, else the one scrolled to. */
   activeId: string | null;
-  /** Events the search hides from the list; their dots dim but stay usable. */
-  dimmedIds: Set<string>;
   isPast: (event: CcvaaEvent) => boolean;
   onHighlight: (eventId: string | null) => void;
   /** A first tap on touch: zoom in on the dot without opening it. */
@@ -53,7 +51,6 @@ export function EventsTimeline({
   events,
   layout,
   activeId,
-  dimmedIds,
   isPast,
   onHighlight,
   onPreview,
@@ -113,14 +110,13 @@ export function EventsTimeline({
           const position = layout.positions.get(event.id) ?? 0;
           const active = event.id === activeId;
           const past = isPast(event);
-          const dimmed = dimmedIds.has(event.id);
 
           return (
             <li
               key={event.id}
-              className={`absolute left-16 -translate-y-1/2 transition-opacity duration-300 ${
+              className={`absolute left-16 -translate-y-1/2 ${
                 active ? "z-20" : "z-10"
-              } ${dimmed && !active ? "opacity-30" : ""}`}
+              }`}
               style={{ top: percent(position) }}
             >
               {/* Hover is tracked on the wrapper so the open preview keeps it alive. */}

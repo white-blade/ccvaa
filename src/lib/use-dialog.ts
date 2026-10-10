@@ -2,6 +2,13 @@ import { useEffect, useRef, type RefObject } from "react";
 
 import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
 
+/**
+ * Open dialogs, oldest first. A dialog can open another — an event's picture opens
+ * the photo viewer over the event — and only the one on top answers the keyboard,
+ * so Escape closes the viewer and leaves the event open beneath it.
+ */
+const openDialogs: object[] = [];
+
 type UseDialogOptions = {
   open: boolean;
   onClose: () => void;
@@ -22,7 +29,7 @@ type UseDialogResult = {
 /**
  * Modal dialog behaviour shared by every dialog: Escape to close, optional
  * arrow-key and swipe navigation, Tab trapped inside, and the page behind locked
- * from scrolling.
+ * from scrolling. With dialogs stacked, keys go to the top one only.
  *
  * Focus moves to `initialFocusRef` on open and returns, on close, to whatever had
  * it before — the card, tile, or dot that opened the dialog.
@@ -43,15 +50,23 @@ export function useDialog({
     if (!open) return;
     const opener =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    return () => opener?.focus();
+    // The opener may be inside a section whose position changed while the dialog
+    // was open. Restore keyboard focus without making the browser scroll the page.
+    return () => opener?.focus({ preventScroll: true });
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
 
-    initialFocusRef.current?.focus();
+    // The close button is inside a fixed, portalled sheet. Letting focus scroll
+    // its ancestors can move the document underneath the newly opened dialog.
+    initialFocusRef.current?.focus({ preventScroll: true });
+
+    const self = {};
+    openDialogs.push(self);
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (openDialogs[openDialogs.length - 1] !== self) return;
       if (event.key === "Escape") {
         onClose();
         return;
@@ -87,6 +102,7 @@ export function useDialog({
     document.body.style.overflow = "hidden";
 
     return () => {
+      openDialogs.splice(openDialogs.indexOf(self), 1);
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };

@@ -63,7 +63,7 @@ One page, `/`, in sections the header links to:
 | Hero       | Headline over the coast photograph                                          |
 | `#about`   | About; the board (group photo, profiles with portrait and bio); the ten purposes, each opening on its own |
 | `#gallery` | Every photograph, 2–5 per row, each opening a full-size viewer              |
-| `#events`  | Searchable listings beside a date-scaled timeline (a date rail on smaller screens); each opens a detail dialog |
+| `#events`  | Listings beside a date-scaled timeline (a date rail of dates and places on smaller screens); each opens a detail dialog |
 | `#contact` | Email and mailing address                                                   |
 
 - **Navigation**: the header (or, on phones, a bottom tab bar) marks the section being
@@ -93,7 +93,6 @@ src/
 ├── lib/
 │   ├── site.ts             ALL copy and config — edit here first
 │   ├── events.ts           event listings (content, not data)
-│   ├── event-search.ts     listing search
 │   ├── timeline.ts         where each event sits on the timeline
 │   ├── gallery.ts          build-time read of public/photos/
 │   ├── scroll-to-section.ts  the section glide

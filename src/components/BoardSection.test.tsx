@@ -2,7 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { BoardMemberDialog } from "@/components/BoardMemberDialog";
 import { BoardSection } from "@/components/BoardSection";
+import { boardContent } from "@/lib/site";
 import { expectNoAxeViolations } from "@/test/axe";
 
 function memberCard(name: string): HTMLElement {
@@ -51,13 +53,21 @@ describe("BoardSection", () => {
     expect(within(screen.getByRole("dialog")).queryByRole("link")).toBeNull();
   });
 
-  it("says a bio is coming rather than showing filler when there is none yet", async () => {
+  it("shows every member's bio, Albert Zang's included", async () => {
     const user = userEvent.setup();
     render(<BoardSection />);
     await user.click(memberCard("Albert Zang"));
     const dialog = screen.getByRole("dialog", { name: "Albert Zang" });
-    expect(dialog).toHaveTextContent("Bio coming soon.");
+    expect(dialog).toHaveTextContent(/hobbyist photographer/);
+    expect(dialog).toHaveTextContent(/inspire one another\./);
+    expect(dialog).not.toHaveTextContent("Bio coming soon.");
     expect(within(dialog).getByRole("img", { name: /^Albert Zang, Secretary/ })).toBeInTheDocument();
+  });
+
+  it("says a bio is coming rather than showing filler when there is none yet", () => {
+    const member = { ...boardContent.members[2], bio: [] as readonly string[] };
+    render(<BoardMemberDialog member={member} onClose={() => {}} onNext={() => {}} onPrevious={() => {}} />);
+    expect(screen.getByRole("dialog", { name: "Albert Zang" })).toHaveTextContent("Bio coming soon.");
   });
 
   it("shows the board's group photograph, described left to right", () => {

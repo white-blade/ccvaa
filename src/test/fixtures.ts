@@ -6,14 +6,15 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export function makeEvent(
   overrides: Partial<CcvaaEvent> & Pick<CcvaaEvent, "id" | "startsAt">,
 ): CcvaaEvent {
-  const [, month, day] = overrides.startsAt.split("-");
+  const [year, month, day] = overrides.startsAt.split("-");
   return {
     title: overrides.id,
     dateLabel: overrides.startsAt,
     location: "Richmond, BC",
     summary: "",
     details: [],
-    dateBadge: { month: MONTHS[Number(month) - 1], day: String(Number(day)) },
+    placeLabel: "Richmond, Canada",
+    dateBadge: { year, month: MONTHS[Number(month) - 1], day: String(Number(day)) },
     ...overrides,
   };
 }

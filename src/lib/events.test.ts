@@ -47,7 +47,26 @@ describe("getEvents", () => {
   it("reads the date badge off the ISO string, not a shifted Date", () => {
     // Tests run in America/Vancouver: a UTC-parsed date would show the 13th here.
     const exhibition = events.find((event) => event.id === "coastal-light-exhibition");
-    expect(exhibition?.dateBadge).toEqual({ month: "Nov", day: "14" });
+    expect(exhibition?.dateBadge).toEqual({ year: "2026", month: "Nov", day: "14" });
+  });
+
+  it("labels each event's place as city and country, or online without one", () => {
+    const exhibition = events.find((event) => event.id === "coastal-light-exhibition");
+    const talk = events.find((event) => event.id === "artist-talk-pacific-light");
+    expect(exhibition?.placeLabel).toBe("Richmond, Canada");
+    expect(talk?.placeLabel).toBe("Online");
+    for (const event of events) {
+      expect(event.placeLabel).toMatch(/^(Online|[^,]+, [^,]+)$/);
+    }
+  });
+
+  it("opens with the founding, on the date of the certificate of incorporation", () => {
+    const [first] = events;
+    expect(first.id).toBe("ccvaa-founded");
+    expect(first.startsAt).toBe("2026-06-27");
+    expect(first.dateBadge).toEqual({ year: "2026", month: "Jun", day: "27" });
+    expect(first.placeLabel).toBe("Victoria, Canada");
+    expect(first.image?.src).toBe("/ccvaa/events/certificate-of-incorporation.jpg");
   });
 
   it("prefixes every picture with the base path", () => {
