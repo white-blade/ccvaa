@@ -85,6 +85,8 @@
   --animate-photo-in: photo-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-photo-from-right: photo-from-right 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-photo-from-left: photo-from-left 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Slideshow captions move only — text never fades, so contrast holds mid-change. */
+  --animate-caption-in: caption-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   @keyframes viewer-in {
     from {
@@ -110,6 +112,12 @@
     from {
       opacity: 0;
       transform: translateX(-6%);
+    }
+  }
+
+  @keyframes caption-in {
+    from {
+      transform: translateY(0.75rem);
     }
   }
 

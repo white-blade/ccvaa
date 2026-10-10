@@ -2,53 +2,44 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 import { assetPath } from "@/lib/asset";
+import { galleryPhotoDetails } from "@/lib/gallery-photos";
 
 /** Folder under `public/` that holds gallery photos. */
-const PHOTO_DIR = "photos";
+export const PHOTO_DIR = "photos";
 
 /**
  * Raster formats browsers can display. AVIF and WebP are included deliberately —
  * the folder is expected to hold a mix.
  */
-const SUPPORTED_FORMATS = /\.(jpe?g|png|webp|avif|gif)$/i;
+export const SUPPORTED_FORMATS = /\.(jpe?g|png|webp|avif|gif)$/i;
 
 export type GalleryPhoto = {
-  /** File name, used as the React key and the caption lookup. */
+  /** File name, used as the React key and the details lookup. */
   file: string;
   /** Base-path-prefixed URL. */
   src: string;
   alt: string;
-};
-
-/**
- * Alt text per file. Entries are optional — anything missing falls back to a
- * generic description, so dropping in a new photo never breaks the build.
- */
-const PHOTO_ALT: Record<string, string> = {
-  "1.jpg":
-    "A wooden dock reaching into a still, mist-covered lake, its planks scattered with red and pink maple leaves beneath an autumn tree.",
-  "2.avif":
-    "A terraced hillside garden of pink and red flowering shrubs looking down over a lake ringed by hazy blue mountains.",
-  "3.jpg":
-    "An empty wooden bench on a lakeshore in low golden light, framed by bare branches and dry winter grasses.",
-  "4.jpg":
-    "Branches of magenta bougainvillea against a pink and orange sunset sky, with hills and distant town lights below.",
-  "5.jpg":
-    "Sunrise breaking over a ridge above a green mountain valley, a lone figure crossing the meadow among moss-covered boulders.",
-  "6.avif":
-    "A high alpine valley seen over a foreground of pale granite boulders, with conifers and cloud-covered peaks beyond.",
+  /** The caption shown beside the photograph; the alt text when none is given. */
+  description?: string;
+  author?: string;
+  /** When it was taken, YYYY-MM-DD. */
+  takenAt?: string;
 };
 
 const FALLBACK_ALT = "A photograph from the Coast to Coast Visual Arts Association gallery.";
 
+const DETAILS = new Map(galleryPhotoDetails.map((details) => [details.file, details]));
+
 /**
- * Reads `public/photos/` at **build time**.
+ * Reads `public/photos/` at **build time** and joins each file with its entry in
+ * `gallery-photos.ts`.
  *
  * A static export has no server, so nothing can list a directory per request.
  * This runs once during `next build` and the file names are baked into the HTML,
  * which is what makes "drop a photo in the folder and it appears" work without a
- * backend. Returns an empty list when the folder is missing or unreadable so a
- * fresh clone still builds.
+ * backend. A file without an entry still shows, with a generic description. Returns
+ * an empty list when the folder is missing or unreadable so a fresh clone still
+ * builds.
  */
 export async function readGalleryPhotos(): Promise<GalleryPhoto[]> {
   let fileNames: string[];
@@ -68,9 +59,16 @@ export async function readGalleryPhotos(): Promise<GalleryPhoto[]> {
     .sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
     )
-    .map((file) => ({
-      file,
-      src: assetPath(`/${PHOTO_DIR}/${file}`),
-      alt: PHOTO_ALT[file] ?? FALLBACK_ALT,
-    }));
+    .map((file) => {
+      const details = DETAILS.get(file);
+      return {
+        file,
+        src: assetPath(`/${PHOTO_DIR}/${file}`),
+        alt: details?.alt ?? FALLBACK_ALT,
+        // Left out rather than undefined, so the props stay plain JSON.
+        ...(details?.description ? { description: details.description } : {}),
+        ...(details?.author ? { author: details.author } : {}),
+        ...(details?.takenAt ? { takenAt: details.takenAt } : {}),
+      };
+    });
 }
