@@ -28,9 +28,10 @@ static export supports no middleware at all.
 src/app/         page.tsx (the one page), layout.tsx, globals.css, icon.svg
 src/components/  Header, Hero, AboutSection, BoardSection, PurposesSection,
                  GallerySection/Grid/Lightbox,
-                 EventsSection/Browser/Timeline/Card/Dialog,
+                 EventsSection/Browser/Timeline/DateRail/Card/Dialog, TabBar,
                  ContactSection, Footer, BrandMark, CoastToCoastLogo, ColumnControl
-                 shared: Section (numbered section shell), Disclosure, Reveal
+                 shared: Section (numbered section shell), Disclosure, Reveal,
+                 Modal (dialog shell; a bottom sheet on phones), SectionLinks
 src/lib/site.ts  ALL copy and config — edit here first
 src/lib/         events.ts, event-search.ts, timeline.ts, gallery.ts, asset.ts,
                  use-dialog.ts, use-columns.ts, use-today.ts, use-active-section.ts,
@@ -67,10 +68,11 @@ in `src/lib/` as plain functions (see `timeline.ts`, `event-search.ts`); compone
 stay presentational. Deploys run `npm test` before building.
 
 `e2e/` holds the browser suite (Playwright). It serves `out/` under `/ccvaa` as Pages
-does and runs every test on a desktop, a touch tablet, and a touch phone in parallel —
+does and runs every test in parallel on six devices — Chromium desktop, touch tablet,
+and touch phone, and WebKit (Safari's engine) iPhone, iPad, and portrait iPad —
 layout overflow, full-page axe with contrast, touch input, and section navigation are
-checked there because jsdom cannot. Locally it drives the installed Chrome; CI
-installs Chromium. CI runs lint, typecheck, unit, and browser tests as parallel jobs.
+checked there because jsdom cannot. Locally the Chromium projects drive the
+installed Chrome (`npx playwright install webkit` once for WebKit); CI installs both. CI runs lint, typecheck, unit, and browser tests as parallel jobs.
 
 Preview a production build: `npm run build && npx serve out` (or
 `python3 -m http.server 4000 --directory out`).
@@ -92,6 +94,14 @@ the other breaks every asset path.
 - Never commit secrets. There are none to commit — keep it that way.
 - Match surrounding style: Tailwind utility classes, `@/` import alias, comments only
   where intent isn't obvious from the code.
+- Devices are told apart by CSS media features — width breakpoints for layout,
+  `pointer-coarse:` for touch — never by user agent (static HTML, no server). Phones
+  (< md) get the bottom `TabBar`, < sm bottom-sheet dialogs, < lg the `EventsDateRail`;
+  see [`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md).
+  Fixed and sticky elements read the header's measured height from `--header-h` and
+  pad for notches with `env(safe-area-inset-*)`.
+- Never put `overflow-hidden` on an ancestor of something sticky: it makes a scroll
+  container and the sticky element stops sticking. Use `overflow-clip`.
 - New sections go through `Section`; its number comes from the section's place in
   `navigation`, so add the nav entry too.
 - Accessibility is a requirement, not a polish pass: every control reachable and

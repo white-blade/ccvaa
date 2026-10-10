@@ -51,7 +51,7 @@ export function BoardSection() {
               type="button"
               onClick={() => setOpenIndex(index)}
               aria-haspopup="dialog"
-              className="group flex w-full items-center gap-4 rounded-3xl bg-white p-5 text-left shadow-sm ring-1 ring-ocean-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-coral/10 hover:ring-coral/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+              className="group flex w-full items-center gap-4 rounded-3xl bg-white p-5 text-left shadow-sm ring-1 ring-ocean-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-coral/10 hover:ring-coral/50 pointer-coarse:active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
             >
               <span
                 aria-hidden="true"

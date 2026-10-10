@@ -32,6 +32,16 @@
   /* Gallery tiles: a short rise-and-fade, gated on motion-safe at use */
   --animate-rise-in: rise-in 320ms ease-out both;
   --animate-scroll-cue: scroll-cue 2.2s ease-in-out infinite;
+  --animate-sheet-in: sheet-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
+    }
+  }
 
   @keyframes scroll-cue {
     from {
@@ -52,6 +62,20 @@
       transform: none;
     }
   }
+}
+
+/*
+ * --header-h: the fixed header's real height, published by Header.tsx as it changes
+ * (it grows by the notch on phones with viewport-fit=cover). Sticky elements and
+ * scroll offsets read it; the fallback holds until the first measurement.
+ */
+:root {
+  --header-h: 5rem;
+}
+
+html {
+  /* The grey iOS tap flash is replaced by explicit press feedback on touch. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {

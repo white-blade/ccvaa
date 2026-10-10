@@ -32,7 +32,7 @@ export function EventCard({
         () => onHighlight(false),
       )}
       aria-haspopup="dialog"
-      className={`group relative flex w-full flex-col overflow-hidden rounded-3xl bg-white text-left transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 sm:flex-row ${
+      className={`group relative flex w-full flex-col overflow-hidden rounded-3xl bg-white text-left transition-all duration-300 pointer-coarse:active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 sm:flex-row ${
         highlighted
           ? "-translate-y-0.5 shadow-2xl shadow-coral/20 ring-2 ring-coral"
           : "shadow-sm ring-1 ring-ocean-100"
@@ -112,7 +112,8 @@ export function EventCard({
           {event.location}
         </p>
 
-        <p className="mt-3 flex-1 text-sm leading-relaxed text-ocean-600">
+        {/* Three lines on phones, so a card fits a screen; the dialog has it all. */}
+        <p className="mt-3 flex-1 text-sm leading-relaxed text-ocean-600 max-sm:line-clamp-3">
           {event.summary}
         </p>
 

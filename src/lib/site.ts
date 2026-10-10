@@ -49,10 +49,8 @@ export function sectionNumber(id: SectionId): string {
 export const headerContent = {
   skipLabel: "Skip to content",
   navLabel: "Main navigation",
-  /** The phone menu: a second nav landmark, so it needs a name of its own. */
-  menuLabel: "Site menu",
-  openMenuLabel: "Open menu",
-  closeMenuLabel: "Close menu",
+  /** The phone tab bar: a second nav landmark, so it needs a name of its own. */
+  tabBarLabel: "Sections",
 } as const;
 
 export const heroContent = {
@@ -220,6 +218,8 @@ export const eventsContent = {
   noResults: "No events match that search.",
   pastLabel: "Past",
   timelineLabel: "Event timeline",
+  /** The phone and portrait-tablet strip that stands in for the timeline. */
+  dateRailLabel: "Event dates",
   todayLabel: "Today",
 } as const;
 

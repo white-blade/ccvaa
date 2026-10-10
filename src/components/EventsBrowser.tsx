@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { EventCard } from "@/components/EventCard";
 import { EventDialog } from "@/components/EventDialog";
+import { EventsDateRail } from "@/components/EventsDateRail";
 import { EventsTimeline } from "@/components/EventsTimeline";
 import { searchEvents, searchIndex } from "@/lib/event-search";
+import { glideTo } from "@/lib/scroll-to-section";
 import type { CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 import { timelineLayout } from "@/lib/timeline";
@@ -26,11 +28,26 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
    * until the reading position moves to another card or the visitor taps elsewhere
    * — not on raw scroll distance, which a tap's own drift can exceed.
    */
-  const [preview, setPreview] = useState<{ id: string; inViewId: string | null } | null>(null);
+  const [preview, setPreview] = useState<{
+    id: string;
+    inViewId: string | null;
+  } | null>(null);
   /** The card nearest the middle of the screen, so the timeline follows scrolling. */
   const [inViewId, setInViewId] = useState<string | null>(null);
 
   const listRef = useRef<HTMLUListElement>(null);
+  const railRef = useRef<HTMLElement>(null);
+
+  /** A date chip: glide the card to just below the header and the rail. */
+  const showCard = (eventId: string) => {
+    const card = listRef.current?.querySelector<HTMLElement>(
+      `[data-event-id="${eventId}"] button`,
+    );
+    if (!card) return;
+    const header = document.querySelector("header")?.offsetHeight ?? 0;
+    const rail = railRef.current?.offsetHeight ?? 0;
+    glideTo(card, header + rail + 12);
+  };
 
   const index = useMemo(() => searchIndex(events), [events]);
   const { terms, matches } = searchEvents(events, index, query);
@@ -62,17 +79,21 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
       { rootMargin: "-45% 0px -50% 0px" },
     );
 
-    list.querySelectorAll("[data-event-id]").forEach((item) => observer.observe(item));
+    list
+      .querySelectorAll("[data-event-id]")
+      .forEach((item) => observer.observe(item));
     return () => observer.disconnect();
   }, [matchKey]);
 
-  const previewId = preview && preview.inViewId === inViewId ? preview.id : null;
+  const previewId =
+    preview && preview.inViewId === inViewId ? preview.id : null;
 
   const timelineRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!previewId) return;
     const onPointerDown = (pointer: PointerEvent) => {
-      if (!timelineRef.current?.contains(pointer.target as Node)) setPreview(null);
+      if (!timelineRef.current?.contains(pointer.target as Node))
+        setPreview(null);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
@@ -86,7 +107,9 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
   const closeDialog = useCallback(() => setOpenEventId(null), []);
 
   const noun =
-    events.length === 1 ? eventsContent.countNoun : eventsContent.countNounPlural;
+    events.length === 1
+      ? eventsContent.countNoun
+      : eventsContent.countNounPlural;
   const countLabel = terms.length
     ? `${matches.length} of ${events.length} ${noun}`
     : `${events.length} ${noun}`;
@@ -119,38 +142,58 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
         </div>
 
         {/* Announced, because filtering changes the page without moving focus. */}
-        <p aria-live="polite" className="text-sm lining-nums tabular-nums text-ocean-500">
+        <p
+          aria-live="polite"
+          className="text-sm lining-nums tabular-nums text-ocean-500"
+        >
           {countLabel}
         </p>
       </div>
 
       <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-14">
-        {matches.length > 0 ? (
-          <ul ref={listRef} className="space-y-6">
-            {matches.map((event) => (
-              <li key={event.id} data-event-id={event.id}>
-                <EventCard
-                  event={event}
-                  past={isPast(event)}
-                  highlighted={hoveredId === event.id || previewId === event.id}
-                  onOpen={() => setOpenEventId(event.id)}
-                  onHighlight={(highlighted) => setHoveredId(highlighted ? event.id : null)}
-                />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-ocean-200 bg-white/60 p-10 text-center">
-            <p className="text-sm text-ocean-600">{eventsContent.noResults}</p>
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="mt-4 inline-flex items-center rounded-full border border-ocean-200 bg-white px-4 py-2 text-sm font-semibold text-ocean-800 transition-colors hover:border-ocean-400 hover:bg-ocean-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
-            >
-              {eventsContent.clearSearchLabel}
-            </button>
-          </div>
-        )}
+        {/* The rail is sticky within this column, so it rides along with the list. */}
+        <div>
+          {/* Below lg only: the side timeline has no room, so the dates ride above. */}
+          <EventsDateRail
+            ref={railRef}
+            events={events}
+            activeId={activeId}
+            dimmedIds={dimmedIds}
+            onSelect={showCard}
+          />
+          {matches.length > 0 ? (
+            <ul ref={listRef} className="space-y-6">
+              {matches.map((event) => (
+                <li key={event.id} data-event-id={event.id}>
+                  <EventCard
+                    event={event}
+                    past={isPast(event)}
+                    highlighted={
+                      hoveredId === event.id || previewId === event.id
+                    }
+                    onOpen={() => setOpenEventId(event.id)}
+                    onHighlight={(highlighted) =>
+                      setHoveredId(highlighted ? event.id : null)
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-ocean-200 bg-white/60 p-10 text-center">
+              <p className="text-sm text-ocean-600">
+                {eventsContent.noResults}
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="mt-4 inline-flex items-center rounded-full border border-ocean-200 bg-white px-4 py-2 text-sm font-semibold text-ocean-800 transition-colors hover:border-ocean-400 hover:bg-ocean-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+              >
+                {eventsContent.clearSearchLabel}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Wide screens only: on a phone the cards' own dates carry the sequence. */}
         <aside ref={timelineRef} className="hidden lg:block">
@@ -169,7 +212,9 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
         </aside>
       </div>
 
-      {openEvent ? <EventDialog event={openEvent} onClose={closeDialog} /> : null}
+      {openEvent ? (
+        <EventDialog event={openEvent} onClose={closeDialog} />
+      ) : null}
     </>
   );
 }

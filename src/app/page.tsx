@@ -6,6 +6,7 @@ import { GallerySection } from "@/components/GallerySection";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { SectionLinks } from "@/components/SectionLinks";
+import { TabBar } from "@/components/TabBar";
 import { headerContent } from "@/lib/site";
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
         <ContactSection />
       </main>
       <Footer />
+      <TabBar />
     </>
   );
 }

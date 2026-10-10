@@ -9,7 +9,8 @@ export function Footer() {
 
   return (
     <footer className="bg-ocean-950 text-ocean-100">
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      {/* On phones the tab bar covers the bottom edge, so the footer pads past it. */}
+      <div className="mx-auto max-w-6xl px-6 py-16 max-md:pb-[calc(7rem+env(safe-area-inset-bottom))]">
         <div className="grid gap-12 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="max-w-sm">
             <CoastToCoastLogo className="h-9 w-auto" />

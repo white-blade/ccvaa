@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EventsBrowser } from "@/components/EventsBrowser";
+import { glideTo } from "@/lib/scroll-to-section";
 import { expectNoAxeViolations } from "@/test/axe";
 import { makeEvent } from "@/test/fixtures";
 
@@ -26,6 +27,8 @@ const events = [
     location: "Online (Zoom)",
   }),
 ];
+
+vi.mock("@/lib/scroll-to-section", () => ({ glideTo: vi.fn() }));
 
 function renderOn(today: string) {
   // Only Date is faked, so user-event's own timers still run.
@@ -187,6 +190,34 @@ describe("EventsBrowser timeline", () => {
     expect(talkDot).toHaveFocus();
     await user.keyboard("{ArrowUp}");
     expect(exhibitionDot).toHaveFocus();
+  });
+});
+
+describe("EventsBrowser date rail (below lg)", () => {
+  function rail() {
+    return within(screen.getByRole("navigation", { name: "Event dates" }));
+  }
+
+  it("glides a chosen chip's card into view below the header and the rail", async () => {
+    const user = renderOn("2026-10-09");
+    vi.mocked(glideTo).mockClear();
+    await user.click(rail().getByRole("button", { name: /^Artist Talk/ }));
+    expect(glideTo).toHaveBeenCalledTimes(1);
+    const [target, offset] = vi.mocked(glideTo).mock.calls[0];
+    expect(target).toBe(card("Artist Talk"));
+    expect(offset).toBeGreaterThanOrEqual(12);
+  });
+
+  it("marks the chip of the event highlighted on the timeline", async () => {
+    const user = renderOn("2026-10-09");
+    await user.hover(dot("Artist Talk — February 11, 2027"));
+    expect(rail().getByRole("button", { name: /^Artist Talk/ })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("dims the chips of events the search hides", async () => {
+    const user = renderOn("2026-10-09");
+    await user.type(screen.getByRole("searchbox"), "zoom");
+    expect(rail().getByRole("button", { name: /^Coastal Light/ })).toHaveClass("opacity-40");
   });
 });
 
