@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 
+import { closeButtonClass, Modal } from "@/components/Modal";
 import { isPictureBlock, type CcvaaEvent, type EventPictureBlock } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
-import { useDialog } from "@/lib/use-dialog";
 
 type EventDialogProps = {
   event: CcvaaEvent;
@@ -47,92 +47,80 @@ function PictureBlock({ block }: { block: EventPictureBlock }) {
 }
 
 export function EventDialog({ event, onClose }: EventDialogProps) {
-  const { dialogRef, initialFocusRef } = useDialog({ open: true, onClose });
   const titleId = `event-${event.id}-title`;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-ocean-950/70 p-4 backdrop-blur-sm sm:p-8"
-      // Backdrop click closes; the panel stops propagation so inner clicks do not.
-      onClick={onClose}
-    >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(clickEvent) => clickEvent.stopPropagation()}
-        // Capped and scrolled internally, so a long description with pictures
-        // cannot push the close button off screen.
-        className="my-auto flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-ocean-100 bg-white shadow-2xl"
-      >
-        <div className="relative shrink-0">
-          {event.image ? (
-            <div className="relative aspect-[16/9] w-full bg-ocean-900 sm:aspect-[21/9]">
-              <Image
-                src={event.image.src}
-                alt={event.image.alt}
-                fill
-                unoptimized
-                sizes="(min-width: 768px) 48rem, 100vw"
-                className="object-cover"
-              />
+    <Modal labelledBy={titleId} onClose={onClose}>
+      {(initialFocusRef) => (
+        <>
+          <div className="relative shrink-0">
+            {event.image ? (
+              <div className="relative aspect-[16/9] w-full bg-ocean-900 sm:aspect-[21/9]">
+                <Image
+                  src={event.image.src}
+                  alt={event.image.alt}
+                  fill
+                  unoptimized
+                  sizes="(min-width: 768px) 48rem, 100vw"
+                  className="object-cover"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-gradient-to-t from-ocean-950/90 via-ocean-950/30 to-ocean-950/10"
+                />
+              </div>
+            ) : (
               <div
                 aria-hidden="true"
-                className="absolute inset-0 bg-gradient-to-t from-ocean-950/90 via-ocean-950/30 to-ocean-950/10"
+                className="h-28 w-full bg-gradient-to-br from-ocean-800 via-ocean-900 to-ocean-950 sm:h-32"
               />
-            </div>
-          ) : (
-            <div
-              aria-hidden="true"
-              className="h-28 w-full bg-gradient-to-br from-ocean-800 via-ocean-900 to-ocean-950 sm:h-32"
-            />
-          )}
-
-          {/* Title over the picture rather than below it — the image becomes the
-              header instead of a banner the text has to repeat. */}
-          <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-            <p className="text-xs font-medium uppercase tracking-wider text-cream/80">
-              <time dateTime={event.startsAt}>{event.dateLabel}</time>
-            </p>
-            <h3
-              id={titleId}
-              className="mt-2 font-display text-2xl font-semibold text-white sm:text-3xl"
-            >
-              {event.title}
-            </h3>
-            <p className="mt-1 text-sm text-cream/80">{event.location}</p>
-          </div>
-
-          <button
-            type="button"
-            ref={initialFocusRef}
-            onClick={onClose}
-            aria-label={eventsContent.closeLabel}
-            className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-ocean-950/40 text-cream backdrop-blur-sm transition-colors hover:bg-ocean-950/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral"
-          >
-            <span aria-hidden="true">✕</span>
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
-          <div className="space-y-5 text-sm leading-relaxed text-ocean-700">
-            {event.details.map((detail, index) =>
-              isPictureBlock(detail) ? (
-                <PictureBlock key={`pictures-${index}`} block={detail} />
-              ) : (
-                <p key={detail}>{detail}</p>
-              ),
             )}
+
+            {/* Title over the picture rather than below it — the image becomes the
+                header instead of a banner the text has to repeat. */}
+            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+              <p className="text-xs font-medium uppercase tracking-wider text-cream/80">
+                <time dateTime={event.startsAt}>{event.dateLabel}</time>
+              </p>
+              <h3
+                id={titleId}
+                className="mt-2 font-display text-2xl font-semibold text-white sm:text-3xl"
+              >
+                {event.title}
+              </h3>
+              <p className="mt-1 text-sm text-cream/80">{event.location}</p>
+            </div>
+
+            <button
+              type="button"
+              ref={initialFocusRef}
+              onClick={onClose}
+              aria-label={eventsContent.closeLabel}
+              className={`absolute right-4 top-4 ${closeButtonClass}`}
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
           </div>
 
-          {event.admission ? (
-            <p className="mt-6 inline-flex rounded-full bg-ocean-50 px-4 py-2 text-sm font-medium text-ocean-800">
-              {event.admission}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
+            <div className="space-y-5 text-sm leading-relaxed text-ocean-700">
+              {event.details.map((detail, index) =>
+                isPictureBlock(detail) ? (
+                  <PictureBlock key={`pictures-${index}`} block={detail} />
+                ) : (
+                  <p key={detail}>{detail}</p>
+                ),
+              )}
+            </div>
+
+            {event.admission ? (
+              <p className="mt-6 inline-flex rounded-full bg-ocean-50 px-4 py-2 text-sm font-medium text-ocean-800">
+                {event.admission}
+              </p>
+            ) : null}
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }

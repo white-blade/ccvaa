@@ -16,12 +16,12 @@ type UseDialogResult = {
 };
 
 /**
- * Modal dialog behaviour shared by the gallery lightbox and the events dialog:
- * Escape to close, optional arrow-key navigation, Tab trapped inside, and the
- * page behind locked from scrolling.
+ * Modal dialog behaviour shared by every dialog: Escape to close, optional
+ * arrow-key and swipe navigation, Tab trapped inside, and the page behind locked
+ * from scrolling.
  *
- * Focus is moved to `initialFocusRef` on open. Restoring focus to whatever opened
- * the dialog stays with the caller, which knows which element that was.
+ * Focus moves to `initialFocusRef` on open and returns, on close, to whatever had
+ * it before — the card, tile, or dot that opened the dialog.
  */
 export function useDialog({
   open,
@@ -31,6 +31,15 @@ export function useDialog({
 }: UseDialogOptions): UseDialogResult {
   const dialogRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLButtonElement>(null);
+
+  // Keyed on `open` alone, and declared first: it must capture the opener before
+  // the effect below moves focus, and must not re-run when a callback changes.
+  useEffect(() => {
+    if (!open) return;
+    const opener =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => opener?.focus();
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +86,37 @@ export function useDialog({
       document.body.style.overflow = previousOverflow;
     };
   }, [open, onClose, onNext, onPrevious]);
+
+  // Swipe left/right steps through a collection on touch screens. A swipe must be
+  // clearly horizontal, so vertical scrolling and pinch-zoom are left alone.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!open || !dialog || (!onNext && !onPrevious)) return;
+
+    let start: { x: number; y: number } | null = null;
+    const onTouchStart = (event: TouchEvent) => {
+      start =
+        event.touches.length === 1
+          ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+          : null;
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      if (!start) return;
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      start = null;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      (dx < 0 ? onNext : onPrevious)?.();
+    };
+
+    dialog.addEventListener("touchstart", onTouchStart, { passive: true });
+    dialog.addEventListener("touchend", onTouchEnd);
+    return () => {
+      dialog.removeEventListener("touchstart", onTouchStart);
+      dialog.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [open, onNext, onPrevious]);
 
   return { dialogRef, initialFocusRef };
 }

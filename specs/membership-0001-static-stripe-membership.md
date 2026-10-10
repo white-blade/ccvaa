@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` |
+| **Status** | `withdrawn` — removed from the site; see [`home-0001`](home-0001-single-page.md) |
 | **Depends on** | [`platform-0002`](platform-0002-github-pages-static-migration.md) |
 | **Source** | CEO (2026-10-08) |
 

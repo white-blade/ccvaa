@@ -1,11 +1,12 @@
-import { GalleryCarousel } from "@/components/GalleryCarousel";
+import { GalleryGrid } from "@/components/GalleryGrid";
+import { Section } from "@/components/Section";
 import { readGalleryPhotos } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
 
 /**
  * Server component: resolves the photo list at build time, then hands it to the
- * client carousel. Renders nothing at all when there are no photos, so an empty
- * folder leaves no hollow section behind.
+ * client grid. Renders nothing at all when there are no photos, so an empty folder
+ * leaves no hollow section behind.
  */
 export async function GallerySection() {
   const photos = await readGalleryPhotos();
@@ -15,21 +16,17 @@ export async function GallerySection() {
   }
 
   return (
-    <section id="gallery" className="scroll-mt-24 bg-ocean-50 py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="max-w-3xl">
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-ocean-900 sm:text-4xl">
-            {galleryContent.title}
-          </h2>
-          <p className="mt-6 text-base leading-relaxed text-ocean-700">
-            {galleryContent.description}
-          </p>
-        </div>
-
-        <div className="mt-10">
-          <GalleryCarousel photos={photos} />
-        </div>
+    <Section
+      id="gallery"
+      tone="dark"
+      eyebrow={galleryContent.eyebrow}
+      title={galleryContent.title}
+      description={galleryContent.description}
+      glow
+    >
+      <div className="mt-10">
+        <GalleryGrid photos={photos} />
       </div>
-    </section>
+    </Section>
   );
 }

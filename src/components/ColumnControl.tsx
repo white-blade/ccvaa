@@ -5,8 +5,10 @@ type ColumnControlProps<T extends number> = {
   options: readonly T[];
   value: T;
   onChange: (next: T) => void;
-  /** Distinguishes the two controls when both are on screen. */
+  /** Prefix for the label's id. */
   id: string;
+  /** Styles for a dark section background. */
+  onDark?: boolean;
 };
 
 /**
@@ -19,6 +21,7 @@ export function ColumnControl<T extends number>({
   value,
   onChange,
   id,
+  onDark = false,
 }: ColumnControlProps<T>) {
   const labelId = `${id}-label`;
 
@@ -26,14 +29,18 @@ export function ColumnControl<T extends number>({
     <div className="flex shrink-0 items-center gap-3">
       <span
         id={labelId}
-        className="text-xs font-medium uppercase tracking-wider text-ocean-500"
+        className={`text-xs font-medium uppercase tracking-wider ${
+          onDark ? "text-ocean-200" : "text-ocean-500"
+        }`}
       >
         {label}
       </span>
       <div
         role="group"
         aria-labelledby={labelId}
-        className="flex items-center gap-1 rounded-full border border-ocean-200 bg-white p-1"
+        className={`flex items-center gap-1 rounded-full border p-1 ${
+          onDark ? "border-white/15 bg-white/5" : "border-ocean-200 bg-white"
+        }`}
       >
         {options.map((option) => (
           <button
@@ -41,10 +48,14 @@ export function ColumnControl<T extends number>({
             type="button"
             onClick={() => onChange(option)}
             aria-pressed={value === option}
-            className={`h-8 w-8 rounded-full text-sm font-semibold lining-nums tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
+            className={`h-8 w-8 rounded-full text-sm pointer-coarse:h-10 pointer-coarse:w-10 font-semibold lining-nums tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
               value === option
-                ? "bg-ocean-900 text-cream"
-                : "text-ocean-600 hover:bg-ocean-50"
+                ? onDark
+                  ? "bg-cream text-ocean-900"
+                  : "bg-ocean-900 text-cream"
+                : onDark
+                  ? "text-ocean-100 hover:bg-white/10"
+                  : "text-ocean-600 hover:bg-ocean-50"
             }`}
           >
             {option}

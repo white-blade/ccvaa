@@ -45,8 +45,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sourceSans.variable} ${playfair.variable} h-full scroll-smooth antialiased`}
+      className={`${sourceSans.variable} ${playfair.variable} h-full antialiased`}
+      // The inline script adds `js` before hydration; React would otherwise warn.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Arms the scroll reveal in globals.css — only when scripts actually run. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );

@@ -25,23 +25,24 @@ static export supports no middleware at all.
 ## Layout
 
 ```
-src/app/         page.tsx (home), gallery/, events/, membership/,
-                 layout.tsx, globals.css, icon.svg
+src/app/         page.tsx (the one page), layout.tsx, globals.css, icon.svg
 src/components/  Header, Hero, AboutSection, BoardSection, PurposesSection,
-                 GallerySection/Carousel/Grid/Lightbox, PageBanner,
-                 EventsBrowser/Calendar/Card/Dialog,
-                 MembershipSection, ContactSection, Footer, BrandMark,
-                 CoastToCoastLogo, ColumnControl
+                 GallerySection/Grid/Lightbox,
+                 EventsSection/Browser/Timeline/Card/Dialog,
+                 ContactSection, Footer, BrandMark, CoastToCoastLogo, ColumnControl
+                 shared: Section (numbered section shell), Disclosure, Reveal
 src/lib/site.ts  ALL copy and config — edit here first
-src/lib/         events.ts, calendar.ts, event-search.ts, gallery.ts,
-                 membership.ts, asset.ts, use-dialog.ts, use-columns.ts, use-today.ts
+src/lib/         events.ts, event-search.ts, timeline.ts, gallery.ts, asset.ts,
+                 use-dialog.ts, use-columns.ts, use-today.ts, use-active-section.ts,
+                 hover-focus.ts
 src/test/        shared test fixtures
 specs/           architecture specs / decision records
 assets/          source originals, not deployed
 ```
 
-Pages: `/` (hero, about, gallery carousel, contact), `/gallery`, `/events`,
-`/membership`. Gallery photos come from `public/photos/`, read at build time — adding
+One page, `/`: hero, `#about`, `#gallery`, `#events` (listings beside a timeline),
+`#contact`. There are no other routes and no membership — see
+[`specs/home-0001-single-page.md`](specs/home-0001-single-page.md). Gallery photos come from `public/photos/`, read at build time — adding
 one is a file drop, not a code change.
 
 **Content changes go in `src/lib/site.ts`.** Org details, navigation, hero copy, the
@@ -57,12 +58,19 @@ npm run build      # static export to out/
 npm run lint
 npm run typecheck
 npm test           # Vitest, once; `npm run test:watch` to keep it running
+npm run build && npm run test:e2e   # Playwright against out/: desktop, tablet, phone
 ```
 
 Tests live beside the code as `*.test.ts(x)` and run in jsdom, pinned to
 `America/Vancouver` so date bugs west of Greenwich show up. Logic worth testing goes
-in `src/lib/` as plain functions (see `calendar.ts`, `event-search.ts`); components
+in `src/lib/` as plain functions (see `timeline.ts`, `event-search.ts`); components
 stay presentational. Deploys run `npm test` before building.
+
+`e2e/` holds the browser suite (Playwright). It serves `out/` under `/ccvaa` as Pages
+does and runs every test on a desktop, a touch tablet, and a touch phone in parallel —
+layout overflow, full-page axe with contrast, touch input, and section navigation are
+checked there because jsdom cannot. Locally it drives the installed Chrome; CI
+installs Chromium. CI runs lint, typecheck, unit, and browser tests as parallel jobs.
 
 Preview a production build: `npm run build && npx serve out` (or
 `python3 -m http.server 4000 --directory out`).
@@ -84,4 +92,13 @@ the other breaks every asset path.
 - Never commit secrets. There are none to commit — keep it that way.
 - Match surrounding style: Tailwind utility classes, `@/` import alias, comments only
   where intent isn't obvious from the code.
+- New sections go through `Section`; its number comes from the section's place in
+  `navigation`, so add the nav entry too.
+- Accessibility is a requirement, not a polish pass: every control reachable and
+  operable by keyboard with a visible `focus-visible` ring, hover effects mirrored on
+  focus (`hoverFocusHandlers`, which also keeps touch from stranding a highlight),
+  nothing that only works on hover (touch has none), tap targets of 40px or more,
+  motion behind `motion-safe`, and small text on light
+  backgrounds in `coral-dark` or `ocean-500`+ (the lighter shades fail 4.5:1).
+  Component tests call `expectNoAxeViolations` from `src/test/axe.ts`.
 - Run `lint`, `typecheck`, `test`, and `build` before calling work done.

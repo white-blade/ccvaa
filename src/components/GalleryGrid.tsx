@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
 import { ColumnControl } from "@/components/ColumnControl";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
 import type { GalleryPhoto } from "@/lib/gallery";
-import { galleryContent, galleryPageContent } from "@/lib/site";
+import { galleryContent } from "@/lib/site";
 import { createColumnStore } from "@/lib/use-columns";
 
 const COLUMN_OPTIONS = [2, 3, 4, 5] as const;
@@ -46,17 +46,7 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
   const columns = useColumns();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  /** Which tile opened the viewer, so focus can go back to it on close. */
-  const tileRefs = useRef(new Map<number, HTMLButtonElement | null>());
-
-  const closeViewer = useCallback(() => {
-    setOpenIndex((previous) => {
-      if (previous !== null) {
-        tileRefs.current.get(previous)?.focus();
-      }
-      return null;
-    });
-  }, []);
+  const closeViewer = useCallback(() => setOpenIndex(null), []);
 
   const step = useCallback(
     (delta: number) =>
@@ -73,23 +63,24 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
 
   const countLabel = `${photos.length} ${
     photos.length === 1
-      ? galleryPageContent.countNoun
-      : galleryPageContent.countNounPlural
+      ? galleryContent.countNoun
+      : galleryContent.countNounPlural
   }`;
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white px-5 py-3 shadow-xl shadow-ocean-950/10 ring-1 ring-ocean-100">
-        <p className="text-sm font-medium lining-nums tabular-nums text-ocean-600">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/5 px-5 py-3 ring-1 ring-white/10 backdrop-blur">
+        <p className="text-sm font-medium lining-nums tabular-nums text-ocean-100">
           {countLabel}
         </p>
 
         <ColumnControl
           id="gallery-columns"
-          label={galleryPageContent.columnsLabel}
+          label={galleryContent.columnsLabel}
           options={COLUMN_OPTIONS}
           value={columns}
           onChange={columnStore.choose}
+          onDark
         />
       </div>
 
@@ -105,15 +96,12 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
             >
               <button
                 type="button"
-                ref={(node) => {
-                  tileRefs.current.set(index, node);
-                }}
                 onClick={() => setOpenIndex(index)}
                 aria-haspopup="dialog"
                 // Square tiles keep the grid even and reserve their space before the
                 // file loads, so changing the column count never shifts the page. The
                 // crop is only the tile — the viewer shows the whole photograph.
-                className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-100 shadow-sm ring-1 ring-ocean-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-ocean-950/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+                className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-900 shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40 hover:ring-coral/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950"
               >
                 <Image
                   src={photo.src}
@@ -130,17 +118,18 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 bg-gradient-to-t from-ocean-950/70 via-ocean-950/0 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+                  // Touch screens never hover, so there the overlay simply stays on.
+                  className="absolute inset-0 bg-gradient-to-t from-ocean-950/70 via-ocean-950/0 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100"
                 />
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 flex translate-y-2 items-end justify-between p-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 sm:p-4"
+                  className="absolute inset-x-0 bottom-0 flex translate-y-2 items-end justify-between p-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 pointer-coarse:translate-y-0 pointer-coarse:opacity-100 sm:p-4"
                 >
                   <span className="font-display text-lg font-semibold text-white lining-nums tabular-nums sm:text-xl">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ocean-900 shadow-sm backdrop-blur">
-                    {galleryPageContent.viewLabel}
+                    {galleryContent.viewLabel}
                     <span className="text-coral-dark">⤢</span>
                   </span>
                 </span>
