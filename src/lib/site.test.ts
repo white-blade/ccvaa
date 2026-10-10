@@ -65,4 +65,8 @@ describe("email policy", () => {
     const found = new Set(content.match(EMAIL) ?? []);
     expect([...found]).toEqual([organization.email]);
   });
+
+  it("gives the society's registration as on its certificate", () => {
+    expect(organization.registrationDetail).toBe("BC Society No. S0085619 · Incorporated June 27, 2026");
+  });
 });

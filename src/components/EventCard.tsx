@@ -60,11 +60,18 @@ export function EventCard({
         ) : (
           // Events with no venue to photograph — an online talk — still need a
           // frame, or the list falls out of rhythm wherever one appears.
+          // It says where instead: the place, set large, over soft coral rings.
           <div
             aria-hidden="true"
+            data-no-image
             className="absolute inset-0 bg-gradient-to-br from-ocean-700 via-ocean-900 to-ocean-950"
           >
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-coral/30 blur-2xl" />
+            <div className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full border border-coral/25" />
+            <div className="absolute -bottom-8 -right-8 h-40 w-40 rounded-full border border-coral/20" />
+            <p className="absolute bottom-5 left-5 right-5 font-display text-3xl italic leading-tight text-cream/90 sm:text-4xl">
+              {event.placeLabel}
+            </p>
           </div>
         )}
 
@@ -117,15 +124,15 @@ export function EventCard({
           {event.summary}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        {/* The admission note on a line of its own, and "View details" always at
+            the card's bottom right, however long the note runs. */}
+        <div className="mt-5 flex flex-col gap-4">
           {event.admission ? (
-            <span className="rounded-full bg-ocean-50 px-3 py-1 text-xs font-medium text-ocean-700">
+            <span className="self-start rounded-full bg-ocean-50 px-3 py-1 text-xs font-medium text-ocean-700">
               {event.admission}
             </span>
-          ) : (
-            <span />
-          )}
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-ocean-800 transition-colors group-hover:text-coral-dark">
+          ) : null}
+          <span data-details-link className="inline-flex items-center gap-1 self-end text-sm font-semibold text-ocean-800 transition-colors group-hover:text-coral-dark">
             {eventsContent.detailsLabel}
             <span
               aria-hidden="true"

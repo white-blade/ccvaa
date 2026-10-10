@@ -48,6 +48,8 @@ a Vitest file under `src/`.
 | L7c | The event listings have no search or filter, on any device | Auto — e2e › device layouts › every device: the listings have no search…; unit:EventsBrowser |
 | L8 | 1024 and up: the side timeline, no rail | Auto — e2e › device layouts › lg and up… |
 | L8b | 1024 and up: the timeline's month labels are three-letter monospace capitals in one fixed-width column (equal widths, left edges within 1px); years sit in their own column to the left, bold `coral-dark`, set apart from the months by weight and colour | Auto — e2e › device layouts › lg and up: timeline months and years each line up…; unit:EventsBrowser; unit:timeline |
+| L8c | 1024 and up: no month or year label prints under the "Today" badge (a tick that close hides its labels, keeps its mark) | Auto — e2e › events polish › lg and up: no month or year label…; unit:timeline |
+| L8d | Every event card ends with "View details" at the same bottom-right place, whatever its admission note; an event without a picture shows its place, set large, in the picture's frame | Auto — e2e › events polish › every event card…; …an event without a picture…; unit:EventsBrowser |
 | L9 | The side timeline and the date rail stay pinned while the listings scroll (never `overflow-hidden` above a sticky element) | Auto — e2e › device layouts › … stays pinned while the listings scroll |
 | L9b | The date rail marks the card read past, and clears a stale mark after jumping back up | Auto — e2e › device layouts › below lg: a date rail…; …jumping back up to Events… |
 | L10 | *Retired in gallery-0003: the per-row control is gone.* Phones (< 768): the gallery is a card — the photograph, then author and date below it, no veil | Auto — e2e › device layouts › phones: the gallery is a card… |

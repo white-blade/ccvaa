@@ -26,6 +26,11 @@ export const organization = {
   legalName: "Coast to Coast Visual Arts Association",
   registrationNote:
     "Registered non-profit organization in British Columbia, Canada.",
+  /**
+   * From the Societies Act certificate of incorporation (public record). Shown under
+   * the mission, where the registration note would only repeat the paragraph beside it.
+   */
+  registrationDetail: "BC Society No. S0085619 · Incorporated June 27, 2026",
   email: "info@ccvaa.ca",
   location: "Richmond, British Columbia, Canada",
   address: {
@@ -251,7 +256,7 @@ export const eventsContent = {
   eyebrow: "What’s on",
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Follow the timeline, and select any event for full details.",
+    "Exhibitions, workshops, and gatherings through the year — choose any event for the full details.",
   detailsLabel: "View details",
   /** An event picture's button, before its description: opens it whole. */
   viewPictureLabel: "View the full picture",

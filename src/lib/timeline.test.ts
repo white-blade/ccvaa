@@ -64,6 +64,15 @@ describe("timelineLayout", () => {
     expect(timelineLayout(season, "2027-02-11", 0).today).toBeCloseTo(102 / 242);
   });
 
+  it("stands the labels of a month under the Today badge aside, and only that month", () => {
+    // Feb 2: a day after the February tick, a month after January's.
+    const { ticks } = timelineLayout(season, "2027-02-02", 0);
+    expect(ticks.filter((tick) => tick.underToday).map((tick) => tick.label)).toEqual(["Feb"]);
+    // Mid-month, clear of every tick: nothing gives way.
+    expect(timelineLayout(season, "2027-03-16", 0).ticks.some((tick) => tick.underToday)).toBe(false);
+    expect(timelineLayout(season, null, 0).ticks.some((tick) => tick.underToday)).toBe(false);
+  });
+
   it("leaves today off when it is before, after, or unknown", () => {
     expect(timelineLayout(season, "2026-10-09").today).toBeNull();
     expect(timelineLayout(season, "2027-08-01").today).toBeNull();
