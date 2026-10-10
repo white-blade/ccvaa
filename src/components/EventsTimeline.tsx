@@ -78,7 +78,10 @@ export function EventsTimeline({
         {layout.ticks.map((tick) => (
           <li
             key={tick.iso}
-            className="absolute left-0 flex w-18 -translate-y-1/2 items-baseline justify-end gap-1.5 pr-3 font-mono leading-none"
+            data-under-today={tick.underToday ? "" : undefined}
+            className={`absolute left-0 flex w-18 -translate-y-1/2 items-baseline justify-end gap-1.5 pr-3 font-mono leading-none ${
+              tick.underToday ? "[&>[data-tick-month]]:invisible [&>[data-tick-year]]:invisible" : ""
+            }`}
             style={{ top: percent(tick.position) }}
           >
             {/* Two fixed-width monospace columns, year then month, so every label

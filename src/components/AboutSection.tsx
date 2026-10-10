@@ -34,7 +34,7 @@ export function AboutSection() {
               {aboutContent.quoteAttribution}
             </figcaption>
             <p className="relative mt-6 border-t border-white/10 pt-6 text-sm text-ocean-200">
-              {organization.registrationNote}
+              {organization.registrationDetail}
             </p>
           </figure>
         </Reveal>
