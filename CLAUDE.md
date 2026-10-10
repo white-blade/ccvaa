@@ -106,7 +106,8 @@ npm run build        # static export to out/
 npm run lint
 npm run typecheck
 npm test             # Vitest, once; `npm run test:watch` to keep it running
-npm run test:e2e     # Playwright against out/ — build first
+npm run test:e2e     # Playwright against out/ — build first; E2E_PORT=4180 to run
+                     # beside a test server already on 4173
 ```
 
 ## Tests and the regression checklist
