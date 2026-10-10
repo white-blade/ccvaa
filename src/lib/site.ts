@@ -16,6 +16,12 @@ export const siteConfig = {
   },
 } as const;
 
+/**
+ * POLICY: the organization's address (`email` below) is the only email address the
+ * site shows. Personal email addresses — board members' or anyone else's — are
+ * never added anywhere on the page, bios included; people are reached through the
+ * organization. A test fails if any other address appears (src/lib/site.test.ts).
+ */
 export const organization = {
   legalName: "Coast to Coast Visual Arts Association",
   registrationNote:
@@ -48,6 +54,7 @@ export function sectionNumber(id: SectionId): string {
 
 export const headerContent = {
   skipLabel: "Skip to content",
+  backToTopLabel: "Back to top",
   navLabel: "Main navigation",
   /** The phone tab bar: a second nav landmark, so it needs a name of its own. */
   tabBarLabel: "Sections",
@@ -75,8 +82,9 @@ export const aboutContent = {
     "Whether you are an artist, educator, volunteer, or art enthusiast, we invite you to join our growing community.",
   ],
   purposesHeading: "Our Purposes",
-  purposesShowLabel: "Read all",
-  purposesHideLabel: "Collapse",
+  /** The shortcut beside the heading; each purpose also opens on its own. */
+  purposesExpandAllLabel: "Expand all",
+  purposesCollapseAllLabel: "Collapse all",
   purposes: [
     {
       title: "Advancement of Visual Arts",
@@ -133,52 +141,66 @@ export const aboutContent = {
 
 export const boardContent = {
   title: "Our Board",
+  /** File in `public/board/`. */
+  photo: "board.jpg",
   photoAlt:
-    "CCVAA board members Zhong Liu, Yaqi Jing, and Albert Zang",
-  photoPlaceholderNote: "Board photo coming soon.",
+    "CCVAA board members, from left: Yaqi Jing, Zhong Liu, and Albert Zang, smiling together in front of a dark studio backdrop.",
   portraitPlaceholderNote: "Portrait coming soon.",
+  /** Shown for a member whose `bio` is still empty. */
+  bioPlaceholder: "Bio coming soon.",
   profileLabel: "View profile",
+  websiteLabel: "Website",
   closeLabel: "Close",
   previousLabel: "Previous board member",
   nextLabel: "Next board member",
   /**
-   * NOTE: every `bio` below is lorem ipsum standing in for the real text. Replace it
-   * before launch. To add a portrait, put the file in `public/board/` and set
-   * `portrait: "file-name.jpg"` on the member.
+   * No personal email addresses here, ever — see the policy on `organization`. A
+   * member's own public website may be linked.
+   *
+   * `portrait` is a file in `public/board/` (pre-sized: ≤1200px, ≤300KB); leave it
+   * out and the profile shows a monogram. An empty `bio` shows `bioPlaceholder`.
    */
   members: [
     {
       id: "zhong-liu",
       name: "Zhong Liu",
       role: "President",
-      portraitAlt: "Portrait of Zhong Liu, President",
-      portrait: undefined as string | undefined,
+      portrait: "zhong-liu.jpg" as string | undefined,
+      portraitAlt:
+        "Zhong Liu, President, in a white T-shirt, smiling and looking off to one side against a dark backdrop.",
       bio: [
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-      ],
+        "Zhong Liu is a Richmond-based photographic artist originally from China. With more than thirty years of experience in photography, his work explores the relationship between nature, time, and contemplation. His photographs have been exhibited nationally and internationally in Canada, China, France, Switzerland, and Macau, and have received multiple international awards, including the MonoVisions Photography Awards and the Minimalist Photography Awards.",
+        "Liu is the author of several photography books and served as a contracted expert for Fotomen magazine from 2012 to 2015. He holds a Bachelor of Fine Arts degree from Minzu University of China.",
+        "Beyond his artistic practice, Liu actively participates in international cultural and artistic exchange initiatives, serves as a juror for international photography exhibitions, and is committed to community engagement through volunteer work and public cultural events.",
+        "Liu currently serves as President of the Coast to Coast Visual Arts Association. He is also a member of the China Photographers Association and the Canadian Association for Photographic Art.",
+      ] as readonly string[],
+      website: {
+        label: "liuzhongphoto.com",
+        href: "https://www.liuzhongphoto.com",
+      } as { label: string; href: string } | undefined,
     },
     {
       id: "yaqi-jing",
       name: "Yaqi Jing",
       role: "Vice President",
-      portraitAlt: "Portrait of Yaqi Jing, Vice President",
-      portrait: undefined as string | undefined,
+      portrait: "yaqi-jing.jpg" as string | undefined,
+      portraitAlt:
+        "Yaqi Jing, Vice President, in a denim jacket, smiling at the camera against a mottled grey backdrop.",
       bio: [
-      "Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.",
-      "Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis.",
-      ],
+        "Yaqi Jing is a contemporary visual artist based in Vancouver, Canada. Her practice spans large-scale abstract expressionism, mixed-media paintings, and conceptual installations. Integrating Western abstraction with Eastern philosophical thought, her work explores themes of psychological self-reflection, natural aesthetics, and existential flow. With an extensive international exhibition footprint—including showcases in France, Switzerland, and North America—her art seeks to transform inner consciousness into tactile, visual narratives.",
+      ] as readonly string[],
+      website: undefined as { label: string; href: string } | undefined,
     },
     {
       id: "albert-zang",
       name: "Albert Zang",
       role: "Secretary",
-      portraitAlt: "Portrait of Albert Zang, Secretary",
-      portrait: undefined as string | undefined,
-      bio: [
-      "Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus.",
-      "Phasellus ultrices nulla quis nibh. Quisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus. Nam nulla quam, gravida non, commodo a, sodales sit amet, nisi.",
-      ],
+      portrait: "albert-zang.jpg" as string | undefined,
+      portraitAlt:
+        "Albert Zang, Secretary, in a grey knit hoodie, facing the camera against a warm brown backdrop.",
+      // Bio not yet written — shows `bioPlaceholder` until it is.
+      bio: [] as readonly string[],
+      website: undefined as { label: string; href: string } | undefined,
     },
   ],
 } as const;
@@ -196,6 +218,11 @@ export const galleryContent = {
   closeLabel: "Close",
   previousLabel: "Previous photograph",
   nextLabel: "Next photograph",
+  /** The viewer's strip of thumbnails, and each one: "Show photograph 3". */
+  thumbnailsLabel: "All photographs",
+  showPhotoLabel: "Show photograph",
+  /** Shown to mouse and keyboard users only; touch gets swipes instead. */
+  keyboardHint: "← → to browse · Esc to close",
   columnsLabel: "Per row",
   /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
   countNoun: "photograph",

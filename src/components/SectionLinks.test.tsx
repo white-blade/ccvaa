@@ -1,13 +1,17 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SectionLinks } from "@/components/SectionLinks";
 import { scrollToSection } from "@/lib/scroll-to-section";
 
-vi.mock("@/lib/scroll-to-section", () => ({ scrollToSection: vi.fn() }));
+vi.mock("@/lib/scroll-to-section", () => ({
+  scrollToSection: vi.fn(),
+  SECTION_GLIDE_EVENT: "ccvaa:section-glide",
+}));
 
 beforeEach(() => {
   vi.mocked(scrollToSection).mockReset().mockReturnValue(true);
+  window.history.replaceState(null, "", "/");
   render(
     <>
       <SectionLinks />
@@ -17,6 +21,10 @@ beforeEach(() => {
       <a href="https://example.com/">Elsewhere</a>
     </>,
   );
+});
+
+afterEach(() => {
+  window.history.replaceState(null, "", "/");
 });
 
 describe("SectionLinks", () => {
@@ -40,5 +48,17 @@ describe("SectionLinks", () => {
   it("lets the browser follow the link when there is no such section", () => {
     vi.mocked(scrollToSection).mockReturnValue(false);
     expect(fireEvent.click(screen.getByText("Events"))).toBe(true);
+  });
+
+  it("glides on Back and Forward without adding history", () => {
+    window.history.replaceState(null, "", "/#gallery");
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(scrollToSection).toHaveBeenCalledWith("#gallery", { history: "none" });
+  });
+
+  it("takes over scroll restoration, so the browser does not snap first", () => {
+    expect(window.history.scrollRestoration).toBe("manual");
   });
 });

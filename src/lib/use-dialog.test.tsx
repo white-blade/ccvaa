@@ -65,4 +65,20 @@ describe("useDialog", () => {
     renderDialog();
     expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
   });
+
+  it("dismisses on a clear downward swipe when asked to, and only then", () => {
+    const onSwipeDown = vi.fn();
+    const onClose = vi.fn();
+    render(<SwipeDownDialog onClose={onClose} onSwipeDown={onSwipeDown} />);
+    const dialog = screen.getByRole("dialog", { name: "Swipe" });
+    swipe(dialog, [200, 100], [210, 300]);
+    expect(onSwipeDown).toHaveBeenCalledTimes(1);
+    swipe(dialog, [200, 100], [380, 220]); // more sideways than down
+    expect(onSwipeDown).toHaveBeenCalledTimes(1);
+  });
 });
+
+function SwipeDownDialog(props: { onClose: () => void; onSwipeDown: () => void }) {
+  const { dialogRef } = useDialog({ open: true, ...props });
+  return <div ref={dialogRef} role="dialog" aria-label="Swipe" />;
+}

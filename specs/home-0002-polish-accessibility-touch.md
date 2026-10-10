@@ -168,6 +168,8 @@ nothing is downloaded; CI installs Playwright's Chromium.
 
 ## Open
 
-- **Board bios are lorem ipsum** and portraits are monograms — replace before launch.
+- ~~Board bios are lorem ipsum and portraits are monograms~~ — replaced with the real
+  photographs and bios in [`home-0004`](home-0004-board-photos-bios.md); Albert
+  Zang's bio is still to come.
 - The dev server twice served stale CSS after `globals.css` edits made while a
   production build ran; restarting `npm run dev` fixes it.

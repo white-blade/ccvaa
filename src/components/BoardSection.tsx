@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useState } from "react";
 
 import { BoardMemberDialog, initials } from "@/components/BoardMemberDialog";
-import { CoastToCoastLogo } from "@/components/CoastToCoastLogo";
-import { subsectionRuleClass, subsectionTitleClass } from "@/components/Disclosure";
+import { subsectionRuleClass, subsectionTitleClass } from "@/components/subsection";
+import { assetPath } from "@/lib/asset";
 import { boardContent } from "@/lib/site";
 
 const members = boardContent.members;
@@ -28,19 +29,17 @@ export function BoardSection() {
       <h3 className={`${subsectionRuleClass} ${subsectionTitleClass}`}>{boardContent.title}</h3>
 
       <figure className="mt-8">
-        <div
-          role="img"
-          aria-label={`${boardContent.photoAlt} — ${boardContent.photoPlaceholderNote}`}
-          className="relative mx-auto flex aspect-[21/9] w-full max-w-4xl flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl bg-ocean-950 px-6"
-        >
-          <div
-            aria-hidden="true"
-            className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-coral/25 blur-3xl"
+        <div className="relative mx-auto aspect-[4/3] w-full max-w-4xl overflow-hidden rounded-3xl bg-ocean-950 shadow-xl shadow-ocean-950/15 sm:aspect-[16/9]">
+          <Image
+            src={assetPath(`/board/${boardContent.photo}`)}
+            alt={boardContent.photoAlt}
+            fill
+            unoptimized
+            loading="lazy"
+            sizes="(min-width: 1024px) 56rem, 100vw"
+            // Faces sit in the upper half; keep them in frame at every crop.
+            className="fx-parallax object-cover object-[50%_30%]"
           />
-          <CoastToCoastLogo className="relative h-auto w-full max-w-[12rem] sm:max-w-[16rem]" />
-          <p aria-hidden="true" className="relative text-center text-sm text-ocean-200">
-            {boardContent.photoPlaceholderNote}
-          </p>
         </div>
       </figure>
 
@@ -55,9 +54,21 @@ export function BoardSection() {
             >
               <span
                 aria-hidden="true"
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-coral to-coral-dark font-display text-lg italic text-white shadow-md shadow-coral/30 transition-transform duration-300 group-hover:scale-105"
+                className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-coral to-coral-dark font-display text-lg italic text-white shadow-md shadow-coral/30 ring-2 ring-white transition-transform duration-300 group-hover:scale-105"
               >
-                {initials(member.name)}
+                {member.portrait ? (
+                  <Image
+                    src={assetPath(`/board/${member.portrait}`)}
+                    alt=""
+                    fill
+                    unoptimized
+                    loading="lazy"
+                    sizes="3.5rem"
+                    className="object-cover object-[50%_20%]"
+                  />
+                ) : (
+                  initials(member.name)
+                )}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-semibold uppercase tracking-widest text-coral-dark">

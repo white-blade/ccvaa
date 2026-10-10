@@ -40,6 +40,36 @@ describe("Section", () => {
   });
 });
 
+describe("Section scroll effects", () => {
+  it("adds a decorative ghost numeral behind the heading", () => {
+    const { container } = render(
+      <Section id="gallery" tone="dark" eyebrow="The collection" title="Gallery">
+        <p>Body</p>
+      </Section>,
+    );
+    const ghost = container.querySelector(".section-ghost")!;
+    // Drawn by CSS from the attribute: no text for screen readers or contrast checks.
+    expect(ghost).toHaveAttribute("data-ghost", "02");
+    expect(ghost).toHaveTextContent("");
+    expect(ghost).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("opens tinted sections like a window, but not light ones (no visible edge)", () => {
+    const { container, rerender } = render(
+      <Section id="gallery" tone="dark" eyebrow="e" title="t">
+        <p />
+      </Section>,
+    );
+    expect(container.querySelector("section")).toHaveClass("section-aperture");
+    rerender(
+      <Section id="about" tone="light" eyebrow="e" title="t">
+        <p />
+      </Section>,
+    );
+    expect(container.querySelector("section")).not.toHaveClass("section-aperture");
+  });
+});
+
 describe("Reveal", () => {
   it("reveals at once where IntersectionObserver is unavailable", () => {
     render(<Reveal>Content</Reveal>);

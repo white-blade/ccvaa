@@ -24,9 +24,55 @@ describe("BoardSection", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Zhong Liu" });
     expect(dialog).toHaveTextContent("President");
-    expect(within(dialog).getByRole("img", { name: /Portrait of Zhong Liu/ })).toBeInTheDocument();
-    expect(dialog).toHaveTextContent(/Lorem ipsum/);
+    expect(within(dialog).getByRole("img", { name: /^Zhong Liu, President/ })).toHaveAttribute(
+      "src",
+      "/ccvaa/board/zhong-liu.jpg",
+    );
+    expect(dialog).toHaveTextContent(/Richmond-based photographic artist/);
+    expect(dialog).not.toHaveTextContent(/Lorem ipsum/);
     expect(within(dialog).getByRole("button", { name: "Close" })).toHaveFocus();
+  });
+
+  it("links a member's website, opening safely in a new tab", async () => {
+    const user = userEvent.setup();
+    render(<BoardSection />);
+    await user.click(memberCard("Zhong Liu"));
+    const link = within(screen.getByRole("dialog")).getByRole("link", { name: /liuzhongphoto\.com/ });
+    expect(link).toHaveAttribute("href", "https://www.liuzhongphoto.com");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(link).toHaveAccessibleName(/opens in a new tab/);
+  });
+
+  it("shows no website line for members without one", async () => {
+    const user = userEvent.setup();
+    render(<BoardSection />);
+    await user.click(memberCard("Yaqi Jing"));
+    expect(within(screen.getByRole("dialog")).queryByRole("link")).toBeNull();
+  });
+
+  it("says a bio is coming rather than showing filler when there is none yet", async () => {
+    const user = userEvent.setup();
+    render(<BoardSection />);
+    await user.click(memberCard("Albert Zang"));
+    const dialog = screen.getByRole("dialog", { name: "Albert Zang" });
+    expect(dialog).toHaveTextContent("Bio coming soon.");
+    expect(within(dialog).getByRole("img", { name: /^Albert Zang, Secretary/ })).toBeInTheDocument();
+  });
+
+  it("shows the board's group photograph, described left to right", () => {
+    render(<BoardSection />);
+    expect(screen.getByRole("img", { name: /from left: Yaqi Jing, Zhong Liu, and Albert Zang/ })).toHaveAttribute(
+      "src",
+      "/ccvaa/board/board.jpg",
+    );
+  });
+
+  it("puts each member's photo on their card, decorative beside their name", () => {
+    render(<BoardSection />);
+    const avatar = memberCard("Yaqi Jing").querySelector("img")!;
+    expect(avatar).toHaveAttribute("src", "/ccvaa/board/yaqi-jing.jpg");
+    expect(avatar).toHaveAttribute("alt", "");
   });
 
   it("steps through the board with the arrow keys and buttons, wrapping around", async () => {

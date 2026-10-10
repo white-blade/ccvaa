@@ -6,6 +6,8 @@ type UseDialogOptions = {
   /** Supplied by consumers that step through a collection (the gallery lightbox). */
   onNext?: () => void;
   onPrevious?: () => void;
+  /** A clear downward swipe on touch — the photo viewer's way out, as in photo apps. */
+  onSwipeDown?: () => void;
 };
 
 type UseDialogResult = {
@@ -28,6 +30,7 @@ export function useDialog({
   onClose,
   onNext,
   onPrevious,
+  onSwipeDown,
 }: UseDialogOptions): UseDialogResult {
   const dialogRef = useRef<HTMLDivElement>(null);
   const initialFocusRef = useRef<HTMLButtonElement>(null);
@@ -87,11 +90,12 @@ export function useDialog({
     };
   }, [open, onClose, onNext, onPrevious]);
 
-  // Swipe left/right steps through a collection on touch screens. A swipe must be
-  // clearly horizontal, so vertical scrolling and pinch-zoom are left alone.
+  // Swipe left/right steps through a collection on touch screens, and down dismisses
+  // where the dialog asks for it. A swipe must clearly favour one axis, so diagonal
+  // drags, scrolling, and pinch-zoom are left alone.
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!open || !dialog || (!onNext && !onPrevious)) return;
+    if (!open || !dialog || (!onNext && !onPrevious && !onSwipeDown)) return;
 
     let start: { x: number; y: number } | null = null;
     const onTouchStart = (event: TouchEvent) => {
@@ -106,6 +110,10 @@ export function useDialog({
       const dx = touch.clientX - start.x;
       const dy = touch.clientY - start.y;
       start = null;
+      if (dy > 80 && dy > Math.abs(dx) * 1.5) {
+        onSwipeDown?.();
+        return;
+      }
       if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
       (dx < 0 ? onNext : onPrevious)?.();
     };
@@ -116,7 +124,7 @@ export function useDialog({
       dialog.removeEventListener("touchstart", onTouchStart);
       dialog.removeEventListener("touchend", onTouchEnd);
     };
-  }, [open, onNext, onPrevious]);
+  }, [open, onNext, onPrevious, onSwipeDown]);
 
   return { dialogRef, initialFocusRef };
 }

@@ -10,7 +10,10 @@ and hosted on GitHub Pages.
 
 - [Next.js](https://nextjs.org/) 16 (App Router, `output: "export"`) + TypeScript
 - [Tailwind CSS](https://tailwindcss.com/) v4
-- [GitHub Actions](https://github.com/features/actions) for CI (lint, typecheck, build) and deploy
+- [Vitest](https://vitest.dev/) + Testing Library + axe for unit tests;
+  [Playwright](https://playwright.dev/) for the browser suite (Chromium and WebKit)
+- [GitHub Actions](https://github.com/features/actions) for CI (lint, typecheck, unit,
+  browser — in parallel) and deploy
 - [GitHub Pages](https://pages.github.com/) for hosting
 
 No runtime dependencies beyond `next`, `react`, and `react-dom`.
@@ -41,8 +44,12 @@ prefix files in `public/`.
 | `npm run build`     | Static export to `out/`  |
 | `npm run lint`      | Run ESLint               |
 | `npm run typecheck` | TypeScript check         |
-| `npm test`          | Vitest suite, once       |
-| `npm run test:e2e`  | Playwright, after a build |
+| `npm test`          | Vitest unit suite, once  |
+| `npm run test:watch`| Vitest, re-running on change |
+| `npm run test:e2e`  | Playwright browser suite on six devices — build first |
+
+For the browser suite locally, run `npx playwright install webkit` once; the Chromium
+devices use your installed Google Chrome.
 
 There is no `start` script — `out/` is plain static files. Preview a production build
 with `npm run build && npx serve out`.
@@ -54,16 +61,26 @@ One page, `/`, in sections the header links to:
 | Section    | What it is                                                                  |
 | ---------- | --------------------------------------------------------------------------- |
 | Hero       | Headline over the coast photograph                                          |
-| `#about`   | About, the board, and the ten purposes                                      |
+| `#about`   | About; the board (group photo, profiles with portrait and bio); the ten purposes, each opening on its own |
 | `#gallery` | Every photograph, 2–5 per row, each opening a full-size viewer              |
-| `#events`  | Searchable listings beside a date-scaled timeline; each opens a detail dialog |
+| `#events`  | Searchable listings beside a date-scaled timeline (a date rail on smaller screens); each opens a detail dialog |
 | `#contact` | Email and mailing address                                                   |
 
-The header links all four sections and marks the one on screen. Phones and tablets get
-their own layouts rather than a squeezed desktop: a bottom tab bar, bottom-sheet
-dialogs, and a date rail in place of the side timeline — see
-[`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md). The page is keyboard-operable throughout (skip link, focus rings, arrow keys
-on the timeline and in the photo viewer) and is checked with axe in the test suite.
+- **Navigation**: the header (or, on phones, a bottom tab bar) marks the section being
+  read. Links glide to their section; Back/Forward glide too; the address follows
+  along, so a shared link lands where you were. From 1280px a back-to-top button
+  appears deep in the page.
+- **Devices**: phones and tablets get their own layouts rather than a squeezed desktop
+  — bottom tab bar, bottom-sheet dialogs, a date rail — see
+  [`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md). Touch
+  works throughout: tap-to-preview on the timeline, swipe in viewers, no hover-only
+  controls.
+- **Motion**: an entrance on first load, scroll-driven transitions between sections,
+  and a photo viewer with thumbnails, directional slides, and swipe gestures — all
+  switched off under reduced motion.
+- **Accessibility**: keyboard-operable throughout (skip link, focus rings, arrow keys
+  on the timeline and in viewers), reduced motion respected, axe-clean with colour
+  contrast.
 
 ## Project structure
 
@@ -73,28 +90,34 @@ src/
 │   ├── page.tsx            the one page
 │   ├── layout.tsx, globals.css, icon.svg
 ├── components/             presentational; they read content from lib/
-└── lib/
-    ├── site.ts             ALL copy and config — edit here first
-    ├── events.ts           event listings (content, not data)
-    ├── event-search.ts     listing search
-    ├── timeline.ts         where each event sits on the timeline
-    ├── gallery.ts          build-time read of public/photos/
-    ├── asset.ts            basePath prefixing for public/ files
-    ├── use-dialog.ts       shared modal behaviour
-    └── use-columns.ts      shared "per row" preference
+├── lib/
+│   ├── site.ts             ALL copy and config — edit here first
+│   ├── events.ts           event listings (content, not data)
+│   ├── event-search.ts     listing search
+│   ├── timeline.ts         where each event sits on the timeline
+│   ├── gallery.ts          build-time read of public/photos/
+│   ├── scroll-to-section.ts  the section glide
+│   ├── use-active-section.ts which section is being read
+│   ├── use-dialog.ts       shared dialog behaviour (keys, focus, swipe)
+│   └── asset.ts, use-columns.ts, use-today.ts, hover-focus.ts
+└── test/                   test helpers (fixtures, axe)
+e2e/                        Playwright browser suite
 public/
 ├── photos/                 gallery — drop a file in, it appears after a rebuild
 ├── events/                 event pictures
+├── board/                  board group photo and portraits
 └── images/                 logo, hero
 assets/                     source originals, never deployed
-specs/                      architecture specs / decision records
+specs/                      specs and decision records
 ```
 
 ### Updating content
 
 | To change…                  | Edit…                                            |
 | --------------------------- | ------------------------------------------------ |
-| Copy, nav, board, purposes  | `src/lib/site.ts`                                |
+| Copy, nav, purposes         | `src/lib/site.ts`                                |
+| Board bios, roles, website  | `boardContent` in `src/lib/site.ts` — no personal email addresses, ever |
+| Board photographs           | files in `public/board/`, named in `boardContent` |
 | Event listings              | `src/lib/events.ts`                              |
 | Gallery photographs         | add or remove files in `public/photos/`          |
 
@@ -104,8 +127,10 @@ specs/                      architecture specs / decision records
 WebP/AVIF/JPEG, longest edge ≤1920px, ≤300KB. `images.unoptimized` is required on
 Pages, so nothing resizes at build — whatever is committed is what visitors download.
 
-Event pictures work the same way, except the file name is referenced from
-`src/lib/events.ts`. An event's `details` may hold paragraphs *and* picture blocks.
+Event pictures and board photographs work the same way, except their file names are
+referenced from `src/lib/events.ts` and `boardContent` respectively. An event's
+`details` may hold paragraphs *and* picture blocks. A board member with an empty `bio`
+shows "Bio coming soon."; one without a `portrait` shows a monogram.
 
 ## Deployment
 
@@ -126,12 +151,18 @@ takes both halves together:
 
 Changing one without the other breaks every asset path. DNS is CEO-managed at Hover.
 
-## CI
+## Testing and CI
 
 Every push and pull request runs four jobs in parallel: lint, typecheck, the Vitest
 unit suite (`src/**/*.test.ts(x)`), and the Playwright browser suite (`e2e/`) on six
-devices across Chromium and WebKit (Safari's engine). The deploy also runs the unit suite before
-building, so a failing test stops it.
+devices — Chromium desktop, touch tablet, and touch phone; WebKit (Safari's engine)
+iPhone, iPad, and portrait iPad. The deploy also runs the unit suite before building,
+so a failing test stops it.
+
+**Before a big change merges**, walk
+[`specs/quality-0001-regression-checklist.md`](specs/quality-0001-regression-checklist.md):
+every behaviour the site promises, each with the test that guards it, plus the few
+checks that need a real phone or a screen reader.
 
 ## Constraints worth knowing before you build
 
@@ -156,9 +187,14 @@ it back.
 The static site later carried a `/membership` page of Stripe Payment Links and a Google
 Form signup, and separate `/gallery` and `/events` pages. Membership was withdrawn and
 the gallery and events folded into the home page — see
-[`specs/home-0001-single-page.md`](specs/home-0001-single-page.md), and
-[`specs/home-0002-polish-accessibility-touch.md`](specs/home-0002-polish-accessibility-touch.md)
-for the polish, accessibility, touch, and test work that followed.
+[`specs/home-0001-single-page.md`](specs/home-0001-single-page.md). What followed is
+recorded in order: polish, accessibility, touch, and tests
+([`home-0002`](specs/home-0002-polish-accessibility-touch.md)); phone and tablet layouts
+([`home-0003`](specs/home-0003-device-optimized.md)); board photographs and bios
+([`home-0004`](specs/home-0004-board-photos-bios.md)); the purposes accordion and
+section-to-section navigation
+([`home-0005`](specs/home-0005-purposes-and-section-switching.md)); the gallery viewer,
+motion, and profile layout ([`home-0006`](specs/home-0006-gallery-viewer-motion-profile.md)).
 
 ## License
 

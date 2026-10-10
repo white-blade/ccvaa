@@ -87,7 +87,7 @@ export function Header() {
     <header
       ref={headerRef}
       // pt clears the notch on phones laid out edge to edge (viewport-fit=cover).
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 motion-safe:animate-intro-drop ${
         dark
           ? "border-b border-white/10 bg-black/15 backdrop-blur-sm"
           : "border-b border-ocean-100/80 bg-cream/95 backdrop-blur-md"

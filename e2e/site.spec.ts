@@ -21,8 +21,23 @@ async function revealAll(page: Page) {
     }
     window.scrollTo(0, 0);
   });
-  // Let the last reveal transitions (700ms) finish before measuring colours.
+  // Let the last reveal transitions (700ms) finish before measuring colours…
   await page.waitForTimeout(900);
+  await entranceFinished(page);
+}
+
+/**
+ * …and the first-load entrance: colours measured mid-fade would be wrong. Waits for
+ * every finite, time-based animation; scroll-driven and looping ones never "finish".
+ */
+async function entranceFinished(page: Page) {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const timing = animation.effect?.getComputedTiming();
+      const timeBased = animation.timeline === document.timeline;
+      return !timeBased || timing?.iterations === Infinity || animation.playState === "finished";
+    }),
+  );
 }
 
 /**
@@ -354,6 +369,19 @@ test.describe("device layouts (specs/home-0003)", () => {
     );
   });
 
+  test("below lg: jumping back up to Events leaves no stale chip marked", async ({ page }, testInfo) => {
+    test.skip(hasTimeline(testInfo), "below lg only");
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(300);
+    await followNav(page, "Events");
+    await expect.poll(async () => Math.abs(await landingGap(page, "events"))).toBeLessThan(3);
+    const rail = page.getByRole("navigation", { name: "Event dates" });
+    await expect(rail.getByRole("button", { name: /^Annual General Meeting/ })).not.toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+  });
+
   test("lg and up: the side timeline, no rail", async ({ page }, testInfo) => {
     test.skip(!hasTimeline(testInfo), "lg and up");
     await expect(page.getByRole("navigation", { name: "Event dates" })).toBeHidden();
@@ -384,4 +412,207 @@ test.describe("device layouts (specs/home-0003)", () => {
       expect(late).toBeGreaterThanOrEqual(0);
     });
   }
+});
+
+test.describe("moving between sections", () => {
+  test("the nav marks only the destination during a glide, never the sections passed", async ({ page }) => {
+    const nav = await sectionNav(page);
+    // Start recording in the same tick as the click, so only the trip is seen.
+    await page.evaluate(() => {
+      (window as unknown as { marked: string[] }).marked = [];
+      const record = () => {
+        const current = document.querySelector("nav [aria-current=true]")?.textContent?.trim();
+        if (current) (window as unknown as { marked: string[] }).marked.push(current);
+        requestAnimationFrame(record);
+      };
+      const link = [...document.querySelectorAll<HTMLAnchorElement>('nav a[href="#contact"]')].find(
+        (candidate) => candidate.offsetParent !== null,
+      )!;
+      link.click();
+      requestAnimationFrame(record);
+    });
+    await expect(nav.getByRole("link", { name: "Contact" })).toHaveAttribute("aria-current", "true");
+    await page.waitForTimeout(1300);
+    const marked = await page.evaluate(() => (window as unknown as { marked: string[] }).marked);
+    expect(new Set(marked)).toEqual(new Set(["Contact"]));
+  });
+
+  test("the last section is marked at the end of the page, on every screen", async ({ page }) => {
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect((await sectionNav(page)).getByRole("link", { name: "Contact" })).toHaveAttribute(
+      "aria-current",
+      "true",
+    );
+  });
+
+  test("Back glides to the previous section instead of snapping", async ({ page }) => {
+    await followNav(page, "Gallery");
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#gallery");
+    await page.waitForTimeout(1300);
+    await followNav(page, "Contact");
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#contact");
+    await page.waitForTimeout(1300);
+
+    const start = await page.evaluate(() => window.scrollY);
+    await page.goBack();
+    // A glide passes through positions in between; a snap would not.
+    const samples: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      samples.push(await page.evaluate(() => window.scrollY));
+      await page.waitForTimeout(60);
+    }
+    await expect.poll(async () => Math.abs(await landingGap(page, "gallery"))).toBeLessThan(3);
+    const end = await page.evaluate(() => window.scrollY);
+    expect(samples.some((y) => y < start - 20 && y > end + 20)).toBe(true);
+    expect(await page.evaluate(() => window.location.hash)).toBe("#gallery");
+  });
+
+  test("the address follows the section being read", async ({ page }) => {
+    await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#events");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("");
+  });
+
+  test("back to top never covers content: shown only from 1280px", async ({ page }, testInfo) => {
+    test.skip(widthOf(testInfo) >= 1280, "below xl only");
+    await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
+    await expect(page.getByRole("link", { name: "Back to top", exact: true })).toBeHidden();
+  });
+
+  test("back to top appears deep in the page and glides home", async ({ page }, testInfo) => {
+    test.skip(widthOf(testInfo) < 1280, "xl and up");
+    const button = page.getByRole("link", { name: "Back to top", exact: true });
+    await expect(button).toBeHidden();
+    await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
+    await expect(button).toBeVisible();
+    await button.click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(button).toBeHidden();
+  });
+});
+
+test.describe("purposes", () => {
+  test("each purpose opens on its own, with its description revealed", async ({ page }) => {
+    const purpose = page.getByRole("button", { name: "Education" });
+    await purpose.scrollIntoViewIfNeeded();
+    await purpose.click();
+    await expect(purpose).toHaveAttribute("aria-expanded", "true");
+    const region = page.getByRole("region", { name: "Education" });
+    await expect(region).toBeVisible();
+    await expect.poll(async () => (await region.boundingBox())?.height ?? 0).toBeGreaterThan(40);
+    await expect(page.getByRole("button", { name: "Cultural Exchange" })).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
+test.describe("board profiles", () => {
+  test("every portrait gets the same frame, however long the bio", async ({ page }) => {
+    const sizes: string[] = [];
+    for (const who of ["Zhong Liu", "Yaqi Jing", "Albert Zang"]) {
+      await page.getByRole("button", { name: new RegExp(who) }).click();
+      const photo = page.getByRole("dialog", { name: who }).getByRole("img", { name: new RegExp(`^${who}`) });
+      await expect(photo).toBeVisible();
+      await page.waitForTimeout(450); // let the sheet or dialog finish arriving
+      const box = (await photo.boundingBox())!;
+      sizes.push(`${Math.round(box.width)}×${Math.round(box.height)}`);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toBeHidden();
+    }
+    expect(new Set(sizes).size, sizes.join(", ")).toBe(1);
+  });
+});
+
+test.describe("photo viewer", () => {
+  test("thumbnails show the set and jump to any photograph", async ({ page }) => {
+    await page.getByRole("button", { name: /View this photograph larger/ }).first().click();
+    const strip = page.getByRole("list", { name: "All photographs" });
+    await expect(strip.getByRole("button")).toHaveCount(await page.locator("#gallery li").count());
+    const dialog = page.getByRole("dialog");
+    const first = await dialog.getAttribute("aria-label");
+    await strip.getByRole("button", { name: "Show photograph 4" }).click();
+    await expect(dialog).not.toHaveAttribute("aria-label", first!);
+    await expect(strip.getByRole("button", { name: "Show photograph 4" })).toHaveAttribute("aria-current", "true");
+  });
+
+  test("a swipe down closes it on touch screens", async ({ page }, testInfo) => {
+    test.skip(!isTouch(testInfo), "touch devices only");
+    await page.getByRole("button", { name: /View this photograph larger/ }).first().tap();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await swipe(page, "[role=dialog]", 0, 200);
+    await expect(page.getByRole("dialog")).toBeHidden();
+  });
+});
+
+test.describe("motion", () => {
+  test("the first-load entrance ends with the hero fully in place", async ({ page }) => {
+    await entranceFinished(page);
+    const heading = page.getByRole("heading", { level: 1 });
+    await expect(heading).toHaveText(/Celebrating visual arts/);
+    expect(await heading.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    const veil = await page.evaluate(
+      () => getComputedStyle(document.querySelector("[class*=animate-intro-unveil]")!).opacity,
+    );
+    expect(veil).toBe("0");
+  });
+
+  test("scroll-driven section effects run where supported, never under reduced motion", async ({
+    page,
+  }) => {
+    const supported = await page.evaluate(() => CSS.supports("animation-timeline: view()"));
+    const gallery = () => page.evaluate(() => getComputedStyle(document.getElementById("gallery")!).animationName);
+    expect(await gallery()).toBe(supported ? "aperture-open" : "none");
+
+    // Round two: motion inside the sections.
+    const names = () =>
+      page.evaluate(() =>
+        [".fx-title", ".fx-tile", ".fx-tile-image", ".fx-cards > li", ".fx-rise", ".fx-write", ".fx-parallax"].map(
+          (selector) => getComputedStyle(document.querySelector(selector)!).animationName,
+        ),
+      );
+    for (const name of await names()) {
+      if (supported) expect(name).not.toBe("none");
+      else expect(name).toBe("none");
+    }
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await gallery()).toBe("none");
+    expect(
+      await page.evaluate(() => getComputedStyle(document.querySelector(".section-ghost")!).animationName),
+    ).toBe("none");
+    expect(new Set(await names())).toEqual(new Set(["none"]));
+  });
+
+  test("scroll effects never fade text: at any scroll position, all text is opaque", async ({ page }) => {
+    // Sample positions through the page and check every text-bearing animated
+    // element — contrast must not depend on where the scroll happens to stop.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < height; y += 700) {
+      await page.evaluate((y) => window.scrollTo(0, y), y);
+      const faded = await page.evaluate(() =>
+        [...document.querySelectorAll(".fx-title, .fx-cards > li, .fx-rise, .fx-write")]
+          .filter((el) => parseFloat(getComputedStyle(el).opacity) < 1)
+          .map((el) => el.textContent?.slice(0, 30)),
+      );
+      expect(faded, `at ${y}px`).toEqual([]);
+    }
+  });
+
+  test("reduced motion: no entrance animation at all", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    const running = await page.evaluate(() =>
+      document.getAnimations().filter((animation) =>
+        String((animation as CSSAnimation).animationName ?? "").startsWith("intro-"),
+      ).length,
+    );
+    expect(running).toBe(0);
+  });
+});
+
+test.describe("content policy", () => {
+  test("the page shows no email address but the organization's", async ({ page }) => {
+    const html = await page.content();
+    const found = new Set(html.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) ?? []);
+    expect([...found]).toEqual(["info@ccvaa.ca"]);
+  });
 });

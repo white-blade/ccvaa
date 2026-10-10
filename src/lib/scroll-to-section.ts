@@ -10,6 +10,19 @@
 
 const ARRIVAL_MS = 1400;
 
+/**
+ * Announced on `window` when a section glide starts and when it settles (arrived or
+ * cancelled). `target` is the section id, or null for the top of the page. Lets the
+ * nav mark the destination for the whole trip instead of flickering through every
+ * section it passes.
+ */
+export const SECTION_GLIDE_EVENT = "ccvaa:section-glide";
+export type SectionGlideDetail = { target: string | null; gliding: boolean };
+
+function announce(detail: SectionGlideDetail) {
+  window.dispatchEvent(new CustomEvent<SectionGlideDetail>(SECTION_GLIDE_EVENT, { detail }));
+}
+
 let cancelGlide: (() => void) | null = null;
 
 function easeInOutCubic(t: number): number {
@@ -38,7 +51,7 @@ function targetTop(section: HTMLElement | null): number {
  * Eases the window to `to`, then calls `onArrive`. Any wheel, touch, or key from the
  * visitor cancels it; reduced motion jumps straight there.
  */
-function glide(to: number, onArrive: () => void) {
+function glide(to: number, onArrive: () => void, onSettle?: () => void) {
   cancelGlide?.();
   const from = window.scrollY;
   const distance = to - from;
@@ -46,6 +59,7 @@ function glide(to: number, onArrive: () => void) {
   if (prefersReducedMotion() || Math.abs(distance) < 2) {
     window.scrollTo({ top: to, behavior: "instant" });
     onArrive();
+    onSettle?.();
     return;
   }
 
@@ -60,6 +74,7 @@ function glide(to: number, onArrive: () => void) {
     window.removeEventListener("touchstart", stop);
     window.removeEventListener("keydown", stop);
     cancelGlide = null;
+    onSettle?.();
   };
   cancelGlide = stop;
   window.addEventListener("wheel", stop, { passive: true });
@@ -72,26 +87,42 @@ function glide(to: number, onArrive: () => void) {
     if (progress < 1) {
       frame = requestAnimationFrame(step);
     } else {
-      stop();
       onArrive();
+      stop();
     }
   };
   frame = requestAnimationFrame(step);
 }
 
 /**
- * Glides to `#id` (or the top for `#top`). Returns false when there is no such
- * section, so the caller can let the browser handle the link as usual.
+ * Glides to `#id` (or the top for `#top` or an empty hash). Returns false when there
+ * is no such section, so the caller can let the browser handle the link as usual.
+ *
+ * `history: "push"` (the default, for clicked links) adds a history entry so Back
+ * returns; `"none"` is for Back/Forward themselves, which have already moved it.
  */
-export function scrollToSection(hash: string): boolean {
+export function scrollToSection(
+  hash: string,
+  { history = "push" }: { history?: "push" | "none" } = {},
+): boolean {
   const id = hash.replace(/^#/, "");
-  const section = id === "top" ? null : document.getElementById(id);
-  if (id !== "top" && !section) return false;
+  const toTop = id === "" || id === "top";
+  const section = toTop ? null : document.getElementById(id);
+  if (!toTop && !section) return false;
 
-  if (window.location.hash !== hash) {
-    window.history.pushState(null, "", hash);
+  // The top of the page is the bare URL, not "#top".
+  const url = toTop ? window.location.pathname + window.location.search : `#${id}`;
+  if (history === "push" && window.location.hash !== (toTop ? "" : `#${id}`)) {
+    window.history.pushState(null, "", url);
   }
-  glide(targetTop(section), () => arrive(section));
+
+  const target = toTop ? null : id;
+  announce({ target, gliding: true });
+  glide(
+    targetTop(section),
+    () => arrive(section),
+    () => announce({ target, gliding: false }),
+  );
   return true;
 }
 

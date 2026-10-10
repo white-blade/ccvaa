@@ -33,6 +33,85 @@
   --animate-rise-in: rise-in 320ms ease-out both;
   --animate-scroll-cue: scroll-cue 2.2s ease-in-out infinite;
   --animate-sheet-in: sheet-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-viewer-in: viewer-in 280ms ease-out both;
+
+  /* First-load entrance (Hero, Header). Each ends at the resting layout. */
+  --animate-intro-zoom: intro-zoom 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-intro-unveil: intro-unveil 1.2s ease-out both;
+  --animate-intro-drop: intro-drop 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms both;
+  --animate-intro-rule: intro-rule 700ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  --animate-intro-word: intro-word 800ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-intro-fade: intro-fade 700ms ease-out both;
+
+  @keyframes intro-zoom {
+    from {
+      transform: scale(1.12);
+    }
+  }
+
+  @keyframes intro-unveil {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes intro-drop {
+    from {
+      transform: translateY(-100%);
+    }
+  }
+
+  @keyframes intro-rule {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes intro-word {
+    from {
+      transform: translateY(110%);
+    }
+  }
+
+  @keyframes intro-fade {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
+  --animate-photo-in: photo-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-photo-from-right: photo-from-right 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-photo-from-left: photo-from-left 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes viewer-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes photo-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+
+  @keyframes photo-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(6%);
+    }
+  }
+
+  @keyframes photo-from-left {
+    from {
+      opacity: 0;
+      transform: translateX(-6%);
+    }
+  }
 
   @keyframes sheet-in {
     from {
@@ -169,6 +248,254 @@ body::after {
   100% {
     background-size: 0% 0.08em;
     background-position: 100% 100%;
+  }
+}
+
+/*
+ * Scroll-driven transitions between sections. Progress follows the scroll position
+ * itself (animation-timeline: view()), so they run as fast or slow as the visitor
+ * scrolls — or the section glide — and reverse on the way back up. Browsers without
+ * scroll timelines, and visitors who prefer reduced motion, see the page as is.
+ */
+/* Outline only: the fill is transparent, so the stroke takes its own ink — set per
+   section tone on the element (--ghost-ink), since currentColor would be the
+   transparent fill. */
+.section-ghost {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--ghost-ink, #1f2a24);
+  opacity: 0.12;
+}
+
+.section-ghost::before {
+  content: attr(data-ghost);
+}
+
+.section-aperture .section-ghost {
+  opacity: 0.18;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* A tinted section opens like a window: inset and rounded as it enters, full
+       bleed by the time it fills the lower third of the screen. */
+    .section-aperture {
+      animation: aperture-open linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    /* The ghost numeral drifts against the scroll: depth without moving content. */
+    .section-ghost {
+      animation: ghost-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+
+    /* The hero's copy recedes and dims as the page scrolls over it. */
+    .hero-exit {
+      animation: hero-recede linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+
+/*
+ * Round two: motion inside the sections, on the same scroll timelines. Text-bearing
+ * elements move by transform and clip only — never by opacity or colour — so text is
+ * always at full contrast, wherever the scroll happens to stop.
+ */
+.fx-divider::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-coral), transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+@supports not (animation-timeline: view()) {
+  .fx-divider::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-divider::before {
+    display: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* A coral hairline draws outward across the top of each arriving section. */
+    .fx-divider::before {
+      animation: divider-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    /* Section titles rise into place as their letters draw together. */
+    .fx-title {
+      animation: title-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+
+    /* Gallery tiles unfold from an inset frame while the photograph zooms out to
+       fit. The tile animates clip-path and the image transform, which compose with
+       the hover lift (translate) and hover zoom (scale) — separate properties. */
+    .fx-tile {
+      animation: tile-unfold linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+
+    .fx-tile-image {
+      animation: tile-zoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 50%;
+    }
+
+    /* Event cards glide in from alternate sides, a slight tilt straightening. */
+    .fx-cards > li {
+      animation: card-from-left linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+
+    .fx-cards > li:nth-child(even) {
+      animation-name: card-from-right;
+    }
+
+    /* Purposes rise into place as each row arrives. */
+    .fx-rise {
+      animation: rise-into-place linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    /* The contact email is written left to right as it comes into view. */
+    .fx-write {
+      animation: write-on linear both;
+      animation-timeline: view();
+      animation-range: entry 20% entry 100%;
+    }
+
+    /* The board photograph drifts inside its frame. */
+    .fx-parallax {
+      animation: parallax-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+}
+
+@keyframes divider-draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes title-settle {
+  from {
+    transform: translateY(0.35em);
+    letter-spacing: 0.04em;
+  }
+  to {
+    transform: none;
+    letter-spacing: -0.025em;
+  }
+}
+
+@keyframes tile-unfold {
+  from {
+    clip-path: inset(10% 10% round 2.5rem);
+  }
+  to {
+    clip-path: inset(0 round 1rem);
+  }
+}
+
+@keyframes tile-zoom {
+  from {
+    transform: scale(1.3);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes card-from-left {
+  from {
+    transform: translateX(-6%) rotate(-1.5deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes card-from-right {
+  from {
+    transform: translateX(6%) rotate(1.5deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rise-into-place {
+  from {
+    transform: translateY(2.5rem) scale(0.97);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes write-on {
+  from {
+    clip-path: inset(-0.2em 100% -0.2em 0);
+  }
+  to {
+    clip-path: inset(-0.2em 0 -0.2em 0);
+  }
+}
+
+@keyframes parallax-drift {
+  from {
+    transform: scale(1.15) translateY(-6%);
+  }
+  to {
+    transform: scale(1.15) translateY(6%);
+  }
+}
+
+@keyframes aperture-open {
+  from {
+    clip-path: inset(0 4% round 2.5rem);
+  }
+  to {
+    clip-path: inset(0 0 round 0);
+  }
+}
+
+@keyframes ghost-drift {
+  from {
+    transform: translateY(35%);
+  }
+  to {
+    transform: translateY(-35%);
+  }
+}
+
+@keyframes hero-recede {
+  to {
+    opacity: 0;
+    transform: translateY(-12%) scale(0.94);
+    filter: blur(2px);
   }
 }
 

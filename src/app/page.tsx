@@ -1,4 +1,5 @@
 import { AboutSection } from "@/components/AboutSection";
+import { BackToTop } from "@/components/BackToTop";
 import { ContactSection } from "@/components/ContactSection";
 import { EventsSection } from "@/components/EventsSection";
 import { Footer } from "@/components/Footer";
@@ -30,6 +31,7 @@ export default function Home() {
       </main>
       <Footer />
       <TabBar />
+      <BackToTop />
     </>
   );
 }
