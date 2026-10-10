@@ -58,6 +58,22 @@ async function revealAll(page: Page) {
   // Let the last reveal transitions (700ms) finish before measuring colours…
   await page.waitForTimeout(900);
   await entranceFinished(page);
+  // …and the hero's copy settle back from its scroll-driven recede: WebKit can
+  // update a scroll timeline a frame or more after the jump back to the top, and
+  // colours measured mid-recede are blended with the photograph behind. Settled is
+  // unchanged across two frames (not "fully opaque": on a 320px screen the copy
+  // starts above the fold, so it rests just short of 1 even at the top).
+  await page.waitForFunction(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const hero = document.querySelector(".hero-exit");
+        if (!hero) return resolve(true);
+        const before = getComputedStyle(hero).opacity;
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => resolve(window.scrollY === 0 && getComputedStyle(hero).opacity === before)),
+        );
+      }),
+  );
 }
 
 /**
@@ -71,6 +87,28 @@ async function entranceFinished(page: Page) {
       const timeBased = animation.timeline === document.timeline;
       return !timeBased || timing?.iterations === Infinity || animation.playState === "finished";
     }),
+  );
+}
+
+/** Waits until every time-based animation inside `selector` (a dialog's entrance) has finished. */
+async function motionSettled(page: Page, selector = '[role="dialog"]') {
+  await page.waitForFunction(
+    (selector) =>
+      [...document.querySelectorAll(selector)].every((element) =>
+        element.getAnimations({ subtree: true }).every((animation) => {
+          const timing = animation.effect?.getComputedTiming();
+          const timeBased = animation.timeline === document.timeline;
+          return !timeBased || timing?.iterations === Infinity || animation.playState === "finished";
+        }),
+      ),
+    selector,
+  );
+}
+
+/** Two painted frames: enough for layout and sticky positioning to catch up with a scroll. */
+async function nextFrames(page: Page) {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
 }
 
@@ -337,7 +375,9 @@ test.describe("mouse", () => {
     await expect(dot).toHaveAttribute("aria-current", "true");
     await expect(page.locator("li[data-event-id=artist-talk-pacific-light] > button")).toHaveClass(/ring-coral/);
 
-    await dot.click();
+    // Once hovered, the preview card covers the middle of the button (the label),
+    // so click the dot itself, as the touch test taps it.
+    await dot.click({ position: { x: 8, y: (await dot.boundingBox())!.height / 2 } });
     await expect(page.getByRole("dialog", { name: /Artist Talk/ })).toBeVisible();
   });
 });
@@ -392,7 +432,8 @@ test.describe("device layouts (specs/home-0003)", () => {
   test("tablets and up: dialogs stay centred", async ({ page }, testInfo) => {
     test.skip(widthOf(testInfo) < 640, "sm and up");
     await page.getByRole("button", { name: /Zhong Liu/ }).click();
-    await page.waitForTimeout(400);
+    await expect(page.getByRole("dialog", { name: "Zhong Liu" })).toBeVisible();
+    await motionSettled(page);
     const box = (await page.getByRole("dialog", { name: "Zhong Liu" }).boundingBox())!;
     const viewport = page.viewportSize()!;
     expect(box.y).toBeGreaterThan(0);
@@ -493,7 +534,8 @@ test.describe("device layouts (specs/home-0003)", () => {
   test("below lg: jumping back up to Events leaves no stale chip marked", async ({ page }, testInfo) => {
     test.skip(hasTimeline(testInfo), "below lg only");
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await page.waitForTimeout(300);
+    // At the end of the page, the nav marks Contact: the starting point is settled.
+    await expect((await sectionNav(page)).getByRole("link", { name: "Contact" })).toHaveAttribute("aria-current", "true");
     await followNav(page, "Events");
     await expect.poll(async () => Math.abs(await landingGap(page, "events"))).toBeLessThan(3);
     const rail = page.getByRole("navigation", { name: "Event dates" });
@@ -573,7 +615,7 @@ test.describe("device layouts (specs/home-0003)", () => {
           const card = document.querySelector(`li[data-event-id="${eventId}"]`)!;
           window.scrollTo(0, card.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2);
         }, eventId);
-        await page.waitForTimeout(150);
+        await nextFrames(page);
         return (await nav.boundingBox())!.y;
       };
       // Two points well into the list, where it must already have stuck.
@@ -724,7 +766,7 @@ test.describe("event pictures", () => {
     await page.locator("li[data-event-id=ccvaa-founded] > button").click();
     const event = page.getByRole("dialog", { name: /CCVAA Is Founded/ });
     await expect(event).toBeVisible();
-    await page.waitForTimeout(600); // let the sheet or dialog finish arriving
+    await motionSettled(page);
     await event.getByRole("button", { name: /^View the full picture: The British Columbia/ }).click();
 
     const viewer = page.getByRole("dialog", { name: /^The British Columbia Societies Act Certificate/ });
@@ -751,7 +793,7 @@ test.describe("board profiles", () => {
       await page.getByRole("button", { name: new RegExp(who) }).click();
       const photo = page.getByRole("dialog", { name: who }).getByRole("img", { name: new RegExp(`^${who}`) });
       await expect(photo).toBeVisible();
-      await page.waitForTimeout(450); // let the sheet or dialog finish arriving
+      await motionSettled(page);
       const box = (await photo.boundingBox())!;
       sizes.push(`${Math.round(box.width)}×${Math.round(box.height)}`);
       await page.keyboard.press("Escape");

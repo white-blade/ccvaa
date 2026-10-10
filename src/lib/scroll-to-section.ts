@@ -48,15 +48,26 @@ function targetTop(section: HTMLElement | null): number {
   return Math.max(0, section.getBoundingClientRect().top + window.scrollY - margin);
 }
 
+/** After landing, how long the glide keeps its section in place while the page settles. */
+const SETTLE_MS = 1000;
+/** How long past its duration a glide waits for frames before finishing without them. */
+const STALL_GRACE_MS = 400;
+
 /**
  * Eases the window to `to()`, then calls `onArrive`. Any wheel, touch, or key from
  * the visitor cancels it; reduced motion jumps straight there.
  *
- * `to` is read again on every frame, so the glide still lands on its section when
- * the page above it changes height on the way (a picture loading, cards measuring
- * themselves once the fonts arrive). The clock starts on the first frame, not at
- * the call, so a busy device that is slow to paint still shows the glide instead of
- * jumping to the end.
+ * Built to land on a slow or busy device, not just a fast one:
+ * - `to` is read again on every frame, so the glide still lands on its section when
+ *   the page above it changes height on the way (a picture loading, cards measuring
+ *   themselves once the fonts arrive).
+ * - The clock starts on the first frame, not at the call, so a device slow to paint
+ *   still shows the glide instead of jumping to the end.
+ * - If frames stop coming altogether (a browser starving a page of them), a timer
+ *   finishes the trip: it arrives, just without the ease.
+ * - For a moment after landing, the section is held in place if the page above it
+ *   shifts. Safari has no scroll anchoring, so a late picture or font would otherwise
+ *   leave the visitor short of where they asked to go.
  */
 function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   cancelGlide?.();
@@ -74,9 +85,15 @@ function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   const duration = Math.min(1100, Math.max(450, 250 + Math.abs(distance) * 0.25));
   let startedAt: number | null = null;
   let frame = 0;
+  let arrived = false;
+  let settleTimer = 0;
+  let resizes: ResizeObserver | null = null;
 
   const stop = () => {
     cancelAnimationFrame(frame);
+    window.clearTimeout(stallTimer);
+    window.clearTimeout(settleTimer);
+    resizes?.disconnect();
     window.removeEventListener("wheel", stop);
     window.removeEventListener("touchstart", stop);
     window.removeEventListener("keydown", stop);
@@ -88,18 +105,34 @@ function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   window.addEventListener("touchstart", stop, { passive: true });
   window.addEventListener("keydown", stop);
 
+  const pin = () => {
+    const target = to();
+    if (Math.abs(window.scrollY - target) > 1) window.scrollTo({ top: target, behavior: "instant" });
+  };
+
+  const land = () => {
+    if (arrived) return;
+    arrived = true;
+    cancelAnimationFrame(frame);
+    window.clearTimeout(stallTimer);
+    pin();
+    onArrive();
+    if (typeof ResizeObserver !== "undefined") {
+      resizes = new ResizeObserver(pin);
+      resizes.observe(document.body);
+    }
+    settleTimer = window.setTimeout(stop, SETTLE_MS);
+  };
+
   const step = (now: number) => {
     startedAt ??= now;
     const progress = Math.min(1, (now - startedAt) / duration);
     window.scrollTo({ top: from + (to() - from) * easeInOutCubic(progress), behavior: "instant" });
-    if (progress < 1) {
-      frame = requestAnimationFrame(step);
-    } else {
-      onArrive();
-      stop();
-    }
+    if (progress < 1) frame = requestAnimationFrame(step);
+    else land();
   };
   frame = requestAnimationFrame(step);
+  const stallTimer = window.setTimeout(land, duration + STALL_GRACE_MS);
 }
 
 /**

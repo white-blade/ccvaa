@@ -161,11 +161,76 @@ describe("scrollToSection", () => {
     scrollToSection("#events");
     expect(seen).toEqual([{ target: "events", gliding: true }]);
     flushFrames();
+    // Landed, but holding the section in place for a moment before settling.
+    expect(seen).toEqual([{ target: "events", gliding: true }]);
+    vi.advanceTimersByTime(1000);
     expect(seen).toEqual([
       { target: "events", gliding: true },
       { target: "events", gliding: false, arrived: true },
     ]);
     window.removeEventListener(SECTION_GLIDE_EVENT, listen);
+  });
+
+  it("still arrives when the browser stops giving it frames", () => {
+    setReducedMotion(false);
+    const section = addSection("events", 2000);
+    scrollToSection("#events");
+    // No frame ever runs.
+    vi.advanceTimersByTime(1100 + 400);
+    expect(scrollY).toBe(2000);
+    expect(document.activeElement).toBe(section);
+    expect(section).toHaveAttribute("data-arrived");
+  });
+
+  describe("after landing", () => {
+    let resized: (() => void) | null = null;
+    beforeEach(() => {
+      resized = null;
+      (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {
+          resized = null;
+        }
+      };
+    });
+    afterEach(() => {
+      delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver;
+    });
+
+    function landOn(id: string, top: () => number) {
+      setReducedMotion(false);
+      const section = addSection(id, 0);
+      section.getBoundingClientRect = () => ({ top: top() - window.scrollY }) as DOMRect;
+      scrollToSection(`#${id}`);
+      flushFrames();
+    }
+
+    it("holds the section in place when the page above it shifts", () => {
+      let top = 2000;
+      landOn("gallery", () => top);
+      expect(scrollY).toBe(2000);
+      top = 2240; // a picture above finished loading
+      resized?.();
+      expect(scrollY).toBe(2240);
+    });
+
+    it("lets go after a moment, or at once when the visitor scrolls", () => {
+      let top = 2000;
+      landOn("gallery", () => top);
+      window.dispatchEvent(new Event("wheel"));
+      top = 2240;
+      resized?.();
+      expect(scrollY).toBe(2000);
+    });
+
+    it("stops holding once the page has settled", () => {
+      landOn("gallery", () => 2000);
+      vi.advanceTimersByTime(1000);
+      expect(resized).toBeNull();
+    });
   });
 
   it("announces the end of a glide the visitor cancels, too", () => {

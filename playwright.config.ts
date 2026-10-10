@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 4173;
+// Overridable so the suite can run beside a test server already on 4173: with
+// reuseExistingServer, it would otherwise test whatever that server is serving.
+const PORT = Number(process.env.E2E_PORT ?? 4173);
 
 /**
  * End-to-end checks in a real browser, against the static export served the way
