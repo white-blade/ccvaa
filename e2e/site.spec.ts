@@ -911,7 +911,11 @@ test.describe("gallery works", () => {
     const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
     await expect(dots).toHaveCount(shown);
     const next = page.getByRole("button", { name: "Next work" });
-    for (let step = 0; step < 9; step++) await next.click();
+    // Stepped by keyboard: a click waits each time for the button to hold still over
+    // two frames, and WebKit on CI paints slowly enough that nine of those overran
+    // the test's 30s. Enter on the focused button is the same press, minus that wait.
+    await next.focus();
+    for (let step = 0; step < 9; step++) await page.keyboard.press("Enter");
     await expect(currentSlide(page)).toHaveAccessibleName(`10 / ${galleryPhotoDetails.length}`);
     await expect(dots).toHaveCount(shown);
     await expect(page.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
