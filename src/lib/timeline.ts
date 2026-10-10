@@ -9,7 +9,7 @@ import type { CcvaaEvent } from "@/lib/events";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export type TimelineTick = {
+type TimelineTick = {
   /** First of the month, ISO. */
   iso: string;
   position: number;

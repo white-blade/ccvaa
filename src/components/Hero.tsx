@@ -5,7 +5,7 @@ import { assetPath } from "@/lib/asset";
 import { heroContent } from "@/lib/site";
 
 /** Hero image is 2000×1313 — sticky background height (content scrolls over it). */
-export const HERO_STAGE_HEIGHT_CLASS =
+const HERO_STAGE_HEIGHT_CLASS =
   "h-[max(32rem,calc(100vw*1313/2000))]";
 /** Stage must be ≥ sticky height or the image bleeds into About. */
 const HERO_STAGE_MIN_HEIGHT_CLASS =

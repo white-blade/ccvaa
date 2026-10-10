@@ -71,11 +71,13 @@ src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoas
                  EventCard, EventDialog
                  ContactSection
                  shared: Section (numbered section shell), Reveal, Modal (dialog
-                 shell; a bottom sheet on phones), SectionLinks, subsection.ts
+                 shell; a bottom sheet on phones), SectionLinks, styles.ts
+                 (shared class strings: subsection heading, round buttons)
 src/lib/site.ts  ALL copy and config — edit here first
 src/lib/         events.ts, event-search.ts, timeline.ts, gallery.ts, asset.ts,
-                 scroll-to-section.ts, use-active-section.ts, use-dialog.ts,
-                 use-columns.ts, use-today.ts, hover-focus.ts
+                 scroll-to-section.ts, use-active-section.ts (one shared store),
+                 use-dialog.ts, use-columns.ts, use-today.ts, hover-focus.ts,
+                 swipe.ts, strip.ts, text.ts
 src/test/        shared test helpers (fixtures, axe)
 e2e/             Playwright browser suite and the static server it uses
 public/          photos/ (gallery), events/, board/, images/
@@ -155,6 +157,10 @@ the other breaks every asset path.
 - Dialogs go through `Modal` (or portal like `GalleryLightbox`): sections are stacking
   contexts, so a dialog rendered inside one sits under the fixed header.
 - Floating controls must not cover content: check them at 320, 768, and 1024px.
+- Reuse before writing: swipes go through `lib/swipe.ts`, horizontal strips centre
+  with `lib/strip.ts`, round icon buttons and subsection headings use
+  `components/styles.ts`, dialogs use `Modal`, sections use `Section`. Before adding
+  a helper, look for one; before adding an export, check it has a second user.
 - Accessibility is a requirement, not a polish pass: every control reachable and
   operable by keyboard with a visible `focus-visible` ring; hover effects mirrored on
   focus (`hoverFocusHandlers`, which also keeps a tap from stranding a highlight);

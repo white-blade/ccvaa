@@ -3,8 +3,10 @@
 import Image from "next/image";
 
 import { Modal } from "@/components/Modal";
+import { roundButtonClass } from "@/components/styles";
 import { assetPath } from "@/lib/asset";
 import { boardContent, type BoardMember } from "@/lib/site";
+import { initials } from "@/lib/text";
 
 type BoardMemberDialogProps = {
   member: BoardMember;
@@ -12,16 +14,6 @@ type BoardMemberDialogProps = {
   onNext: () => void;
   onPrevious: () => void;
 };
-
-export function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("");
-}
-
-const stepButtonClass =
-  "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:border-coral hover:bg-white/10 hover:text-coral focus:outline-none focus-visible:ring-2 focus-visible:ring-coral";
 
 /** A board member's profile: portrait, role, and name in a dark column beside the bio. Arrows step through the board. */
 export function BoardMemberDialog({
@@ -147,7 +139,7 @@ export function BoardMemberDialog({
                     type="button"
                     onClick={onPrevious}
                     aria-label={boardContent.previousLabel}
-                    className={stepButtonClass}
+                    className={roundButtonClass}
                   >
                     <span aria-hidden="true">←</span>
                   </button>
@@ -155,7 +147,7 @@ export function BoardMemberDialog({
                     type="button"
                     onClick={onNext}
                     aria-label={boardContent.nextLabel}
-                    className={stepButtonClass}
+                    className={roundButtonClass}
                   >
                     <span aria-hidden="true">→</span>
                   </button>

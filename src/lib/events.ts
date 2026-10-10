@@ -13,7 +13,7 @@ export type EventPictureBlock = {
  * One block of an event's description: a paragraph, or a picture block. Plain
  * strings keep the common case readable — most blocks are prose.
  */
-export type EventDetail = string | EventPictureBlock;
+type EventDetail = string | EventPictureBlock;
 
 export function isPictureBlock(detail: EventDetail): detail is EventPictureBlock {
   return typeof detail !== "string";

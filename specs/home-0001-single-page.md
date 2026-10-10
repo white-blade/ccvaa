@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, in review with [`home-0002`](home-0002-polish-accessibility-touch.md) |
+| **Status** | `done` — merged |
 | **Supersedes** | [`events-0002`](events-0002-events-page.md) (the `/events` page), [`gallery-0002`](gallery-0002-gallery-page.md) (the `/gallery` page), [`membership-0001`](membership-0001-static-stripe-membership.md) |
 | **Source** | CEO (2026-10-09) |
 

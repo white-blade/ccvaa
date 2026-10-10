@@ -99,6 +99,7 @@ src/
 │   ├── scroll-to-section.ts  the section glide
 │   ├── use-active-section.ts which section is being read
 │   ├── use-dialog.ts       shared dialog behaviour (keys, focus, swipe)
+│   ├── swipe.ts, strip.ts, text.ts   small shared helpers
 │   └── asset.ts, use-columns.ts, use-today.ts, hover-focus.ts
 └── test/                   test helpers (fixtures, axe)
 e2e/                        Playwright browser suite

@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 
+import { roundButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
+import { centreInStrip } from "@/lib/strip";
 import { useDialog } from "@/lib/use-dialog";
 
 type GalleryLightboxProps = {
@@ -20,9 +22,6 @@ type GalleryLightboxProps = {
   /** A thumbnail was chosen. */
   onSelect: (index: number) => void;
 };
-
-const controlClass =
-  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral";
 
 const ENTER_CLASS = {
   [-1]: "motion-safe:animate-photo-from-left",
@@ -73,15 +72,12 @@ export function GalleryLightbox({
     }
   }, [index, photos]);
 
-  // Keep the current thumbnail centred in the strip (the strip's own scroll only).
+  // Keep the current thumbnail centred in the strip.
   useEffect(() => {
     const strip = stripRef.current;
     const thumb = strip?.querySelector<HTMLElement>(`[data-index="${index}"]`);
     if (!strip || !thumb) return;
-    strip.scrollTo?.({
-      left: thumb.offsetLeft - (strip.clientWidth - thumb.offsetWidth) / 2,
-      behavior: "smooth",
-    });
+    centreInStrip(strip, thumb);
   }, [index]);
 
   /** Only a click on the dark surround closes — never one on the image itself. */
@@ -113,7 +109,7 @@ export function GalleryLightbox({
           ref={initialFocusRef}
           onClick={onClose}
           aria-label={galleryContent.closeLabel}
-          className={controlClass}
+          className={roundButtonClass}
         >
           <span aria-hidden="true">✕</span>
         </button>
@@ -154,7 +150,7 @@ export function GalleryLightbox({
             type="button"
             onClick={onPrevious}
             aria-label={galleryContent.previousLabel}
-            className={controlClass}
+            className={roundButtonClass}
           >
             <span aria-hidden="true">‹</span>
           </button>
@@ -199,7 +195,7 @@ export function GalleryLightbox({
             type="button"
             onClick={onNext}
             aria-label={galleryContent.nextLabel}
-            className={controlClass}
+            className={roundButtonClass}
           >
             <span aria-hidden="true">›</span>
           </button>

@@ -8,9 +8,11 @@ const IDS = ["about", "gallery", "events", "contact"];
 
 /** jsdom has no IntersectionObserver; this one lets a test say what is in view. */
 let observerCallback: IntersectionObserverCallback = () => {};
+let observersMade = 0;
 class FakeObserver {
   constructor(callback: IntersectionObserverCallback) {
     observerCallback = callback;
+    observersMade += 1;
   }
   observe() {}
   disconnect() {}
@@ -105,5 +107,22 @@ describe("useActiveSection", () => {
     crossMiddle("gallery");
     glide("main", true);
     expect(screen.getByRole("status")).toHaveTextContent("gallery");
+  });
+
+  it("shares one set of observers between every caller (header, tab bar, links)", () => {
+    // beforeEach already rendered one Probe; two more callers join it.
+    const before = observersMade;
+    render(
+      <>
+        <Probe />
+        <Probe />
+      </>,
+    );
+    expect(observersMade).toBe(before);
+    scrollPage(1200);
+    crossMiddle("gallery");
+    for (const output of screen.getAllByRole("status")) {
+      expect(output).toHaveTextContent("gallery");
+    }
   });
 });

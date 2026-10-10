@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, awaiting review |
+| **Status** | `done` — merged |
 | **Depends on** | [`home-0002`](home-0002-polish-accessibility-touch.md) |
 | **Source** | CEO (2026-10-09) |
 

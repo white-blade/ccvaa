@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 
-import { closeButtonClass, Modal } from "@/components/Modal";
+import { Modal } from "@/components/Modal";
+import { roundGlassButtonClass } from "@/components/styles";
 import { isPictureBlock, type CcvaaEvent, type EventPictureBlock } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
 
@@ -96,7 +97,7 @@ export function EventDialog({ event, onClose }: EventDialogProps) {
               ref={initialFocusRef}
               onClick={onClose}
               aria-label={eventsContent.closeLabel}
-              className={`absolute right-4 top-4 ${closeButtonClass}`}
+              className={`absolute right-4 top-4 ${roundGlassButtonClass}`}
             >
               <span aria-hidden="true">✕</span>
             </button>

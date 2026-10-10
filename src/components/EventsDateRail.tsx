@@ -4,6 +4,7 @@ import { useEffect, useRef, type Ref } from "react";
 
 import type { CcvaaEvent } from "@/lib/events";
 import { eventsContent } from "@/lib/site";
+import { centreInStrip } from "@/lib/strip";
 
 type EventsDateRailProps = {
   events: CcvaaEvent[];
@@ -39,8 +40,7 @@ export function EventsDateRail({
       `[data-event-id="${activeId}"]`,
     );
     if (!list || !chip) return;
-    const left = chip.offsetLeft - (list.clientWidth - chip.offsetWidth) / 2;
-    list.scrollTo?.({ left, behavior: "smooth" });
+    centreInStrip(list, chip);
   }, [activeId]);
 
   return (
