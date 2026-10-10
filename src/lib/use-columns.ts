@@ -1,6 +1,6 @@
 /**
- * A remembered "how many per row" choice, shared by the gallery grid and the
- * events browser.
+ * A remembered "how many per row" choice, used by the gallery grid. Kept generic
+ * so another grid can have its own key and options.
  *
  * The value lives outside React, in `localStorage`, and is read through
  * `useSyncExternalStore`. The prerendered HTML is built once at `next build` with no

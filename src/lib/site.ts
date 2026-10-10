@@ -31,29 +31,54 @@ export const organization = {
   },
 } as const;
 
+/** Sections of the one-page site, top to bottom. `id` is the section's anchor. */
 export const navigation = [
-  /** Root-relative so these resolve from /membership too, not just the home page. */
-  { label: "About", href: "/#about" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "Events", href: "/events" },
-  { label: "Membership", href: "/membership" },
+  { label: "About", id: "about" },
+  { label: "Gallery", id: "gallery" },
+  { label: "Events", id: "events" },
+  { label: "Contact", id: "contact" },
 ] as const;
+
+export type SectionId = (typeof navigation)[number]["id"];
+
+/** "01", "02"… — a section's place in the nav, so numbering follows the order there. */
+export function sectionNumber(id: SectionId): string {
+  return String(navigation.findIndex((item) => item.id === id) + 1).padStart(2, "0");
+}
+
+export const headerContent = {
+  skipLabel: "Skip to content",
+  navLabel: "Main navigation",
+  /** The phone menu: a second nav landmark, so it needs a name of its own. */
+  menuLabel: "Site menu",
+  openMenuLabel: "Open menu",
+  closeMenuLabel: "Close menu",
+} as const;
 
 export const heroContent = {
   eyebrow: "Non-profit · British Columbia, Canada",
   headline: "Celebrating visual arts from coast to coast",
   subheadline:
     "We bring artists, educators, and communities together to create, learn, and share the power of visual expression.",
+  primaryCta: { label: "Explore the gallery", sectionId: "gallery" },
+  secondaryCta: { label: "See what’s on", sectionId: "events" },
+  scrollLabel: "Scroll",
 } as const;
 
 export const aboutContent = {
+  eyebrow: "Who we are",
   title: "About",
+  /** Set large beside the paragraphs. */
+  quote: "Connecting communities through visual arts, from coast to coast.",
+  quoteAttribution: "Our mission",
   paragraphs: [
     "Coast to Coast Visual Arts Association (CCVAA) is a registered non-profit society in British Columbia, dedicated to advancing visual arts across Canada.",
     "We bring artists, educators, and communities together through exhibitions, education, and cultural programming — from local workshops to coast-to-coast collaboration.",
     "Whether you are an artist, educator, volunteer, or art enthusiast, we invite you to join our growing community.",
   ],
   purposesHeading: "Our Purposes",
+  purposesShowLabel: "Read all",
+  purposesHideLabel: "Collapse",
   purposes: [
     {
       title: "Advancement of Visual Arts",
@@ -114,144 +139,101 @@ export const boardContent = {
     "CCVAA board members Zhong Liu, Yaqi Jing, and Albert Zang",
   photoPlaceholderNote: "Board photo coming soon.",
   portraitPlaceholderNote: "Portrait coming soon.",
-  bioPlaceholder: "Bio coming soon.",
+  profileLabel: "View profile",
+  closeLabel: "Close",
+  previousLabel: "Previous board member",
+  nextLabel: "Next board member",
+  /**
+   * NOTE: every `bio` below is lorem ipsum standing in for the real text. Replace it
+   * before launch. To add a portrait, put the file in `public/board/` and set
+   * `portrait: "file-name.jpg"` on the member.
+   */
   members: [
     {
+      id: "zhong-liu",
       name: "Zhong Liu",
       role: "President",
       portraitAlt: "Portrait of Zhong Liu, President",
+      portrait: undefined as string | undefined,
+      bio: [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+      "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+      ],
     },
     {
+      id: "yaqi-jing",
       name: "Yaqi Jing",
       role: "Vice President",
       portraitAlt: "Portrait of Yaqi Jing, Vice President",
+      portrait: undefined as string | undefined,
+      bio: [
+      "Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.",
+      "Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis.",
+      ],
     },
     {
+      id: "albert-zang",
       name: "Albert Zang",
       role: "Secretary",
       portraitAlt: "Portrait of Albert Zang, Secretary",
+      portrait: undefined as string | undefined,
+      bio: [
+      "Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus.",
+      "Phasellus ultrices nulla quis nibh. Quisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus. Nam nulla quam, gravida non, commodo a, sodales sit amet, nisi.",
+      ],
     },
   ],
 } as const;
 
-export const galleryContent = {
-  title: "Gallery",
-  description:
-    "A selection of work and moments from our community. Photographs play automatically — pause at any time, or select one to view it larger.",
-  zoomLabel: "View this photograph larger",
-  closeLabel: "Close",
-  playLabel: "Play slideshow",
-  pauseLabel: "Pause slideshow",
-  previousLabel: "Previous photograph",
-  nextLabel: "Next photograph",
-  goToLabel: "Go to photograph",
-  viewAllLabel: "View all photographs",
-} as const;
+export type BoardMember = (typeof boardContent.members)[number];
 
-export const galleryPageContent = {
+export const galleryContent = {
+  eyebrow: "The collection",
   title: "Gallery",
   description:
-    "Every photograph in our collection. Choose how many to show per row, and select any photograph to view it full size.",
-  eyebrow: "The collection",
+    "Work and moments from our community. Choose how many to show per row, and select any photograph to view it full size.",
+  zoomLabel: "View this photograph larger",
   /** Shown on hover over each tile. */
   viewLabel: "View",
+  closeLabel: "Close",
+  previousLabel: "Previous photograph",
+  nextLabel: "Next photograph",
   columnsLabel: "Per row",
   /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
   countNoun: "photograph",
   countNounPlural: "photographs",
-  emptyNote: "Photographs are on their way.",
 } as const;
 
 export const eventsContent = {
+  eyebrow: "What’s on",
   title: "Events",
   description:
-    "Exhibitions, workshops, and gatherings through the year. Browse the calendar month by month, or search the listings below — select any event for full details.",
+    "Exhibitions, workshops, and gatherings through the year. Follow the timeline, or search the listings — select any event for full details.",
   detailsLabel: "View details",
   closeLabel: "Close",
   searchLabel: "Search events",
   searchPlaceholder: "Search by title, place, or date…",
   clearSearchLabel: "Clear search",
-  perRowLabel: "Per row",
   /** Rendered as "5 events" / "1 event" beside the search field. */
   countNoun: "event",
   countNounPlural: "events",
   noResults: "No events match that search.",
-  emptyNote: "Listings for the coming season are on their way.",
-  eyebrow: "What’s on",
-  listingsTitle: "All listings",
-  calendar: {
-    eyebrow: "Calendar",
-    previousMonthLabel: "Previous month",
-    nextMonthLabel: "Next month",
-    monthsLabel: "Jump to month",
-    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    /** Followed by the month name: "In November". */
-    panelPrefix: "In",
-    emptyMonth: "Nothing scheduled this month.",
-    nextUpLabel: "Next up",
-    pastLabel: "Past",
-    legendEvent: "Event",
-    legendRange: "Multi-day",
-    legendToday: "Today",
-  },
+  pastLabel: "Past",
+  timelineLabel: "Event timeline",
+  todayLabel: "Today",
 } as const;
 
 export const contactContent = {
+  eyebrow: "Get in touch",
   title: "Contact",
   description:
     "Interested in partnering, volunteering, or learning more about our programs? We would love to hear from you.",
   emailLabel: "Email",
+  emailPrompt: "Write to us",
   addressLabel: "Mailing address",
 } as const;
 
-export const membershipContent = {
-  title: "Membership",
-  description:
-    "Join a community of artists, educators, and supporters advancing visual arts across Canada.",
-  comingSoonLabel: "Coming soon",
-  register: {
-    title: "Become a member",
-    description:
-      "Free membership. Share your name and email to receive news on exhibitions, programs, and community events — and tell us how you would like to take part.",
-    cta: "Become a member",
-  },
-  paid: {
-    heading: "Support our work",
-    description:
-      "Paid memberships fund exhibitions, education, and community programming.",
-  },
-  plans: [
-    {
-      id: "founding",
-      name: "Founding",
-      price: "$360",
-      cadence: "one-time",
-      description:
-        "A limited founding membership recognizing our earliest supporters. Available while seats remain.",
-      featured: true,
-    },
-    {
-      id: "lifetime",
-      name: "Lifetime",
-      price: "$500",
-      cadence: "one-time",
-      description:
-        "Lifelong membership with a single contribution — no renewals to track.",
-      featured: false,
-    },
-    {
-      id: "annual",
-      name: "Annual",
-      price: "$36",
-      cadence: "per year",
-      description:
-        "Renews yearly. Cancel or update your payment details at any time.",
-      featured: false,
-    },
-  ],
-  manageBilling: {
-    text: "Already a paid member?",
-    cta: "Manage your billing",
-  },
-  currencyNote: "All amounts in CAD. Payments are processed securely by Stripe.",
+export const footerContent = {
+  navHeading: "Explore",
+  contactHeading: "Contact",
 } as const;

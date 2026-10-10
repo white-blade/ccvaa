@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { MouseEvent } from "react";
+import { createPortal } from "react-dom";
 
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
@@ -20,9 +21,9 @@ const controlClass =
   "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-cream transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral";
 
 /**
- * Full-screen viewer shared by the home-page carousel and the gallery grid.
- * Escape, arrow keys, the focus trap, and the scroll lock come from `useDialog`;
- * restoring focus to whatever opened it stays with the caller.
+ * Full-screen viewer for the gallery grid. Escape, arrow keys, the focus trap, the
+ * scroll lock, and returning focus to the tile all come from `useDialog`. Portalled
+ * to <body> so it covers the fixed header — see `Modal`.
  */
 export function GalleryLightbox({
   photos,
@@ -49,14 +50,14 @@ export function GalleryLightbox({
     }
   }
 
-  return (
+  return createPortal(
     <div
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={photo.alt}
       onClick={closeOnBackdrop}
-      className="fixed inset-0 z-[100] flex flex-col bg-ocean-950/95 p-4 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[100] flex flex-col overscroll-contain bg-ocean-950/95 p-4 backdrop-blur-sm sm:p-6"
     >
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm lining-nums tabular-nums text-ocean-200">
@@ -112,6 +113,7 @@ export function GalleryLightbox({
           </button>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -41,35 +41,42 @@ prefix files in `public/`.
 | `npm run build`     | Static export to `out/`  |
 | `npm run lint`      | Run ESLint               |
 | `npm run typecheck` | TypeScript check         |
+| `npm test`          | Vitest suite, once       |
+| `npm run test:e2e`  | Playwright, after a build |
 
 There is no `start` script — `out/` is plain static files. Preview a production build
 with `npm run build && npx serve out`.
 
-## Pages
+## Page
 
-| Route        | What it is                                                              |
-| ------------ | ----------------------------------------------------------------------- |
-| `/`          | Hero, About (board + the ten purposes), Gallery carousel, Contact       |
-| `/gallery`   | Every photograph, in a grid the visitor sizes at 2–5 per row            |
-| `/events`    | Searchable listings, 1–4 per row, each opening a detail dialog          |
-| `/membership`| Free signup via Google Form, plus Stripe Payment Links for paid tiers   |
+One page, `/`, in sections the header links to:
+
+| Section    | What it is                                                                  |
+| ---------- | --------------------------------------------------------------------------- |
+| Hero       | Headline over the coast photograph                                          |
+| `#about`   | About, the board, and the ten purposes                                      |
+| `#gallery` | Every photograph, 2–5 per row, each opening a full-size viewer              |
+| `#events`  | Searchable listings beside a date-scaled timeline; each opens a detail dialog |
+| `#contact` | Email and mailing address                                                   |
+
+The header links all four sections, marks the one on screen, and folds into a menu on
+phones. The page is keyboard-operable throughout (skip link, focus rings, arrow keys
+on the timeline and in the photo viewer) and is checked with axe in the test suite.
 
 ## Project structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx            home
-│   ├── gallery/page.tsx    all photographs
-│   ├── events/page.tsx     all listings
-│   ├── membership/page.tsx
+│   ├── page.tsx            the one page
 │   ├── layout.tsx, globals.css, icon.svg
 ├── components/             presentational; they read content from lib/
 └── lib/
     ├── site.ts             ALL copy and config — edit here first
     ├── events.ts           event listings (content, not data)
+    ├── event-search.ts     listing search
+    ├── timeline.ts         where each event sits on the timeline
     ├── gallery.ts          build-time read of public/photos/
-    ├── membership.ts       external Stripe / Google Form URLs
     ├── asset.ts            basePath prefixing for public/ files
     ├── use-dialog.ts       shared modal behaviour
     └── use-columns.ts      shared "per row" preference
@@ -87,7 +94,6 @@ specs/                      architecture specs / decision records
 | --------------------------- | ------------------------------------------------ |
 | Copy, nav, board, purposes  | `src/lib/site.ts`                                |
 | Event listings              | `src/lib/events.ts`                              |
-| Membership links            | `src/lib/membership.ts`                          |
 | Gallery photographs         | add or remove files in `public/photos/`          |
 
 **Adding a photograph takes no code change.** `src/lib/gallery.ts` reads
@@ -120,16 +126,17 @@ Changing one without the other breaks every asset path. DNS is CEO-managed at Ho
 
 ## CI
 
-Every push and pull request to `main` runs ESLint, TypeScript typecheck, and the
-production build. No tests are configured — add a `test` script and CI step when logic
-grows more complex.
+Every push and pull request runs four jobs in parallel: lint, typecheck, the Vitest
+unit suite (`src/**/*.test.ts(x)`), and the Playwright browser suite (`e2e/`) on a
+desktop, a touch tablet, and a touch phone. The deploy also runs the unit suite before
+building, so a failing test stops it.
 
 ## Constraints worth knowing before you build
 
 This is a static export. Route handlers, `middleware`/`proxy.ts`, `next/headers`,
 `cookies()`, and server-side data fetching all fail the build — and could not run on
-Pages even if they passed. Anything needing a server is linked out to a service that
-already does it properly (Stripe for payment, Google Forms for signup).
+Pages even if they passed. Anything needing a server belongs with a service that
+already does it properly, linked out from here.
 
 Next.js 16 also differs from earlier versions in ways worth checking: read the relevant
 guide under `node_modules/next/dist/docs/` before using an unfamiliar API.
@@ -143,6 +150,13 @@ GitHub Pages. See
 [`specs/platform-0002-github-pages-static-migration.md`](specs/platform-0002-github-pages-static-migration.md)
 for the full rationale, the file inventory, and what would be required to bring any of
 it back.
+
+The static site later carried a `/membership` page of Stripe Payment Links and a Google
+Form signup, and separate `/gallery` and `/events` pages. Membership was withdrawn and
+the gallery and events folded into the home page — see
+[`specs/home-0001-single-page.md`](specs/home-0001-single-page.md), and
+[`specs/home-0002-polish-accessibility-touch.md`](specs/home-0002-polish-accessibility-touch.md)
+for the polish, accessibility, touch, and test work that followed.
 
 ## License
 

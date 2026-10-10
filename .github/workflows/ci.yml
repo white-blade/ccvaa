@@ -10,30 +10,48 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The checks are independent, so they run side by side: lint, typecheck, and unit
+# tests as one matrix, the browser suite as its own job. Wall time is the slowest
+# job, not the sum of them.
 jobs:
-  build:
+  checks:
+    name: ${{ matrix.check }}
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [lint, typecheck, test]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.check }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Build
+  e2e:
+    name: browser (desktop, tablet, phone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build static export
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
+      # Playwright spreads the three device projects across workers in parallel.
+      - run: npm run test:e2e
+      - name: Keep traces of failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

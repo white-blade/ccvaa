@@ -1,50 +1,31 @@
-import Link from "next/link";
 import { CoastToCoastLogo } from "@/components/CoastToCoastLogo";
 import { siteConfig } from "@/lib/site";
 
-/** Shared logo size, so every surface that shows the wordmark stays in sync. */
-export const BRAND_LOGO_CLASSNAME = "h-7 w-auto object-contain sm:h-8";
-
 type BrandMarkProps = {
   priority?: boolean;
-  /** Use on-light wordmark (scrolled public header). Default: on-dark. */
+  /** Use the on-light wordmark. Default: on-dark. */
   onLight?: boolean;
-  subtitleClassName?: string;
-  className?: string;
-  align?: "start" | "center";
 };
 
-/**
- * Logo + “Visual Arts Association” block, used in the header and on the board page.
- * `align="center"` centres the whole group in its parent; logo and subtitle stay
- * start-aligned to each other (same as the header).
- */
-export function BrandMark({
-  priority = false,
-  onLight = false,
-  subtitleClassName = "text-ocean-600",
-  className = "",
-  align = "start",
-}: BrandMarkProps) {
+/** Logo + “Visual Arts Association”, linking back to the top of the page. */
+export function BrandMark({ priority = false, onLight = false }: BrandMarkProps) {
   return (
-    <Link
-      href="/"
-      className={[
-        "group flex w-fit flex-col items-start gap-1",
-        align === "center" ? "mx-auto" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+    <a
+      href="#top"
+      aria-label={`${siteConfig.name} — back to top`}
+      className="group flex w-fit shrink-0 flex-col items-start gap-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
     >
       <CoastToCoastLogo
         priority={priority}
         onLight={onLight}
-        className={`${BRAND_LOGO_CLASSNAME} transition-opacity group-hover:opacity-90`}
+        className="h-7 w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-8"
       />
-      <span className={["text-xs", subtitleClassName].filter(Boolean).join(" ")}>
+      <span
+        aria-hidden="true"
+        className={`text-xs transition-colors ${onLight ? "text-ocean-600" : "text-ocean-200"}`}
+      >
         {siteConfig.navSubtitle}
       </span>
-    </Link>
+    </a>
   );
 }
