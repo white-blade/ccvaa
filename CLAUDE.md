@@ -39,8 +39,10 @@ Nav: About · Gallery · Events · Contact
   the stage with its author, medium, date, caption, and licence at the top right over
   a frosted veil; below, a card with the credits under it. Selecting it opens the
   full-size viewer (with a full view). Pictures are progressive: a blurred preview,
-  then the smallest prepared size that is sharp (`srcset`). See `specs/gallery-0003`,
-  `gallery-0004`.
+  then the smallest prepared size that is sharp (`srcset`). The dots sit on a glass
+  track; one coral pill glides to the current dot and fills with the slideshow's
+  countdown, and a hovered or focused dot previews its work. See `specs/gallery-0003`,
+  `gallery-0004`, `gallery-0005`.
 - **Events**: listings, beside a date-scaled **timeline** (≥ 1024px) or a sticky
   **date rail** (below) whose chips show the date with its year and the city and country.
 - **Contact**: the email, set large, and the postal address.
@@ -64,7 +66,7 @@ on text move by transform or clip only — never opacity or colour — so contra
 wherever the scroll stops. All of it is `motion-safe` and progressive — reduced motion, or a browser
 without scroll timelines, gets the page as is, nothing hidden.
 
-History of the design decisions: `specs/home-0001` … `home-0008`, `gallery-0003`.
+History of the design decisions: `specs/home-0001` … `home-0008`, `gallery-0003` … `gallery-0005`.
 
 ## Layout
 
@@ -72,7 +74,7 @@ History of the design decisions: `specs/home-0001` … `home-0008`, `gallery-000
 src/app/         page.tsx (the one page), layout.tsx, globals.css, icon.svg
 src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoastLogo
                  AboutSection, BoardSection, BoardMemberDialog, PurposesSection
-                 GallerySection, GallerySlider, GalleryLightbox
+                 GallerySection, GallerySlider, GalleryDots, GalleryLightbox
                  EventsSection, EventsBrowser, EventsTimeline, EventsDateRail,
                  EventCard, EventDialog
                  ContactSection
