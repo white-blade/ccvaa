@@ -406,33 +406,65 @@ describe("GallerySlider: a large gallery", () => {
     alt: `Work number ${i + 1}`,
   }));
 
-  it("shows a window of at most seven dots, sliding with the current work", async () => {
+  /** The dots a wide screen shows (jsdom applies no CSS, so read the window marks). */
+  const wideDots = () => dots().filter((dot) => dot.closest("li")!.getAttribute("data-dot-scale") !== "hidden");
+  const narrowDots = () => dots().filter((dot) => dot.closest("li")!.getAttribute("data-dot-narrow") !== "hidden");
+  const labels = (buttons: HTMLElement[]) => buttons.map((dot) => dot.getAttribute("aria-label"));
+  const currentSlot = (buttons: HTMLElement[]) => buttons.findIndex((dot) => dot.getAttribute("aria-current") === "true");
+
+  it("moves the highlight along the dots as the visitor steps, sliding the window only near its edge", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={many} />);
-    expect(dots()).toHaveLength(7);
-    expect(dots()[0]).toHaveAccessibleName("Show work 1");
-    expect(dots()[0]).toHaveAttribute("aria-current", "true");
+    const next = screen.getByRole("button", { name: "Next work" });
+    expect(wideDots()).toHaveLength(7);
 
-    for (let i = 0; i < 9; i++) await user.click(screen.getByRole("button", { name: "Next work" }));
-    expect(slide()).toHaveAccessibleName("10 / 20");
-    expect(dots()).toHaveLength(7);
-    // One work back, the rest ahead: on the 10th, the dots run 9 to 15.
-    expect(dots().map((dot) => dot.getAttribute("aria-label"))).toEqual(
-      [9, 10, 11, 12, 13, 14, 15].map((n) => `Show work ${n}`),
-    );
-    expect(screen.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
+    // Works 1 to 6: the window holds still and the highlight travels across it.
+    const slots: number[] = [currentSlot(wideDots())];
+    for (let i = 0; i < 5; i++) {
+      await user.click(next);
+      slots.push(currentSlot(wideDots()));
+    }
+    expect(slots).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(labels(wideDots())[0]).toBe("Show work 1");
+
+    // Work 7 would reach the last dot: the window slides, one dot still ahead.
+    await user.click(next);
+    expect(slide()).toHaveAccessibleName("7 / 20");
+    expect(labels(wideDots())).toEqual([2, 3, 4, 5, 6, 7, 8].map((n) => `Show work ${n}`));
+    expect(currentSlot(wideDots())).toBe(5);
+
+    // Stepping back moves the highlight back without sliding, until the first dot.
+    await user.click(screen.getByRole("button", { name: "Previous work" }));
+    expect(labels(wideDots())[0]).toBe("Show work 2");
+    expect(currentSlot(wideDots())).toBe(4);
   });
 
-  it("keeps a narrower window of five for small screens, hiding the rest there", async () => {
+  it("starts a jump's window one before the work: jump to the 11th and the dots run 10 to 16", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={many} />);
-    for (let i = 0; i < 10; i++) await user.click(screen.getByRole("button", { name: "Next work" }));
-    // On the 11th: the wide window runs 10-16, the narrow one 10-14.
-    const narrow = dots().map((dot) => dot.closest("li")!);
-    expect(narrow.map((li) => li.getAttribute("data-dot-narrow"))).toEqual([
-      "small", "full", "full", "medium", "small", "hidden", "hidden",
-    ]);
-    expect(narrow.filter((li) => li.classList.contains("max-sm:hidden"))).toHaveLength(2);
+    await user.click(openViewer());
+    await user.click(within(screen.getByRole("list", { name: "All works" })).getByRole("button", { name: "Show work 11" }));
+    await user.keyboard("{Escape}");
+    expect(slide()).toHaveAccessibleName("11 / 20");
+    expect(labels(wideDots())).toEqual([10, 11, 12, 13, 14, 15, 16].map((n) => `Show work ${n}`));
+  });
+
+  it("keeps a narrower window of five for small screens, always holding the current work", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    const next = screen.getByRole("button", { name: "Next work" });
+    for (let i = 0; i < 12; i++) {
+      await user.click(next);
+      expect(narrowDots()).toHaveLength(5);
+      expect(wideDots()).toHaveLength(7);
+      expect(currentSlot(narrowDots())).toBeGreaterThanOrEqual(0);
+      // Each window is hidden only at its own breakpoint.
+      for (const dot of dots()) {
+        const li = dot.closest("li")!;
+        expect(li.classList.contains("max-sm:hidden")).toBe(li.getAttribute("data-dot-narrow") === "hidden");
+        expect(li.classList.contains("sm:hidden")).toBe(li.getAttribute("data-dot-scale") === "hidden");
+      }
+    }
   });
 
   it("draws the edge dots smaller where more works lie beyond", async () => {
@@ -440,10 +472,11 @@ describe("GallerySlider: a large gallery", () => {
     render(<GallerySlider photos={many} />);
     await user.click(screen.getByRole("button", { name: "Show work 4" }));
     await user.click(screen.getByRole("button", { name: "Show work 7" }));
-    const scales = dots().map((dot) => dot.closest("li")!.getAttribute("data-dot-scale"));
-    // On the 7th: the 6th (with more behind it) small, the current full, the far end tapering.
+    // A jump to the 7th: the window runs 6-12, the 6th (more behind it) small, the current full.
+    const scales = wideDots().map((dot) => dot.closest("li")!.getAttribute("data-dot-scale"));
     expect(scales).toEqual(["small", "full", "full", "full", "full", "medium", "small"]);
   });
+
 
   it("wraps from the last work to the first, the window following", async () => {
     const user = userEvent.setup();

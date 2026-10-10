@@ -16,7 +16,7 @@ import { GalleryPicture } from "@/components/GalleryPicture";
 import { StepIcon } from "@/components/StepIcon";
 import { roundButtonClass, roundGlassButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
-import { dotWindow, MAX_DOTS_NARROW, type DotScale } from "@/lib/dot-window";
+import { dotWindow, MAX_DOTS, MAX_DOTS_NARROW, nextDotStart, type DotScale } from "@/lib/dot-window";
 import { galleryContent } from "@/lib/site";
 import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
 import { formatIsoDate } from "@/lib/text";
@@ -53,7 +53,9 @@ const DOT_SCALE_NARROW: Record<DotScale, string> = { small: "max-sm:scale-50", m
 const SLIDE_SIZES = "(min-width: 1280px) 76rem, 100vw";
 
 export function GallerySlider({ photos }: GallerySliderProps) {
-  const [index, setIndex] = useState(0);
+  /** The current work, and where each dot window (wide, narrow) starts: they move together. */
+  const [nav, setNav] = useState({ index: 0, wide: 0, narrow: 0 });
+  const index = nav.index;
   /** Which way the visitor last moved, so the next photograph slides in from there. */
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -65,18 +67,30 @@ export function GallerySlider({ photos }: GallerySliderProps) {
   const hasMany = count > 1;
   const photo = photos[index];
 
+  const moveTo = useCallback(
+    (target: (current: number) => number) =>
+      setNav((previous) => {
+        const next = target(previous.index);
+        return {
+          index: next,
+          wide: nextDotStart({ index: previous.index, start: previous.wide }, next, count, MAX_DOTS),
+          narrow: nextDotStart({ index: previous.index, start: previous.narrow }, next, count, MAX_DOTS_NARROW),
+        };
+      }),
+    [count],
+  );
   const step = useCallback(
     (delta: -1 | 1) => {
       setDirection(delta);
-      setIndex((current) => (current + delta + count) % count);
+      moveTo((current) => (current + delta + count) % count);
     },
-    [count],
+    [count, moveTo],
   );
   const next = useCallback(() => step(1), [step]);
   const previous = useCallback(() => step(-1), [step]);
   const select = (target: number) => {
     setDirection(target === index ? 0 : target > index ? 1 : -1);
-    setIndex(target);
+    moveTo(() => target);
   };
   const closeViewer = useCallback(() => setViewerOpen(false), []);
 
@@ -128,9 +142,14 @@ export function GallerySlider({ photos }: GallerySliderProps) {
   };
 
   const takenOn = photo.takenAt ? formatIsoDate(photo.takenAt) : null;
-  const dots = dotWindow(index, count);
-  const narrowDots = dotWindow(index, count, MAX_DOTS_NARROW);
+  const dots = dotWindow(index, count, MAX_DOTS, nav.wide);
+  const narrowDots = dotWindow(index, count, MAX_DOTS_NARROW, nav.narrow);
   const inNarrow = (dot: number) => dot >= narrowDots.start && dot < narrowDots.end;
+  const inWide = (dot: number) => dot >= dots.start && dot < dots.end;
+  // The two windows move independently, so render every dot either one shows and
+  // hide each, per breakpoint, outside its own window.
+  const firstDot = Math.min(dots.start, narrowDots.start);
+  const lastDot = Math.max(dots.end, narrowDots.end);
 
   return (
     <>
@@ -305,15 +324,15 @@ export function GallerySlider({ photos }: GallerySliderProps) {
               aria-label={galleryContent.dotsLabel}
               className="flex items-center justify-center"
             >
-              {photos.slice(dots.start, dots.end).map((each, offset) => {
-                const dotIndex = dots.start + offset;
+              {photos.slice(firstDot, lastDot).map((each, offset) => {
+                const dotIndex = firstDot + offset;
                 const current = dotIndex === index;
                 return (
                   <li
                     key={each.file}
-                    data-dot-scale={dots.scale(dotIndex)}
+                    data-dot-scale={inWide(dotIndex) ? dots.scale(dotIndex) : "hidden"}
                     data-dot-narrow={inNarrow(dotIndex) ? narrowDots.scale(dotIndex) : "hidden"}
-                    className={inNarrow(dotIndex) ? "" : "max-sm:hidden"}
+                    className={`${inWide(dotIndex) ? "" : "sm:hidden"} ${inNarrow(dotIndex) ? "" : "max-sm:hidden"}`}
                   >
                     <button
                       type="button"
@@ -324,7 +343,7 @@ export function GallerySlider({ photos }: GallerySliderProps) {
                     >
                       <span
                         aria-hidden="true"
-                        className={`block h-2 rounded-full transition-all duration-300 ${DOT_SCALE_WIDE[dots.scale(dotIndex)]} ${inNarrow(dotIndex) ? DOT_SCALE_NARROW[narrowDots.scale(dotIndex)] : ""} ${
+                        className={`block h-2 rounded-full transition-all duration-300 ${inWide(dotIndex) ? DOT_SCALE_WIDE[dots.scale(dotIndex)] : ""} ${inNarrow(dotIndex) ? DOT_SCALE_NARROW[narrowDots.scale(dotIndex)] : ""} ${
                           current
                             ? "w-5 bg-coral"
                             : "w-2 bg-white/50 group-hover:bg-white/80 group-focus-visible:bg-white/80"
