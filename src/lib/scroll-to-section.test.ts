@@ -63,6 +63,34 @@ describe("scrollToSection", () => {
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
 
+  it("still glides when the first frame comes late, instead of jumping to the end", () => {
+    setReducedMotion(false);
+    addSection("events", 2000);
+    scrollToSection("#events");
+    // A busy device paints its first frame long after the glide was asked for.
+    now += 5000;
+    flushFrames(200);
+
+    const tops = vi.mocked(window.scrollTo).mock.calls.map(([options]) => (options as ScrollToOptions).top!);
+    expect(tops[0]).toBe(0);
+    expect(tops.some((top) => top > 200 && top < 1800)).toBe(true);
+    expect(tops.at(-1)).toBe(2000);
+  });
+
+  it("lands on the section even when the page above it grows during the glide", () => {
+    setReducedMotion(false);
+    let top = 2000;
+    const section = addSection("gallery", 0);
+    section.getBoundingClientRect = () => ({ top: top - window.scrollY }) as DOMRect;
+    scrollToSection("#gallery");
+    flushFrames(16, 10);
+    top = 2600; // a picture above finished loading
+    flushFrames();
+
+    const tops = vi.mocked(window.scrollTo).mock.calls.map(([options]) => (options as ScrollToOptions).top!);
+    expect(tops.at(-1)).toBe(2600);
+  });
+
   it("glides with easing and lands exactly on the section", () => {
     setReducedMotion(false);
     addSection("events", 2000);
@@ -135,7 +163,7 @@ describe("scrollToSection", () => {
     flushFrames();
     expect(seen).toEqual([
       { target: "events", gliding: true },
-      { target: "events", gliding: false },
+      { target: "events", gliding: false, arrived: true },
     ]);
     window.removeEventListener(SECTION_GLIDE_EVENT, listen);
   });
@@ -149,7 +177,7 @@ describe("scrollToSection", () => {
     scrollToSection("#events");
     flushFrames(16, 3);
     window.dispatchEvent(new Event("wheel"));
-    expect(seen.at(-1)).toEqual({ target: "events", gliding: false });
+    expect(seen.at(-1)).toEqual({ target: "events", gliding: false, arrived: false });
     window.removeEventListener(SECTION_GLIDE_EVENT, listen);
   });
 

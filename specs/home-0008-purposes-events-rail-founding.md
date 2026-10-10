@@ -137,6 +137,24 @@ The viewer opens over the event dialog, so `useDialog` now keeps a stack of open
 dialogs, and only the top one answers the keyboard. Escape closes the viewer, focus
 returns to the picture, and a second Escape closes the event.
 
+## 9. Section glide on slow devices (CI fix)
+
+The WebKit browser tests for section navigation failed intermittently in CI (and on
+`main`). Three causes, all real on a slow or busy phone:
+
+- The glide's clock started when it was called, not on its first frame, so a
+  late first frame jumped straight to the end: a snap, not a glide. It now
+  starts on the first frame.
+- The destination was measured once, so a page that changed height above it
+  mid-glide (pictures loading, purpose cards measuring once fonts arrive) left
+  the glide short of its section. The target is now re-read every frame.
+- When a glide landed, the nav briefly showed the last section passed on the way
+  until the observer reported the destination. A glide that arrives (rather than
+  being cancelled) now marks its destination at once.
+
+Guards: unit:scroll-to-section (late first frame; page growing mid-glide; `arrived`
+on the settle event) and unit:use-active-section (destination kept on landing).
+
 ## Regression guards
 
 `quality-0001`: L7b, L7c, A4b, C6, and C7 added; T2 retired; A6b rewritten; C1 extended.

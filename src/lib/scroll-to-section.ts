@@ -14,10 +14,11 @@ const ARRIVAL_MS = 1400;
  * Announced on `window` when a section glide starts and when it settles (arrived or
  * cancelled). `target` is the section id, or null for the top of the page. Lets the
  * nav mark the destination for the whole trip instead of flickering through every
- * section it passes.
+ * section it passes. `arrived` is set when a settled glide reached its target, as
+ * opposed to being cancelled by the visitor.
  */
 export const SECTION_GLIDE_EVENT = "ccvaa:section-glide";
-export type SectionGlideDetail = { target: string | null; gliding: boolean };
+export type SectionGlideDetail = { target: string | null; gliding: boolean; arrived?: boolean };
 
 function announce(detail: SectionGlideDetail) {
   window.dispatchEvent(new CustomEvent<SectionGlideDetail>(SECTION_GLIDE_EVENT, { detail }));
@@ -48,16 +49,22 @@ function targetTop(section: HTMLElement | null): number {
 }
 
 /**
- * Eases the window to `to`, then calls `onArrive`. Any wheel, touch, or key from the
- * visitor cancels it; reduced motion jumps straight there.
+ * Eases the window to `to()`, then calls `onArrive`. Any wheel, touch, or key from
+ * the visitor cancels it; reduced motion jumps straight there.
+ *
+ * `to` is read again on every frame, so the glide still lands on its section when
+ * the page above it changes height on the way (a picture loading, cards measuring
+ * themselves once the fonts arrive). The clock starts on the first frame, not at
+ * the call, so a busy device that is slow to paint still shows the glide instead of
+ * jumping to the end.
  */
-function glide(to: number, onArrive: () => void, onSettle?: () => void) {
+function glide(to: () => number, onArrive: () => void, onSettle?: () => void) {
   cancelGlide?.();
   const from = window.scrollY;
-  const distance = to - from;
+  const distance = to() - from;
 
   if (prefersReducedMotion() || Math.abs(distance) < 2) {
-    window.scrollTo({ top: to, behavior: "instant" });
+    window.scrollTo({ top: to(), behavior: "instant" });
     onArrive();
     onSettle?.();
     return;
@@ -65,7 +72,7 @@ function glide(to: number, onArrive: () => void, onSettle?: () => void) {
 
   // Longer trips take longer, within limits that keep both ends feeling deliberate.
   const duration = Math.min(1100, Math.max(450, 250 + Math.abs(distance) * 0.25));
-  const startedAt = performance.now();
+  let startedAt: number | null = null;
   let frame = 0;
 
   const stop = () => {
@@ -82,8 +89,9 @@ function glide(to: number, onArrive: () => void, onSettle?: () => void) {
   window.addEventListener("keydown", stop);
 
   const step = (now: number) => {
+    startedAt ??= now;
     const progress = Math.min(1, (now - startedAt) / duration);
-    window.scrollTo({ top: from + distance * easeInOutCubic(progress), behavior: "instant" });
+    window.scrollTo({ top: from + (to() - from) * easeInOutCubic(progress), behavior: "instant" });
     if (progress < 1) {
       frame = requestAnimationFrame(step);
     } else {
@@ -117,11 +125,15 @@ export function scrollToSection(
   }
 
   const target = toTop ? null : id;
+  let arrived = false;
   announce({ target, gliding: true });
   glide(
-    targetTop(section),
-    () => arrive(section),
-    () => announce({ target, gliding: false }),
+    () => targetTop(section),
+    () => {
+      arrived = true;
+      arrive(section);
+    },
+    () => announce({ target, gliding: false, arrived }),
   );
   return true;
 }
@@ -132,7 +144,7 @@ export function scrollToSection(
  * lands where the eye does, and calls `onArrive`.
  */
 export function glideTo(element: HTMLElement, offset: number, onArrive?: () => void) {
-  const to = Math.max(0, element.getBoundingClientRect().top + window.scrollY - offset);
+  const to = () => Math.max(0, element.getBoundingClientRect().top + window.scrollY - offset);
   glide(to, () => {
     element.focus({ preventScroll: true });
     onArrive?.();

@@ -36,9 +36,9 @@ function scrollPage(y: number, { pageHeight = 5000, viewport = 900 } = {}) {
   });
 }
 
-function glide(target: string | null, gliding: boolean) {
+function glide(target: string | null, gliding: boolean, arrived = false) {
   act(() => {
-    window.dispatchEvent(new CustomEvent(SECTION_GLIDE_EVENT, { detail: { target, gliding } }));
+    window.dispatchEvent(new CustomEvent(SECTION_GLIDE_EVENT, { detail: { target, gliding, arrived } }));
   });
 }
 
@@ -84,7 +84,7 @@ describe("useActiveSection", () => {
     expect(screen.getByRole("status")).toHaveTextContent("contact");
   });
 
-  it("holds the destination for a whole glide, then follows the page again", () => {
+  it("holds the destination for a whole glide; a cancelled one follows the page again", () => {
     scrollPage(1200);
     crossMiddle("about");
     glide("contact", true);
@@ -93,6 +93,15 @@ describe("useActiveSection", () => {
     expect(screen.getByRole("status")).toHaveTextContent("contact");
     glide("contact", false);
     expect(screen.getByRole("status")).toHaveTextContent("events");
+  });
+
+  it("keeps the destination once a glide lands, before the observer reports it", () => {
+    scrollPage(1200);
+    glide("contact", true);
+    crossMiddle("gallery"); // passed on the way
+    crossMiddle("events");
+    glide("contact", false, true);
+    expect(screen.getByRole("status")).toHaveTextContent("contact");
   });
 
   it("shows the hero for a glide to the top", () => {

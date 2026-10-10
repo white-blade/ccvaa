@@ -65,8 +65,12 @@ function start(store: Store, ids: string[]): () => void {
   };
 
   const onGlide = (event: Event) => {
-    const { target, gliding } = (event as CustomEvent<SectionGlideDetail>).detail;
+    const { target, gliding, arrived } = (event as CustomEvent<SectionGlideDetail>).detail;
     glideTarget = gliding ? target : undefined;
+    // Landed: the destination is what is being read now. Without this, the section
+    // last seen crossing the middle on the way would show for a frame or more until
+    // the observer reports the destination.
+    if (arrived && (target === null || ids.includes(target))) active = target;
     publish();
   };
   window.addEventListener(SECTION_GLIDE_EVENT, onGlide);
