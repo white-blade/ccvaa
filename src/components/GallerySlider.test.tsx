@@ -23,7 +23,7 @@ const photos: GalleryPhoto[] = [
 const INTERVAL = 6000;
 
 const slide = () => screen.getByRole("group", { name: /^\d+ \/ \d+$/ });
-const dots = () => within(screen.getByRole("list", { name: "Choose a photograph" })).getAllByRole("button");
+const dots = () => within(screen.getByRole("list", { name: "Choose a work" })).getAllByRole("button");
 const openViewer = () => screen.getByRole("button", { name: /View full size/ });
 
 /** Points `matchMedia` at a reduced-motion preference, or none. */
@@ -60,7 +60,7 @@ describe("GallerySlider: one photograph at a time", () => {
   it("looks right without credits: no empty author or date, the alt text as caption", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
-    await user.click(screen.getByRole("button", { name: "Next photograph" }));
+    await user.click(screen.getByRole("button", { name: "Next work" }));
     expect(slide()).toHaveAccessibleName("2 / 3");
     expect(within(slide()).queryByText(/Photograph by/)).toBeNull();
     expect(slide().querySelector("time")).toBeNull();
@@ -70,9 +70,9 @@ describe("GallerySlider: one photograph at a time", () => {
   it("steps with previous and next, wrapping at the ends", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
-    await user.click(screen.getByRole("button", { name: "Previous photograph" }));
+    await user.click(screen.getByRole("button", { name: "Previous work" }));
     expect(slide()).toHaveAccessibleName("3 / 3");
-    await user.click(screen.getByRole("button", { name: "Next photograph" }));
+    await user.click(screen.getByRole("button", { name: "Next work" }));
     expect(slide()).toHaveAccessibleName("1 / 3");
   });
 
@@ -80,13 +80,13 @@ describe("GallerySlider: one photograph at a time", () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
     expect(dots().map((dot) => dot.getAttribute("aria-label"))).toEqual([
-      "Show photograph 1",
-      "Show photograph 2",
-      "Show photograph 3",
+      "Show work 1",
+      "Show work 2",
+      "Show work 3",
     ]);
     expect(dots()[0]).toHaveAttribute("aria-current", "true");
 
-    await user.click(screen.getByRole("button", { name: "Show photograph 3" }));
+    await user.click(screen.getByRole("button", { name: "Show work 3" }));
     expect(slide()).toHaveAccessibleName("3 / 3");
     expect(dots()[2]).toHaveAttribute("aria-current", "true");
     expect(dots()[0]).not.toHaveAttribute("aria-current");
@@ -97,9 +97,9 @@ describe("GallerySlider: one photograph at a time", () => {
     render(<GallerySlider photos={photos} />);
     const frame = () => slide().querySelector("[class*=animate-photo]");
     expect(frame()).toBeNull(); // the first is simply there
-    await user.click(screen.getByRole("button", { name: "Next photograph" }));
+    await user.click(screen.getByRole("button", { name: "Next work" }));
     expect(frame()!.className).toContain("animate-photo-from-right");
-    await user.click(screen.getByRole("button", { name: "Show photograph 1" }));
+    await user.click(screen.getByRole("button", { name: "Show work 1" }));
     expect(frame()!.className).toContain("animate-photo-from-left");
     // The credits move in by transform alone (caption-in), so their text never fades.
     expect(slide().querySelector("[data-credits]")).toHaveClass("motion-safe:animate-caption-in");
@@ -165,7 +165,7 @@ describe("GallerySlider: the slideshow", () => {
   it("gives a photograph chosen by hand its full time", () => {
     render(<GallerySlider photos={photos} />);
     advance(INTERVAL - 1000);
-    fireEvent.click(screen.getByRole("button", { name: "Show photograph 3" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show work 3" }));
     advance(INTERVAL - 1);
     expect(slide()).toHaveAccessibleName("3 / 3");
     advance(1);
@@ -186,7 +186,7 @@ describe("GallerySlider: the slideshow", () => {
 
   it("holds while a mouse rests on it, but not for a touch", () => {
     render(<GallerySlider photos={photos} />);
-    const region = screen.getByRole("region", { name: "Gallery photographs" });
+    const region = screen.getByRole("region", { name: "Gallery of works" });
     fireEvent.pointerEnter(region, { pointerType: "mouse" });
     advance(INTERVAL * 2);
     expect(slide()).toHaveAccessibleName("1 / 3");
@@ -201,7 +201,7 @@ describe("GallerySlider: the slideshow", () => {
 
   it("holds while keyboard focus is inside it", () => {
     render(<GallerySlider photos={photos} />);
-    const next = screen.getByRole("button", { name: "Next photograph" });
+    const next = screen.getByRole("button", { name: "Next work" });
     vi.spyOn(next, "matches").mockReturnValue(true); // :focus-visible
     act(() => next.focus());
     advance(INTERVAL * 2);
@@ -254,7 +254,7 @@ describe("GallerySlider: the viewer", () => {
     await user.click(openViewer());
     const dialog = screen.getByRole("dialog", { name: "Photograph number 1" });
     const credit = within(dialog).getByText("Ada Fieldhouse").closest("p")!;
-    expect(credit).toHaveTextContent("Photograph by Ada Fieldhouse·Taken January 1, 2024");
+    expect(credit).toHaveTextContent("By Ada Fieldhouse·Made January 1, 2024");
     const caption = within(dialog).getByText("Caption one");
     expect(credit.compareDocumentPosition(caption) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Shown whole, never cropped.
@@ -264,7 +264,7 @@ describe("GallerySlider: the viewer", () => {
   it("shows no credit line for a photograph without one", async () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
-    await user.click(screen.getByRole("button", { name: "Show photograph 2" }));
+    await user.click(screen.getByRole("button", { name: "Show work 2" }));
     await user.click(openViewer());
     const dialog = screen.getByRole("dialog", { name: "Photograph number 2" });
     expect(within(dialog).queryByText(/Photograph by|Taken/)).toBeNull();
@@ -296,7 +296,7 @@ describe("GallerySlider: the viewer", () => {
     render(<GallerySlider photos={photos} />);
     await user.click(openViewer());
     const dialog = screen.getByRole("dialog", { name: "Photograph number 1" });
-    const expand = within(dialog).getByRole("button", { name: "Expand photograph" });
+    const expand = within(dialog).getByRole("button", { name: "Expand image" });
     expect(expand).toHaveAttribute("aria-pressed", "false");
 
     await user.click(expand);
@@ -305,7 +305,7 @@ describe("GallerySlider: the viewer", () => {
     expect(collapse).toHaveAttribute("aria-pressed", "true");
     // Only the photograph: caption, credits, and thumbnails step aside.
     expect(within(dialog).queryByText("Caption one")).toBeNull();
-    expect(within(dialog).queryByRole("list", { name: "All photographs" })).toBeNull();
+    expect(within(dialog).queryByRole("list", { name: "All works" })).toBeNull();
     expect(within(dialog).getByRole("img", { name: "Photograph number 1" })).toHaveClass("object-contain");
 
     await user.click(collapse);
@@ -321,7 +321,7 @@ describe("GallerySlider: the viewer", () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
     await user.click(openViewer());
-    await user.click(screen.getByRole("button", { name: "Expand photograph" }));
+    await user.click(screen.getByRole("button", { name: "Expand image" }));
 
     await user.keyboard("{ArrowRight}");
     const dialog = screen.getByRole("dialog", { name: "Photograph number 2" });
@@ -349,12 +349,12 @@ describe("GallerySlider: the viewer", () => {
     const user = userEvent.setup();
     render(<GallerySlider photos={photos} />);
     await user.click(openViewer());
-    const strip = within(screen.getByRole("list", { name: "All photographs" }));
+    const strip = within(screen.getByRole("list", { name: "All works" }));
     expect(strip.getAllByRole("button")).toHaveLength(3);
     expect(strip.getAllByRole("button")[0]).toHaveAttribute("aria-current", "true");
-    await user.click(strip.getByRole("button", { name: "Show photograph 3" }));
+    await user.click(strip.getByRole("button", { name: "Show work 3" }));
     expect(screen.getByRole("dialog", { name: "Photograph number 3" })).toBeInTheDocument();
-    expect(strip.getByRole("button", { name: "Show photograph 3" })).toHaveAttribute("aria-current", "true");
+    expect(strip.getByRole("button", { name: "Show work 3" })).toHaveAttribute("aria-current", "true");
   });
 
   it("fetches the neighbouring photographs ahead of a step", async () => {
@@ -396,5 +396,135 @@ describe("GallerySlider: the viewer", () => {
     const hint = screen.getByText(/to browse/);
     expect(hint).toHaveClass("hidden", "pointer-fine:inline");
     expect(hint).toHaveAttribute("aria-hidden", "true");
+  });
+});
+
+describe("GallerySlider: a large gallery", () => {
+  const many: GalleryPhoto[] = Array.from({ length: 20 }, (_, i) => ({
+    file: `w${i + 1}`,
+    src: `/ccvaa/photos/w${i + 1}-lg.avif`,
+    alt: `Work number ${i + 1}`,
+  }));
+
+  it("shows a window of at most seven dots, sliding with the current work", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    expect(dots()).toHaveLength(7);
+    expect(dots()[0]).toHaveAccessibleName("Show work 1");
+    expect(dots()[0]).toHaveAttribute("aria-current", "true");
+
+    for (let i = 0; i < 9; i++) await user.click(screen.getByRole("button", { name: "Next work" }));
+    expect(slide()).toHaveAccessibleName("10 / 20");
+    expect(dots()).toHaveLength(7);
+    expect(dots().map((dot) => dot.getAttribute("aria-label"))).toEqual(
+      [7, 8, 9, 10, 11, 12, 13].map((n) => `Show work ${n}`),
+    );
+    expect(screen.getByRole("button", { name: "Show work 10" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("draws the edge dots smaller where more works lie beyond", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    await user.click(screen.getByRole("button", { name: "Show work 4" }));
+    await user.click(screen.getByRole("button", { name: "Show work 7" }));
+    const scales = dots().map((dot) => dot.closest("li")!.getAttribute("data-dot-scale"));
+    expect(scales).toEqual(["small", "medium", "full", "full", "full", "medium", "small"]);
+  });
+
+  it("wraps from the last work to the first, the window following", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={many} />);
+    await user.click(screen.getByRole("button", { name: "Previous work" }));
+    expect(slide()).toHaveAccessibleName("20 / 20");
+    expect(screen.getByRole("button", { name: "Show work 20" })).toHaveAttribute("aria-current", "true");
+    expect(screen.queryByRole("button", { name: "Show work 1" })).toBeNull();
+  });
+});
+
+describe("GallerySlider: progressive pictures and credits", () => {
+  const prepared: GalleryPhoto[] = [
+    {
+      file: "dock",
+      src: "/ccvaa/photos/dock-lg.avif",
+      srcSet: "/ccvaa/photos/dock-sm.avif 640w, /ccvaa/photos/dock-md.avif 1280w, /ccvaa/photos/dock-lg.avif 1920w",
+      width: 1920,
+      height: 1280,
+      blurDataURL: "data:image/webp;base64,AAAA",
+      alt: "A dock",
+      author: "Ada Fieldhouse",
+      takenAt: "2024-01-01",
+      medium: "Photograph",
+      license: { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+      source: "https://commons.wikimedia.org/wiki/File:Dock.jpg",
+    },
+    { file: "bench", src: "/ccvaa/photos/bench-lg.avif", alt: "A bench" },
+  ];
+
+  it("offers every prepared size, so a phone fetches a phone-sized file", () => {
+    render(<GallerySlider photos={prepared} />);
+    const image = within(slide()).getByRole("img", { name: "A dock" });
+    expect(image).toHaveAttribute("srcset", prepared[0].srcSet);
+    expect(image).toHaveAttribute("sizes", "(min-width: 1280px) 76rem, 100vw");
+    expect(image).toHaveAttribute("width", "1920");
+    expect(image).toHaveAttribute("height", "1280");
+    // The first slide is wanted at once; it is what the visitor sees.
+    expect(image).toHaveAttribute("loading", "eager");
+  });
+
+  it("shows the blurred preview until the picture loads, then fades the picture in", () => {
+    render(<GallerySlider photos={prepared} />);
+    const image = within(slide()).getByRole("img", { name: "A dock" });
+    const frame = image.parentElement!;
+    expect(frame.style.backgroundImage).toContain("data:image/webp;base64,AAAA");
+    expect(image).toHaveClass("[html.js_&]:opacity-0");
+
+    fireEvent.load(image);
+    expect(frame).toHaveAttribute("data-picture-loaded");
+    expect(frame.style.backgroundImage).toBe("");
+    expect(image).toHaveClass("opacity-100");
+  });
+
+  it("uncovers a picture that fails to load, so its alt text shows", () => {
+    render(<GallerySlider photos={prepared} />);
+    const image = within(slide()).getByRole("img", { name: "A dock" });
+    fireEvent.error(image);
+    expect(image).toHaveClass("opacity-100");
+  });
+
+  it("names the medium with the date, and links the licence and the source in a new tab", () => {
+    render(<GallerySlider photos={prepared} />);
+    expect(within(slide()).getByText("Photograph")).toBeInTheDocument();
+    const licence = within(slide()).getByRole("link", { name: "CC BY-SA 4.0" });
+    expect(licence).toHaveAttribute("href", "https://creativecommons.org/licenses/by-sa/4.0/");
+    expect(licence).toHaveAttribute("target", "_blank");
+    expect(licence.getAttribute("rel")).toContain("license");
+    const source = within(slide()).getByRole("link", { name: /^Source \(opens in a new tab\)/ });
+    expect(source).toHaveAttribute("href", prepared[0].source);
+    expect(source.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("shows no licence line for the association's own work", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={prepared} />);
+    await user.click(screen.getByRole("button", { name: "Next work" }));
+    expect(within(slide()).queryByRole("link")).toBeNull();
+  });
+
+  it("credits the work in the viewer too", async () => {
+    const user = userEvent.setup();
+    render(<GallerySlider photos={prepared} />);
+    await user.click(openViewer());
+    const dialog = screen.getByRole("dialog", { name: "A dock" });
+    expect(within(dialog).getByRole("link", { name: "CC BY-SA 4.0" })).toBeInTheDocument();
+    expect(within(dialog).getByText(/Photograph/)).toBeInTheDocument();
+    // The viewer shows the work whole, at the size the screen needs.
+    const image = within(dialog).getByRole("img", { name: "A dock" });
+    expect(image).toHaveClass("object-contain");
+    expect(image).toHaveAttribute("sizes", "100vw");
+  });
+
+  it("has no detectable accessibility problems with credits and links", async () => {
+    const { container } = render(<GallerySlider photos={prepared} />);
+    await expectNoAxeViolations(container);
   });
 });

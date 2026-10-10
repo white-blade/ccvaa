@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -10,6 +9,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { GalleryCredit } from "@/components/GalleryCredit";
+import { GalleryPicture } from "@/components/GalleryPicture";
 import { roundButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
@@ -87,7 +88,13 @@ export function GalleryLightbox({
     for (const offset of [1, -1]) {
       const neighbour =
         photos[(index + offset + photos.length) % photos.length];
-      if (neighbour) new window.Image().src = neighbour.src;
+      if (!neighbour) continue;
+      const prefetch = new window.Image();
+      if (neighbour.srcSet) {
+        prefetch.sizes = "100vw";
+        prefetch.srcset = neighbour.srcSet;
+      }
+      prefetch.src = neighbour.src;
     }
   }, [index, photos]);
 
@@ -197,21 +204,19 @@ export function GalleryLightbox({
           key={photo.src}
           className={`pointer-events-none absolute inset-0 ${ENTER_CLASS[direction]}`}
         >
-          <Image
-            src={photo.src}
-            alt={photo.alt}
-            fill
-            unoptimized
-            onLoad={() => setLoadedSrc(photo.src)}
-            className={`object-contain transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          <GalleryPicture
+            photo={photo}
             sizes="100vw"
+            fit="contain"
+            priority
+            onLoad={() => setLoadedSrc(photo.src)}
           />
         </div>
       </div>
 
       {expanded ? null : (
         <div className="mx-auto mt-4 max-w-3xl text-center">
-          {photo.author || takenOn ? (
+          {photo.author || takenOn || photo.medium ? (
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">
               {photo.author ? (
                 <>
@@ -221,7 +226,18 @@ export function GalleryLightbox({
                   {photo.author}
                 </>
               ) : null}
-              {photo.author && takenOn ? (
+              {photo.author && (photo.medium || takenOn) ? (
+                <span aria-hidden="true" className="mx-2 text-ocean-200">
+                  ·
+                </span>
+              ) : null}
+              {photo.medium ? (
+                <>
+                  <span className="sr-only">, </span>
+                  {photo.medium}
+                </>
+              ) : null}
+              {photo.medium && takenOn ? (
                 <span aria-hidden="true" className="mx-2 text-ocean-200">
                   ·
                 </span>
@@ -242,6 +258,7 @@ export function GalleryLightbox({
           >
             {photo.description ?? photo.alt}
           </p>
+          <GalleryCredit photo={photo} className="mt-1.5" />
         </div>
       )}
 
@@ -277,15 +294,7 @@ export function GalleryLightbox({
                         : "opacity-50 hover:opacity-90"
                     }`}
                   >
-                    <Image
-                      src={thumb.src}
-                      alt=""
-                      fill
-                      unoptimized
-                      loading="lazy"
-                      sizes="3.5rem"
-                      className="object-cover"
-                    />
+                    <GalleryPicture photo={{ ...thumb, alt: "" }} sizes="3.5rem" fit="cover" />
                   </button>
                 </li>
               );

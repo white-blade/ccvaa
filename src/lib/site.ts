@@ -214,29 +214,33 @@ export const galleryContent = {
   eyebrow: "The collection",
   title: "Gallery",
   description:
-    "Work and moments from our community, one photograph at a time. Select a photograph to see it whole.",
-  /** The slideshow, for screen readers: "Gallery photographs, carousel". */
-  sliderLabel: "Gallery photographs",
-  /** Seconds each photograph stays before the next one slides in. */
+    "A changing selection of visual art — photography, painting, printmaking, and more. Choose any work to see it in full.",
+  /** The slideshow, for screen readers: "Gallery of works, carousel". */
+  sliderLabel: "Gallery of works",
+  /** Seconds each work stays before the next one slides in. */
   autoplaySeconds: 6,
   pauseLabel: "Pause slideshow",
   playLabel: "Play slideshow",
-  /** The mark on the photograph that opens the viewer; read after the alt text. */
+  /** The mark on the work that opens the viewer; read after the alt text. */
   zoomLabel: "View full size",
-  /** Read before the author: "Photograph by Mira Hollis". */
-  authorPrefix: "Photograph by",
-  /** Read before the date: "Taken October 19, 2024". */
-  takenPrefix: "Taken",
+  /** Read before the author: "By Chensiyuan". */
+  authorPrefix: "By",
+  /** Read before the date: "Made June 16, 2019". */
+  takenPrefix: "Made",
+  /** The credit line's link to where the original is published. */
+  sourceLabel: "Source",
+  /** Read after a link that opens a new tab. */
+  newTabNote: "(opens in a new tab)",
   closeLabel: "Close",
-  /** The viewer's toggle between the framed view and the photograph alone, full screen. */
-  expandLabel: "Expand photograph",
+  /** The viewer's toggle between the framed view and the work alone, full screen. */
+  expandLabel: "Expand image",
   collapseLabel: "Exit full view",
-  previousLabel: "Previous photograph",
-  nextLabel: "Next photograph",
-  /** The slideshow's dots and the viewer's thumbnails, and each one: "Show photograph 3". */
-  dotsLabel: "Choose a photograph",
-  thumbnailsLabel: "All photographs",
-  showPhotoLabel: "Show photograph",
+  previousLabel: "Previous work",
+  nextLabel: "Next work",
+  /** The slideshow's dots and the viewer's thumbnails, and each one: "Show work 3". */
+  dotsLabel: "Choose a work",
+  thumbnailsLabel: "All works",
+  showPhotoLabel: "Show work",
   /** Shown to mouse and keyboard users only; touch gets swipes instead. */
   keyboardHint: "← → to browse · Esc to close",
 } as const;

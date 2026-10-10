@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -11,9 +10,12 @@ import {
   type TouchEvent,
 } from "react";
 
+import { GalleryCredit } from "@/components/GalleryCredit";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
+import { GalleryPicture } from "@/components/GalleryPicture";
 import { roundButtonClass, roundGlassButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
+import { dotWindow } from "@/lib/dot-window";
 import { galleryContent } from "@/lib/site";
 import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
 import { formatIsoDate } from "@/lib/text";
@@ -32,6 +34,8 @@ const ENTER_CLASS = {
 
 const twoDigits = (n: number) => String(n).padStart(2, "0");
 
+const DOT_SCALE = { small: "scale-50", medium: "scale-75", full: "" } as const;
+
 /**
  * The gallery as a slideshow: one photograph at a time, stepped by the arrows, the
  * dots, a swipe, or the slideshow itself. Tapping the photograph opens the
@@ -42,6 +46,9 @@ const twoDigits = (n: number) => String(n).padStart(2, "0");
  * left and deepens to frosted dark on the right. Below `md` it is a card: the
  * photograph, then the credits beneath it, with no veil.
  */
+/** How wide a slide is drawn: the section's full width, capped at its container. */
+const SLIDE_SIZES = "(min-width: 1280px) 76rem, 100vw";
+
 export function GallerySlider({ photos }: GallerySliderProps) {
   const [index, setIndex] = useState(0);
   /** Which way the visitor last moved, so the next photograph slides in from there. */
@@ -77,9 +84,17 @@ export function GallerySlider({ photos }: GallerySliderProps) {
     restartKey: index,
   });
 
-  // Fetch the next photograph now, so the slideshow never waits on the network.
+  // Fetch the next work now, at the size this screen will use, so the slideshow
+  // never waits on the network.
   useEffect(() => {
-    if (hasMany) new window.Image().src = photos[(index + 1) % count].src;
+    if (!hasMany) return;
+    const upcoming = photos[(index + 1) % count];
+    const prefetch = new window.Image();
+    if (upcoming.srcSet) {
+      prefetch.sizes = SLIDE_SIZES;
+      prefetch.srcset = upcoming.srcSet;
+    }
+    prefetch.src = upcoming.src;
   }, [count, hasMany, index, photos]);
 
   // A mouse resting on the slideshow holds it; touch has no hover, so a tap does not.
@@ -110,6 +125,7 @@ export function GallerySlider({ photos }: GallerySliderProps) {
   };
 
   const takenOn = photo.takenAt ? formatIsoDate(photo.takenAt) : null;
+  const dots = dotWindow(index, count);
 
   return (
     <>
@@ -145,13 +161,12 @@ export function GallerySlider({ photos }: GallerySliderProps) {
               >
                 <span className="fx-tile-image absolute inset-0 block">
                   <span key={photo.file} className={`absolute inset-0 block ${ENTER_CLASS[direction]}`}>
-                    <Image
-                      src={photo.src}
-                      alt={photo.alt}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 1280px) 76rem, 100vw"
-                      className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03]"
+                    <GalleryPicture
+                      photo={photo}
+                      sizes={SLIDE_SIZES}
+                      fit="cover"
+                      priority={index === 0}
+                      className="transition-transform duration-[1.2s] ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03]"
                     />
                   </span>
                 </span>
@@ -199,16 +214,28 @@ export function GallerySlider({ photos }: GallerySliderProps) {
                     {photo.author}
                   </p>
                 ) : null}
-                {takenOn ? (
+                {takenOn || photo.medium ? (
                   <p className="mt-1 text-sm text-ocean-100 md:mt-2">
-                    <span className="sr-only">{galleryContent.takenPrefix} </span>
-                    <time dateTime={photo.takenAt}>{takenOn}</time>
+                    {photo.medium}
+                    {photo.medium && takenOn ? (
+                      <span aria-hidden="true" className="mx-2 text-coral/70">
+                        ·
+                      </span>
+                    ) : null}
+                    {takenOn ? (
+                      <>
+                        <span className="sr-only">{photo.medium ? ", " : ""}{galleryContent.takenPrefix} </span>
+                        <time dateTime={photo.takenAt}>{takenOn}</time>
+                      </>
+                    ) : null}
                   </p>
                 ) : null}
                 <span aria-hidden="true" className="mt-4 block h-px w-12 bg-coral/70 md:mt-6" />
                 <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-ocean-100 md:mt-6 md:line-clamp-6 lg:text-base">
                   {photo.description ?? photo.alt}
                 </p>
+                {/* Links, so they take pointer events back from the veil's credits block. */}
+                <GalleryCredit photo={photo} className="pointer-events-auto mt-4 md:mt-6" />
               </div>
             </div>
           </div>
@@ -242,11 +269,12 @@ export function GallerySlider({ photos }: GallerySliderProps) {
               <span aria-hidden="true">‹</span>
             </button>
 
-            <ol aria-label={galleryContent.dotsLabel} className="flex flex-wrap items-center justify-center">
-              {photos.map((each, dotIndex) => {
+            <ol aria-label={galleryContent.dotsLabel} className="flex items-center justify-center">
+              {photos.slice(dots.start, dots.end).map((each, offset) => {
+                const dotIndex = dots.start + offset;
                 const current = dotIndex === index;
                 return (
-                  <li key={each.file}>
+                  <li key={each.file} data-dot-scale={dots.scale(dotIndex)}>
                     <button
                       type="button"
                       onClick={() => select(dotIndex)}
@@ -256,7 +284,7 @@ export function GallerySlider({ photos }: GallerySliderProps) {
                     >
                       <span
                         aria-hidden="true"
-                        className={`block h-2 rounded-full transition-all duration-300 ${
+                        className={`block h-2 rounded-full transition-all duration-300 ${DOT_SCALE[dots.scale(dotIndex)]} ${
                           current
                             ? "w-5 bg-coral"
                             : "w-2 bg-white/50 group-hover:bg-white/80 group-focus-visible:bg-white/80"

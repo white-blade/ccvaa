@@ -4,12 +4,12 @@ import { readGalleryPhotos } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
 
 /**
- * Server component: resolves the photo list at build time, then hands it to the
- * client slideshow. Renders nothing at all when there are no photos, so an empty folder
+ * Server component: resolves the gallery at build time, then hands it to the client
+ * slideshow. Renders nothing at all when there are no works, so an empty gallery
  * leaves no hollow section behind.
  */
-export async function GallerySection() {
-  const photos = await readGalleryPhotos();
+export function GallerySection() {
+  const photos = readGalleryPhotos();
 
   if (photos.length === 0) {
     return null;

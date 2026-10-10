@@ -1,68 +1,52 @@
 // @vitest-environment node
-import type { Dirent } from "node:fs";
-import { readdir } from "node:fs/promises";
-
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { readGalleryPhotos } from "@/lib/gallery";
 import { galleryPhotoDetails } from "@/lib/gallery-photos";
 
-vi.mock("node:fs/promises", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:fs/promises")>();
-  return { ...actual, readdir: vi.fn(actual.readdir) };
-});
-
-function entry(name: string, isFile = true): Dirent {
-  return { name, isFile: () => isFile } as Dirent;
-}
-
-afterEach(() => {
-  vi.mocked(readdir).mockReset();
-});
+const sizes = {
+  dock: {
+    variants: [
+      { file: "dock-lg.avif", width: 1920, height: 1280 },
+      { file: "dock-sm.avif", width: 640, height: 427 },
+      { file: "dock-md.avif", width: 1280, height: 853 },
+    ],
+    blurDataURL: "data:image/webp;base64,AAAA",
+  },
+};
 
 describe("readGalleryPhotos", () => {
-  it("reads the real public/photos folder with base-path URLs and alt text", async () => {
-    vi.mocked(readdir).mockImplementation(
-      (await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises"))
-        .readdir as typeof readdir,
+  it("lists every authored work, in the authored order", () => {
+    const photos = readGalleryPhotos();
+    expect(photos.map((photo) => photo.file)).toEqual(galleryPhotoDetails.map((details) => details.name));
+  });
+
+  it("points at the largest size, base-path-prefixed, with every size in srcset", () => {
+    const [photo] = readGalleryPhotos([{ name: "dock", alt: "A dock" }], sizes);
+    expect(photo.src).toBe("/ccvaa/photos/dock-lg.avif");
+    expect(photo.srcSet).toBe(
+      "/ccvaa/photos/dock-sm.avif 640w, /ccvaa/photos/dock-md.avif 1280w, /ccvaa/photos/dock-lg.avif 1920w",
     );
-    const photos = await readGalleryPhotos();
-    expect(photos.length).toBeGreaterThan(0);
-    for (const photo of photos) {
-      expect(photo.src).toBe(`/ccvaa/photos/${photo.file}`);
-      expect(photo.alt.trim()).not.toBe("");
-    }
+    expect(photo).toMatchObject({ width: 1920, height: 1280, blurDataURL: "data:image/webp;base64,AAAA" });
   });
 
-  it("keeps only image files and sorts them numerically", async () => {
-    vi.mocked(readdir).mockResolvedValue([
-      entry("10.jpg"),
-      entry("2.avif"),
-      entry("notes.txt"),
-      entry("9.PNG"),
-      entry("drafts.jpg", false),
-    ] as never);
-
-    const photos = await readGalleryPhotos();
-    expect(photos.map((photo) => photo.file)).toEqual(["2.avif", "9.PNG", "10.jpg"]);
+  it("carries the details through: alt, caption, author, date, medium, licence, source", () => {
+    const details = {
+      name: "dock",
+      alt: "A dock",
+      description: "A caption",
+      author: "Ada",
+      takenAt: "2024-01-01",
+      medium: "Photograph",
+      license: { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+      source: "https://example.org/dock",
+    };
+    const [photo] = readGalleryPhotos([details], sizes);
+    const { name, ...rest } = details;
+    expect(photo).toMatchObject({ ...rest, file: name });
   });
 
-  it("joins each file with its details: alt text, caption, author, date", async () => {
-    vi.mocked(readdir).mockResolvedValue([entry("1.jpg")] as never);
-    const [photo] = await readGalleryPhotos();
-    const details = galleryPhotoDetails.find((each) => each.file === "1.jpg")!;
-    expect(photo).toEqual({ ...details, src: "/ccvaa/photos/1.jpg" });
-  });
-
-  it("gives a photo without an entry a generic description and no credits", async () => {
-    vi.mocked(readdir).mockResolvedValue([entry("99.jpg")] as never);
-    const [photo] = await readGalleryPhotos();
-    expect(photo.alt).toMatch(/Coast to Coast Visual Arts Association/);
-    expect(Object.keys(photo).sort()).toEqual(["alt", "file", "src"]);
-  });
-
-  it("returns nothing when the folder is missing", async () => {
-    vi.mocked(readdir).mockRejectedValue(new Error("ENOENT"));
-    expect(await readGalleryPhotos()).toEqual([]);
+  it("leaves out a work with no prepared sizes rather than show it broken", () => {
+    expect(readGalleryPhotos([{ name: "missing", alt: "Gone" }], sizes)).toEqual([]);
   });
 });

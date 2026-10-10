@@ -33,12 +33,14 @@ Nav: About · Gallery · Events · Contact
 
 - **About**: the board — a group photograph and a card per member that opens a profile
   (portrait, bio, website) — and the ten purposes as an accordion.
-- **Gallery**: every photograph in `public/photos/`, read at build time, as a sliding
-  gallery — one photograph at a time, prev/next and dots, swipe on touch, a 6s
-  slideshow with a pause button. From 768 the photograph fills the stage with its
-  author, date, and caption at the top right over a frosted veil; below, a card with
-  the credits under the photograph. Selecting it opens the full-size viewer. Credits
-  live in `src/lib/gallery-photos.ts` (see `specs/gallery-0003`).
+- **Gallery**: the works listed in `src/lib/gallery-photos.ts`, as a sliding gallery —
+  one work at a time, prev/next and a sliding window of at most 7 dots (any number of
+  works), swipe on touch, a 6s slideshow with a pause button. From 768 the work fills
+  the stage with its author, medium, date, caption, and licence at the top right over
+  a frosted veil; below, a card with the credits under it. Selecting it opens the
+  full-size viewer (with a full view). Pictures are progressive: a blurred preview,
+  then the smallest prepared size that is sharp (`srcset`). See `specs/gallery-0003`,
+  `gallery-0004`.
 - **Events**: listings, beside a date-scaled **timeline** (≥ 1024px) or a sticky
   **date rail** (below) whose chips show the date with its year and the city and country.
 - **Contact**: the email, set large, and the postal address.
@@ -78,22 +80,28 @@ src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoas
                  shell; a bottom sheet on phones), SectionLinks, styles.ts
                  (shared class strings: subsection heading, round buttons)
 src/lib/site.ts  ALL copy and config — edit here first
-src/lib/         events.ts, timeline.ts, gallery.ts (reads public/photos/),
-                 gallery-photos.ts (each photo's alt, caption, author, date),
+src/lib/         events.ts, timeline.ts, gallery.ts (joins works with their sizes),
+                 gallery-photos.ts (each work's alt, caption, author, date, licence),
+                 gallery-photo-sizes.json (written by `npm run photos`), dot-window.ts,
                  asset.ts, scroll-to-section.ts, use-active-section.ts (one shared
                  store), use-dialog.ts, use-autoplay.ts, use-today.ts, hover-focus.ts,
                  swipe.ts, strip.ts, text.ts
 src/test/        shared test helpers (fixtures, axe)
 e2e/             Playwright browser suite and the static server it uses
-public/          photos/ (gallery), events/, board/, images/
+public/          photos/ (gallery, generated), events/, board/, images/
+scripts/         gallery-photos.mjs (`npm run photos`)
 specs/           specs and decision records — start with quality-0001
 assets/          source originals, not deployed
 ```
 
 **Content changes go in `src/lib/site.ts`.** Org details, navigation, hero copy, the
 board (bios, portraits, website), the ten purposes, and contact info all live there;
-event listings live in `src/lib/events.ts`; each gallery photograph's alt text,
-caption, author, and date live in `src/lib/gallery-photos.ts`, one entry per file. Components read from them and stay
+event listings live in `src/lib/events.ts`; each gallery work's alt text, caption,
+author, date, medium, and licence live in `src/lib/gallery-photos.ts`. Gallery images
+are never hand-sized: `npm run photos -- <folder of originals>` writes three AVIF
+sizes per work into `public/photos/` (≤ 300 KB each) and a blurred preview; the
+originals stay out of the repo. Works under CC BY / BY-SA keep their real creator,
+licence, and source link — that is the licence's condition. Components read from them and stay
 presentational. Images are pre-sized before committing (≤ 1920px, ≤ 300 KB) — Pages
 serves exactly what is committed.
 
@@ -108,6 +116,7 @@ npm run typecheck
 npm test             # Vitest, once; `npm run test:watch` to keep it running
 npm run test:e2e     # Playwright against out/ — build first; E2E_PORT=4180 to run
                      # beside a test server already on 4173
+npm run photos -- <dir>  # gallery originals → public/photos/ sizes + previews
 ```
 
 ## Tests and the regression checklist

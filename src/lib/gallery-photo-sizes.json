@@ -1,0 +1,382 @@
+{
+  "atacama-desert-chile": {
+    "variants": [
+      {
+        "file": "atacama-desert-chile-sm.avif",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "file": "atacama-desert-chile-md.avif",
+        "width": 1280,
+        "height": 960
+      },
+      {
+        "file": "atacama-desert-chile-lg.avif",
+        "width": 1920,
+        "height": 1440
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAADQBACdASoYABIAPu1qrFEppaQiqAqpMB2JYgC/Sf/gHn+wjCknEUL/ASUYkipaAAD+8p3sZlWg6VFIF0AyAw9+62t6q7AC8IghZrizPR7/R/zf5e4w9AlWQ2e1jpLqaav5j1zIFYew+AfmWoLqfws++HtkGCEdDUKjaLEP7gdSqSC2YriWBfdiGyaHxHAAAAA="
+  },
+  "autumn-forest-creek-west-virginia": {
+    "variants": [
+      {
+        "file": "autumn-forest-creek-west-virginia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "autumn-forest-creek-west-virginia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "autumn-forest-creek-west-virginia-lg.avif",
+        "width": 1920,
+        "height": 1280
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAADQAwCdASoYABAAPu1kqk4ppaQiMAgBMB2JQBOgA6SnWux9LHXnfFAA/u6hLoSIhpRayToSPVHWoIRO+5rNxNivQB87FIC6sQGiFiMrZBlIaYdcuqSYl4KCuKUhG3po6B4raFls/hJZHWa0eJadibWfnztKCvs8V3eAXTuoL35Mj8YIKMUgSZgA"
+  },
+  "blue-lake-aoraki-mount-cook": {
+    "variants": [
+      {
+        "file": "blue-lake-aoraki-mount-cook-sm.avif",
+        "width": 640,
+        "height": 443
+      },
+      {
+        "file": "blue-lake-aoraki-mount-cook-md.avif",
+        "width": 1280,
+        "height": 886
+      },
+      {
+        "file": "blue-lake-aoraki-mount-cook-lg.avif",
+        "width": 1920,
+        "height": 1329
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRqYAAABXRUJQVlA4IJoAAADQBACdASoYABEAPu1gq1AppKOisBgIATAdiUAYUAHoQ3E9EdtNCBA7Him/caHkIAD80CactvJOeVWWw88Sw7nv12QdLCRkR4w76zHwrPvLAxvjLeaKFeob8ugppmhDjbP4BdyHC5HvVGLmLWE+XXlWHPPK2jZQ3GrToSwsjVkl5wkCWO4M88Sa1MA665Of+tMDVMqhHZzt0AAA"
+  },
+  "castle-cove-coastal-lookout-at-sea-australia": {
+    "variants": [
+      {
+        "file": "castle-cove-coastal-lookout-at-sea-australia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "castle-cove-coastal-lookout-at-sea-australia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "castle-cove-coastal-lookout-at-sea-australia-lg.avif",
+        "width": 1920,
+        "height": 1280
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JaACdMoAC+6XYrNobC+bgx4mZAAD+eRdAbdChVXKIFmo35jpzcQepz2v01M9jeL02c/QHMV6xHa4RW+HQ0+4u3oFlYT7wZTvC1Z2l5I0K0yZfArDG3Bo0baVpYkICqCW3+BJV4gAQIAAA"
+  },
+  "castle-cove-coastal-lookout-australia": {
+    "variants": [
+      {
+        "file": "castle-cove-coastal-lookout-australia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "castle-cove-coastal-lookout-australia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "castle-cove-coastal-lookout-australia-lg.avif",
+        "width": 1920,
+        "height": 1280
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRqoAAABXRUJQVlA4IJ4AAAAwBACdASoYABAAPu1iqk2ppaQiMAgBMB2JZACdMoADS+an+8wD6aFm/MAA/lXUUtRUXKb5uANTnAHG0T+Q7EzChWFH6XMu7YMcqoa8QmAyTJcSPTzQYOnKrN/Z+Rn1avnEl22+THNRCOTX6KKjFRzr8JPGXO+3BvPH7rmGejHExhcE0OShN2+gA53p6gcTDmqZoSlmQbfJEOoFgAAAAA=="
+  },
+  "clear-water-waterfall-landscape-virginia": {
+    "variants": [
+      {
+        "file": "clear-water-waterfall-landscape-virginia-sm.avif",
+        "width": 446,
+        "height": 640
+      },
+      {
+        "file": "clear-water-waterfall-landscape-virginia-md.avif",
+        "width": 781,
+        "height": 1120
+      },
+      {
+        "file": "clear-water-waterfall-landscape-virginia-lg.avif",
+        "width": 1115,
+        "height": 1600
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRlwBAABXRUJQVlA4IFABAABQBwCdASoYACIAPu1qqFAppiOiqqoBMB2JZgCxH3V/XrKuilVY3kkjHD4Ew3BSQ2pPb2xMVdXc7ZLdBFxZL3jiTDegAP4XPzXp5pPPU3iA/SByqEuYoa5dlg10LsCGMSRnh4HqESFldv3/JoR0JsVCYz1hSQTDcQYjwchNCODNasfJ74c5gg6J+6lwQKm131q14eKczq8P+jU7VRaNR/lIYTtNkyHQJZcBYSBw8nLdTxfCG0qt5mPAM4EVbRLJ4JVWWHOrMVELA7iWi1k3gQZ/pMDc/uXQQcc0Vu4Miiv5BZZWyVdvlCzRjGqKLmhWSQawuoM24FPyxB/n2lkGNzWlWeJO9yhFEWkveg5kTPj1qKa8CMwInHVg0/hnlMQ5O4CviZNR5SNezPb2vjfJpixLt2JKRqIIVZYGAOVB/FLK88B4rWiU8lSoWDzt6/YAAAA="
+  },
+  "desert-plants-and-scenery-joshua-tree": {
+    "variants": [
+      {
+        "file": "desert-plants-and-scenery-joshua-tree-sm.avif",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "file": "desert-plants-and-scenery-joshua-tree-md.avif",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "file": "desert-plants-and-scenery-joshua-tree-lg.avif",
+        "width": 1760,
+        "height": 990
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRqYAAABXRUJQVlA4IJoAAACwBACdASoYAA4APu1iqU2ppaOiMAgBMB2JZACdMoMzPn/FsWFNzx58LcqivcPgAMqR+VX74VLWeT7QyIYQ4/I+lFuBdWw48AsNrISlzOryu3r20bYgOGlD+jO9KkGRCHaAeYTv7OpvqtvLL+tM4CQ00fBZfO5PF5OXbG6FOasvjET8m01rfNMfpn/7+MQh5uJAkMKXpkMyOgAA"
+  },
+  "desert-scenery-with-mountains": {
+    "variants": [
+      {
+        "file": "desert-scenery-with-mountains-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "desert-scenery-with-mountains-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "desert-scenery-with-mountains-lg.avif",
+        "width": 1920,
+        "height": 1280
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAwCdASoYABAAPu1krU6ppaSiMAgBMB2JZwAAW+tYIq9QfS3isQAA/u1N9zloHOMYkktWlPii493pysnaTW8DiXUFODy4MeLBzdz7Oq18iB4AAAA="
+  },
+  "dome-creek-british-columbia": {
+    "variants": [
+      {
+        "file": "dome-creek-british-columbia-sm.avif",
+        "width": 640,
+        "height": 424
+      },
+      {
+        "file": "dome-creek-british-columbia-md.avif",
+        "width": 1280,
+        "height": 848
+      },
+      {
+        "file": "dome-creek-british-columbia-lg.avif",
+        "width": 1920,
+        "height": 1272
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAADQAwCdASoYABAAPu1kqU4ppaOiMAgBMB2JQBOl4AAzkir8jS7L9ugA/tPktpIzEz7+TpY+lvGLhkmz4mudYmREczOiIIxizps9193/zissPK+vagiRHtkiBv/7fgXj17oBoL/QIVw9dBQFEDgAAA=="
+  },
+  "downhill-strand-coastal-countryside-ireland": {
+    "variants": [
+      {
+        "file": "downhill-strand-coastal-countryside-ireland-sm.avif",
+        "width": 640,
+        "height": 426
+      },
+      {
+        "file": "downhill-strand-coastal-countryside-ireland-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "downhill-strand-coastal-countryside-ireland-lg.avif",
+        "width": 1920,
+        "height": 1279
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABwBACdASoYABAAPu1kq04ppaQiMAgBMB2JbACdH8GJ/gPeCE8+tZBnwOgFAAD+0zARNeflNT/pkXmWt+9gMe2/bxI9fHeOCEV3tmql5dT8X6TI6KcTwAfoAltivP3PDmQy1wnBc+mbQ2SvmKLC8c5iF1A8PrLuBNRzYiAA"
+  },
+  "forest-waterfalls-virginia": {
+    "variants": [
+      {
+        "file": "forest-waterfalls-virginia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "forest-waterfalls-virginia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "forest-waterfalls-virginia-lg.avif",
+        "width": 1760,
+        "height": 1173
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRrwAAABXRUJQVlA4ILAAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JQBadO4FwWNU9lW3PB4Nrsxk1kAD+2fPW95nxGjA46AX0FlYW6nISvFJhqZKHDSsTURAdG+iy6sVYXTO+5rr495hODYLP0Dy9ish4Dm89yemlSnnc7nlvYgqVTABSQnYRzr044qt9qiXBwwxpZaVaqjz9D4MwK1ZcmP67zp2EDU50+u63mLZ0rwfmSm2dNnQvekJQZAAAAA=="
+  },
+  "gosaikunda-lake-himalayas": {
+    "variants": [
+      {
+        "file": "gosaikunda-lake-himalayas-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "gosaikunda-lake-himalayas-md.avif",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "file": "gosaikunda-lake-himalayas-lg.avif",
+        "width": 1920,
+        "height": 1281
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRrIAAABXRUJQVlA4IKYAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYgC7AYxO7QpntaIR2i52B6kSLAD92xGzIpBQPtpKVO3ruNkwpgTCDiN6rDfOqY9x5LnRFyupZve+KTUdyMa7viRZA4Lt7kGDwZtESWxTWY+xLgBQEfYWsJFn0NFe+gBUfJ7AVOIOaF1pF7ITqnbTnMW0lyd5pi3B+Ld+egAkYdjWPV+EPhMnNE7nAAAA"
+  },
+  "lake-louise-panorama": {
+    "variants": [
+      {
+        "file": "lake-louise-panorama-sm.avif",
+        "width": 640,
+        "height": 359
+      },
+      {
+        "file": "lake-louise-panorama-md.avif",
+        "width": 1280,
+        "height": 718
+      },
+      {
+        "file": "lake-louise-panorama-lg.avif",
+        "width": 1920,
+        "height": 1077
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAABQBACdASoYAA0APu1kqk4ppaQiMAgBMB2JZACdIExDBFAddPPN/noi1NlgAP6yDzRidebp4Rmv4t3L2IOHDIaeZQjBXd+Dk2++O9GHg4KibdjnKMMU+yGpMT9x/kVntvX2udx+rOn9W3Q6qjD2m165o4/urB7/hGHh59Gq5ZT7S84bwWwlwrTUAAA="
+  },
+  "lake-sylvester-sunrise-new-zealand": {
+    "variants": [
+      {
+        "file": "lake-sylvester-sunrise-new-zealand-sm.avif",
+        "width": 640,
+        "height": 296
+      },
+      {
+        "file": "lake-sylvester-sunrise-new-zealand-md.avif",
+        "width": 1280,
+        "height": 593
+      },
+      {
+        "file": "lake-sylvester-sunrise-new-zealand-lg.avif",
+        "width": 1920,
+        "height": 890
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAADwAwCdASoYAAsAPu1mqk2ppaQiMAgBMB2JQBOioQAOMmuJXbmju5WAAP6yB7KGSIwkF7K1rL8bBeabeL8WPkwJUhzL77JNGYZ9KEu59iLSEaBqOWawnWMnCHoMPddIFFOA/T5q6ttYQSkGIHEqK828a3W7IBJ7rU0AAA=="
+  },
+  "peyriac-de-mer-salt-ponds-france": {
+    "variants": [
+      {
+        "file": "peyriac-de-mer-salt-ponds-france-sm.avif",
+        "width": 640,
+        "height": 398
+      },
+      {
+        "file": "peyriac-de-mer-salt-ponds-france-md.avif",
+        "width": 1280,
+        "height": 797
+      },
+      {
+        "file": "peyriac-de-mer-salt-ponds-france-lg.avif",
+        "width": 1920,
+        "height": 1196
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAACwAwCdASoYAA8ALrV2u12jqampiYC0SgCsAD2NsnB+vLFod+mlAAD+1wAZTVxFpcucKXKkhlBuI8khw9hECYM0yTBbdOIPUoU7JmPMHfTFTdsp3Hm7689njHosrACjLLDTSY/x+knIXJ+uDoGjzQKPzUc73WJ/22y+VxglA4aLDdA6YhrKKRaSQAA="
+  },
+  "quinault-rain-forest-washington": {
+    "variants": [
+      {
+        "file": "quinault-rain-forest-washington-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "quinault-rain-forest-washington-md.avif",
+        "width": 1280,
+        "height": 854
+      },
+      {
+        "file": "quinault-rain-forest-washington-lg.avif",
+        "width": 1760,
+        "height": 1175
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRrAAAABXRUJQVlA4IKQAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JaAAIEC6IkwqRKZbey8iJUAD7sGNfe3mexMY1UxJA80SfFInzMExeCL9jIOlJ9n1t4Ss32lR9rHfMvduBgmNk8siciDPm6B3FQfP/qqnmsA8CE8qDKNehcWcT1LHh2zZ2e9S932XDj5PBTEaAvgDjyIRzy8xwzeGj0Hp7sbUgVEc1WoHYYmZIwcAAAA=="
+  },
+  "sninsky-kamen-in-winter-slovakia": {
+    "variants": [
+      {
+        "file": "sninsky-kamen-in-winter-slovakia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "sninsky-kamen-in-winter-slovakia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "sninsky-kamen-in-winter-slovakia-lg.avif",
+        "width": 1920,
+        "height": 1280
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAACQAwCdASoYABAAPu1krU2ppaSiMAgBMB2JZwAOcAqWrZlTG62AAP58IWJSeGZf++jT0L300uV1oqCaWOoekXfOfrsBBqUOknwoh4NB6nrte2I7Xmv/WP/eWw/g92i3ScPg9IAAAAA="
+  },
+  "steens-mountain-oregon": {
+    "variants": [
+      {
+        "file": "steens-mountain-oregon-sm.avif",
+        "width": 640,
+        "height": 426
+      },
+      {
+        "file": "steens-mountain-oregon-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "steens-mountain-oregon-lg.avif",
+        "width": 1920,
+        "height": 1279
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAAAwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JQBOmUGUgCRaoslt/cd7mrwAA90djs5zf4HwHiXQB9JHHNsndSFDOgnbD0P0kBJRQfyd0PswyyfXge6CBtsCK2xVmLNjclMo8Y7zWmTCxJTsRDith1OSgmNmaHg/+5f+gnCt8YjyLMfJFp4xCBjujnKXVfJk8Rgf7GhAA"
+  },
+  "waterfalls-rocks-landscape-virginia": {
+    "variants": [
+      {
+        "file": "waterfalls-rocks-landscape-virginia-sm.avif",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "file": "waterfalls-rocks-landscape-virginia-md.avif",
+        "width": 1280,
+        "height": 853
+      },
+      {
+        "file": "waterfalls-rocks-landscape-virginia-lg.avif",
+        "width": 1760,
+        "height": 1173
+      }
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRroAAABXRUJQVlA4IK4AAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JQBYdsXrY06TZSPcl/0kt0uXyCAD3Rjd9u8+ssJHtQz109SF57MSHu1ZKHKB9FRrpQpHuVcDPy6sOHr8e3WoqS5C6+mpmFCmrzNmjKyBcPek8DJ5U01zt+Z5bPur5DEJ2bJo1qP3adsHxRKF7nsd91Pmk2rEN2DxpntBF0xZMN+cFbPeBCEbLPH6be4nt0O95VcXR4AA="
+  }
+}
