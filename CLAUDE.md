@@ -123,7 +123,12 @@ purpose? Change its checklist line and its test in the same pull request.
   touch, not its name. Locally the Chromium projects drive the installed Chrome (run
   `npx playwright install webkit` once); CI installs both.
 - **CI** runs lint, typecheck, unit, and browser tests as parallel jobs on every push
-  and pull request. Deploys also run the unit suite before building.
+  and pull request; a final `ci-ok` job passes only if all of them did. Deploys also
+  run the unit suite before building.
+- **`main` is protected** (GitHub ruleset "main: CI must pass"): changes land only by
+  pull request, and only once `ci-ok` is green on a branch up to date with `main`.
+  No force pushes, no deletion, and no bypass — for admins too. A new CI job needs no
+  ruleset change: `ci-ok` waits on it once it is added to `ci-ok`'s `needs`.
 
 ## Deploy
 

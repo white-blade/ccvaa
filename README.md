@@ -160,6 +160,11 @@ devices — Chromium desktop, touch tablet, and touch phone; WebKit (Safari's en
 iPhone, iPad, and portrait iPad. The deploy also runs the unit suite before building,
 so a failing test stops it.
 
+**`main` only accepts changes through pull requests that pass CI.** A ruleset requires
+the `ci-ok` check — green only when every CI job is — on a branch up to date with
+`main`; there is no bypass, for admins included. Direct pushes and force pushes to
+`main` are blocked.
+
 **Before a big change merges**, walk
 [`specs/quality-0001-regression-checklist.md`](specs/quality-0001-regression-checklist.md):
 every behaviour the site promises, each with the test that guards it, plus the few

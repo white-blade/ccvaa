@@ -131,5 +131,6 @@ a Vitest file under `src/`.
 | ID | Behaviour | Guard |
 |----|-----------|-------|
 | P1 | Lint, typecheck, unit, and browser tests run in parallel on every pull request | Auto — `.github/workflows/ci.yml` |
+| P1b | **Nothing merges to `main` unless CI passed**: the `main` ruleset requires a pull request, the `ci-ok` check (green only if every CI job is), and an up-to-date branch; no force pushes, no deletion, no bypass — admins included | Auto — GitHub ruleset "main: CI must pass" |
 | P2 | A failing unit test stops a deploy | Auto — `.github/workflows/deploy-pages.yml` |
 | P3 | Static export only: no route handlers, middleware, or server data | Auto — `npm run build` fails otherwise |
