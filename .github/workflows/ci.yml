@@ -10,12 +10,39 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The checks are independent, so they run side by side: lint, typecheck, and unit
-# tests as one matrix, the browser suite as its own job. Wall time is the slowest
-# job, not the sum of them.
+# Every check runs side by side, so wall time is the slowest job, not the sum. The
+# browser suite, by far the slowest, is split by device: one job per Playwright
+# project, and each WebKit project — about three times slower than Chromium — in two
+# shards. A pull request that touches only docs skips the unit and browser suites.
 jobs:
+  changes:
+    name: what changed
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A pull request checks out its merge commit: parent 1 is main, so the
+          # diff between them is exactly what the pull request changes.
+          fetch-depth: 2
+      - id: diff
+        name: Is anything besides docs changed?
+        run: |
+          if [ "${{ github.event_name }}" != pull_request ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git diff --name-only HEAD^1 HEAD | tee changed.txt
+          # Docs, specs, and source originals never reach the build or the tests.
+          if grep -qvE '\.md$|^specs/|^assets/|^\.claude/' changed.txt; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   checks:
     name: ${{ matrix.check }}
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,11 +55,28 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run ${{ matrix.check }}
+      - if: matrix.check != 'test' || needs.changes.outputs.code == 'true'
+        run: npm run ${{ matrix.check }}
 
   e2e:
-    name: browser (Chromium + WebKit, desktop to phone)
+    name: browser (${{ matrix.project }}${{ matrix.shard != '1/1' && format(' {0}', matrix.shard) || '' }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { project: desktop, browser: chromium, shard: 1/1 }
+          - { project: tablet-touch, browser: chromium, shard: 1/1 }
+          - { project: phone-touch, browser: chromium, shard: 1/1 }
+          # WebKit is Safari's engine — what every iPhone and iPad browser runs.
+          - { project: iphone-webkit, browser: webkit, shard: 1/2 }
+          - { project: iphone-webkit, browser: webkit, shard: 2/2 }
+          - { project: ipad-webkit, browser: webkit, shard: 1/2 }
+          - { project: ipad-webkit, browser: webkit, shard: 2/2 }
+          - { project: ipad-portrait-webkit, browser: webkit, shard: 1/2 }
+          - { project: ipad-portrait-webkit, browser: webkit, shard: 2/2 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,34 +84,44 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # WebKit is Safari's engine — what every iPhone and iPad browser runs.
-      - name: Install Chromium and WebKit
-        run: npx playwright install --with-deps chromium webkit
+      - id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browser }}
+      # Downloads the browser only on a cache miss; the system libraries always.
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Build static export
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-      # Playwright spreads the three device projects across workers in parallel.
-      - run: npm run test:e2e
+      - run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}
       - name: Keep traces of failures
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.project }}-${{ strategy.job-index }}
           path: test-results/
           retention-days: 7
 
   # The one check main's ruleset requires: it passes only if every job above
-  # passed. Requiring this instead of each job by name means a job added or
-  # renamed later is covered automatically, never silently dropped.
+  # passed, or was skipped because the pull request changed only docs. Requiring
+  # this instead of each job by name means a job added or renamed later is covered
+  # automatically, never silently dropped.
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [checks, e2e]
+    needs: [changes, checks, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Every CI job passed
         run: |
-          echo "checks: ${{ needs.checks.result }}  e2e: ${{ needs.e2e.result }}"
+          echo "changes: ${{ needs.changes.result }}  checks: ${{ needs.checks.result }}  e2e: ${{ needs.e2e.result }}"
+          test "${{ needs.changes.result }}" = success
           test "${{ needs.checks.result }}" = success
-          test "${{ needs.e2e.result }}" = success
+          case "${{ needs.e2e.result }}" in
+            success) ;;
+            skipped) test "${{ needs.changes.outputs.code }}" = false ;;
+            *) exit 1 ;;
+          esac
