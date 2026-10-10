@@ -29,8 +29,9 @@ every line below still holds. Most are enforced by tests; the rest need a person
    pull request. Adding one? Add a line and a test. A line with no guard is a wish.
 
 **Guard** names a test: `e2e › <describe> › <title>` is in `e2e/site.spec.ts` and
-runs on all six devices — Chromium desktop (1440), touch tablet (1180), touch phone
-(Pixel 7), and WebKit iPhone 15, iPad Pro 11 landscape and portrait. `unit:<file>` is
+runs on all six devices, or only those its device tag fits — Chromium
+desktop (1440), touch tablet (1180), touch phone (Pixel 7), and WebKit iPhone 15, iPad
+Pro 11 landscape and portrait; the tags are in `e2e/device-tags.ts`. `unit:<file>` is
 a Vitest file under `src/`.
 
 ## Devices and layout
