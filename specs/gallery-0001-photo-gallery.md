@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, awaiting review |
+| **Status** | `superseded` — the carousel was replaced by the full grid in [`home-0001`](home-0001-single-page.md); the build-time folder read it introduced remains |
 | **Depends on** | [`platform-0002`](platform-0002-github-pages-static-migration.md) |
 | **Source** | CEO (2026-10-08) |
 

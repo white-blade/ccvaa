@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, awaiting review |
+| **Status** | `superseded` — the `/events` page folded into the one page in [`home-0001`](home-0001-single-page.md) |
 | **Depends on** | [`events-0001`](events-0001-events-section.md), [`gallery-0002`](gallery-0002-gallery-page.md) |
 | **Source** | CEO (2026-10-09) |
 

@@ -56,3 +56,18 @@ jobs:
           name: playwright-traces
           path: test-results/
           retention-days: 7
+
+  # The one check main's ruleset requires: it passes only if every job above
+  # passed. Requiring this instead of each job by name means a job added or
+  # renamed later is covered automatically, never silently dropped.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [checks, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every CI job passed
+        run: |
+          echo "checks: ${{ needs.checks.result }}  e2e: ${{ needs.e2e.result }}"
+          test "${{ needs.checks.result }}" = success
+          test "${{ needs.e2e.result }}" = success

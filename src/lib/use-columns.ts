@@ -13,7 +13,7 @@
  * `useSyncExternalStore` from its own `use…` function, which is where the React
  * hooks lint rules expect to find it.
  */
-export type ColumnStore<T extends number> = {
+type ColumnStore<T extends number> = {
   subscribe: (onChange: () => void) => () => void;
   getSnapshot: () => T;
   getServerSnapshot: () => T;

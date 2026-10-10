@@ -255,7 +255,6 @@ export const contactContent = {
   title: "Contact",
   description:
     "Interested in partnering, volunteering, or learning more about our programs? We would love to hear from you.",
-  emailLabel: "Email",
   emailPrompt: "Write to us",
   addressLabel: "Mailing address",
 } as const;

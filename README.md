@@ -99,6 +99,7 @@ src/
 │   ├── scroll-to-section.ts  the section glide
 │   ├── use-active-section.ts which section is being read
 │   ├── use-dialog.ts       shared dialog behaviour (keys, focus, swipe)
+│   ├── swipe.ts, strip.ts, text.ts   small shared helpers
 │   └── asset.ts, use-columns.ts, use-today.ts, hover-focus.ts
 └── test/                   test helpers (fixtures, axe)
 e2e/                        Playwright browser suite
@@ -158,6 +159,11 @@ unit suite (`src/**/*.test.ts(x)`), and the Playwright browser suite (`e2e/`) on
 devices — Chromium desktop, touch tablet, and touch phone; WebKit (Safari's engine)
 iPhone, iPad, and portrait iPad. The deploy also runs the unit suite before building,
 so a failing test stops it.
+
+**`main` only accepts changes through pull requests that pass CI.** A ruleset requires
+the `ci-ok` check — green only when every CI job is — on a branch up to date with
+`main`; there is no bypass, for admins included. Direct pushes and force pushes to
+`main` are blocked.
 
 **Before a big change merges**, walk
 [`specs/quality-0001-regression-checklist.md`](specs/quality-0001-regression-checklist.md):

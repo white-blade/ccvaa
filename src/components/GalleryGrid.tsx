@@ -95,7 +95,6 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
             options={COLUMN_OPTIONS}
             value={columns}
             onChange={columnStore.choose}
-            onDark
           />
         </div>
       </div>

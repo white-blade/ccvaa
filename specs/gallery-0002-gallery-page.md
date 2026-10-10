@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, awaiting review |
+| **Status** | `superseded` — the `/gallery` page folded into the one page in [`home-0001`](home-0001-single-page.md); its grid and viewer live on there |
 | **Depends on** | [`gallery-0001`](gallery-0001-photo-gallery.md) |
 | **Source** | CEO (2026-10-09) |
 

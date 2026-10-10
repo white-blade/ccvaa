@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { useCallback, useState } from "react";
 
-import { BoardMemberDialog, initials } from "@/components/BoardMemberDialog";
-import { subsectionRuleClass, subsectionTitleClass } from "@/components/subsection";
+import { BoardMemberDialog } from "@/components/BoardMemberDialog";
+import { subsectionRuleClass, subsectionTitleClass } from "@/components/styles";
 import { assetPath } from "@/lib/asset";
 import { boardContent } from "@/lib/site";
+import { initials } from "@/lib/text";
 
 const members = boardContent.members;
 

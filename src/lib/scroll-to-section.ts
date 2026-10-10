@@ -129,9 +129,12 @@ export function scrollToSection(
 /**
  * Glides until `element` sits `offset` pixels below the top of the viewport — past
  * the header and anything sticky under it — then gives it focus, so a keyboard user
- * lands where the eye does.
+ * lands where the eye does, and calls `onArrive`.
  */
-export function glideTo(element: HTMLElement, offset: number) {
+export function glideTo(element: HTMLElement, offset: number, onArrive?: () => void) {
   const to = Math.max(0, element.getBoundingClientRect().top + window.scrollY - offset);
-  glide(to, () => element.focus({ preventScroll: true }));
+  glide(to, () => {
+    element.focus({ preventScroll: true });
+    onArrive?.();
+  });
 }

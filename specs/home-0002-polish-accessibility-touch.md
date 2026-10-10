@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` — implemented, awaiting review |
+| **Status** | `done` — merged |
 | **Depends on** | [`home-0001`](home-0001-single-page.md) |
 | **Source** | CEO (2026-10-09) |
 

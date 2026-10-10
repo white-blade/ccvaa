@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
+
 type UseDialogOptions = {
   open: boolean;
   onClose: () => void;
@@ -97,25 +99,17 @@ export function useDialog({
     const dialog = dialogRef.current;
     if (!open || !dialog || (!onNext && !onPrevious && !onSwipeDown)) return;
 
-    let start: { x: number; y: number } | null = null;
+    let start: Point | null = null;
     const onTouchStart = (event: TouchEvent) => {
-      start =
-        event.touches.length === 1
-          ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
-          : null;
+      start = singleTouch(event);
     };
     const onTouchEnd = (event: TouchEvent) => {
       if (!start) return;
-      const touch = event.changedTouches[0];
-      const dx = touch.clientX - start.x;
-      const dy = touch.clientY - start.y;
+      const swipe = swipeBetween(start, touchEnd(event));
       start = null;
-      if (dy > 80 && dy > Math.abs(dx) * 1.5) {
-        onSwipeDown?.();
-        return;
-      }
-      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      (dx < 0 ? onNext : onPrevious)?.();
+      if (swipe === "down") onSwipeDown?.();
+      else if (swipe === "left") onNext?.();
+      else if (swipe === "right") onPrevious?.();
     };
 
     dialog.addEventListener("touchstart", onTouchStart, { passive: true });

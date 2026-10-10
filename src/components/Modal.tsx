@@ -3,6 +3,7 @@
 import { useRef, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 
+import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
 import { useDialog } from "@/lib/use-dialog";
 
 type ModalProps = {
@@ -16,9 +17,6 @@ type ModalProps = {
   /** Given the ref for the control that should take focus on open — the close button. */
   children: (initialFocusRef: RefObject<HTMLButtonElement | null>) => ReactNode;
 };
-
-/** How far down the handle must be dragged to dismiss the sheet. */
-const DISMISS_DRAG_PX = 60;
 
 /**
  * The shared dialog shell: dimmed backdrop, centred white panel capped to the
@@ -46,17 +44,16 @@ export function Modal({
     onNext,
     onPrevious,
   });
-  const dragStartY = useRef<number | null>(null);
+  const dragStart = useRef<Point | null>(null);
 
   const onHandleTouchStart = (event: TouchEvent) => {
-    dragStartY.current =
-      event.touches.length === 1 ? event.touches[0].clientY : null;
+    dragStart.current = singleTouch(event);
   };
   const onHandleTouchEnd = (event: TouchEvent) => {
-    if (dragStartY.current === null) return;
-    const dy = event.changedTouches[0].clientY - dragStartY.current;
-    dragStartY.current = null;
-    if (dy > DISMISS_DRAG_PX) onClose();
+    if (!dragStart.current) return;
+    const swipe = swipeBetween(dragStart.current, touchEnd(event));
+    dragStart.current = null;
+    if (swipe === "down") onClose();
   };
 
   return createPortal(
@@ -89,7 +86,3 @@ export function Modal({
     document.body,
   );
 }
-
-/** The round ✕ used in every dialog's corner. */
-export const closeButtonClass =
-  "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-ocean-950/40 text-cream backdrop-blur-sm transition-colors hover:bg-ocean-950/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral";

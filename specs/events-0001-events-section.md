@@ -4,7 +4,7 @@
 |-------|--------|
 | **Type** | `task` |
 | **Priority** | `now` |
-| **Status** | `in-progress` |
+| **Status** | `superseded` — the home-page events grid moved to its own page in [`events-0002`](events-0002-events-page.md), then back onto the one page with a timeline in [`home-0001`](home-0001-single-page.md) |
 | **Depends on** | [`gallery-0001`](gallery-0001-photo-gallery.md) |
 | **Source** | CEO (2026-10-08) |
 

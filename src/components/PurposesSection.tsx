@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { subsectionRuleClass, subsectionTitleClass } from "@/components/subsection";
+import { subsectionRuleClass, subsectionTitleClass } from "@/components/styles";
 import { aboutContent } from "@/lib/site";
 
 const purposes = aboutContent.purposes;
