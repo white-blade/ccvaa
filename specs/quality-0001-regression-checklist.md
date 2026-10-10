@@ -47,6 +47,7 @@ a Vitest file under `src/`.
 | L7b | Below 1024: each rail chip shows the full date with its year and the city and country (or "Online"), not the title; the title is still in its accessible name | Auto — e2e › device layouts › below lg: each chip shows the full date…; unit:EventsDateRail |
 | L7c | The event listings have no search or filter, on any device | Auto — e2e › device layouts › every device: the listings have no search…; unit:EventsBrowser |
 | L8 | 1024 and up: the side timeline, no rail | Auto — e2e › device layouts › lg and up… |
+| L8b | 1024 and up: the timeline's month labels are three-letter monospace capitals in one fixed-width column (equal widths, left edges within 1px); years sit in their own column to the left, bold `coral-dark`, set apart from the months by weight and colour | Auto — e2e › device layouts › lg and up: timeline months and years each line up…; unit:EventsBrowser; unit:timeline |
 | L9 | The side timeline and the date rail stay pinned while the listings scroll (never `overflow-hidden` above a sticky element) | Auto — e2e › device layouts › … stays pinned while the listings scroll |
 | L9b | The date rail marks the card read past, and clears a stale mark after jumping back up | Auto — e2e › device layouts › below lg: a date rail…; …jumping back up to Events… |
 | L10 | Below 640 the gallery has no per-row control | Auto — e2e › device layouts › phones: the gallery drops the per-row control |

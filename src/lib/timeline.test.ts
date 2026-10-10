@@ -33,6 +33,16 @@ describe("timelineLayout", () => {
     ]);
   });
 
+  it("names every month in three letters, so the monospace column holds them all", () => {
+    const year = timelineLayout(
+      [makeEvent({ id: "a", startsAt: "2027-01-05" }), makeEvent({ id: "b", startsAt: "2027-12-05" })],
+      null,
+    );
+    expect(year.ticks).toHaveLength(12);
+    for (const tick of year.ticks) expect(tick.label).toMatch(/^[A-Z][a-z]{2}$/);
+    for (const tick of year.ticks.filter((tick) => tick.year)) expect(tick.year).toMatch(/^\d{4}$/);
+  });
+
   it("places each dot on its start date, in proportion", () => {
     const { positions } = timelineLayout(season, null, 0);
     // 2026-11-01 → 2027-07-01 is 242 days; the talk is 102 days in.
