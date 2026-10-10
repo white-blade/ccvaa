@@ -3,17 +3,17 @@ import { expect, test, type Locator, type Page, type TestInfo } from "@playwrigh
 import { MAX_DOTS, MAX_DOTS_NARROW } from "../src/lib/dot-window";
 import { galleryPhotoDetails } from "../src/lib/gallery-photos";
 
+import type { DeviceTag } from "./device-tags";
+
 /**
- * Every project runs every test; some only make sense for some devices. Decided by
- * what the device is — touch, and how wide — not by its name, so a new device in
- * playwright.config.ts needs no changes here.
+ * Every project runs every test except those tagged for another kind of device
+ * (`on("@touch")`, `on("@lg")`…; see device-tags.ts). Inside a test, the same rules
+ * read from what the device is — touch, and how wide — never from its name.
  */
-const isTouch = (testInfo: TestInfo) => Boolean(testInfo.project.use.hasTouch);
+const on = (tag: DeviceTag) => ({ tag });
 const widthOf = (testInfo: TestInfo) => testInfo.project.use.viewport?.width ?? 1280;
 /** Below `md` the section links move to the bottom tab bar. */
 const isPhone = (testInfo: TestInfo) => widthOf(testInfo) < 768;
-/** The events timeline shows from `lg`. */
-const hasTimeline = (testInfo: TestInfo) => widthOf(testInfo) >= 1024;
 
 /** Subscribe before the action so short animations cannot finish before the wait begins. */
 async function waitForAnimationEnd(page: Page, selector: string, name: string) {
@@ -230,8 +230,7 @@ test.describe("accessibility", () => {
     expect(violations).toEqual([]);
   });
 
-  test("keyboard: the skip link comes first and lands on the content", async ({ page }, testInfo) => {
-    test.skip(isTouch(testInfo), "keyboard path");
+  test("keyboard: the skip link comes first and lands on the content", on("@no-touch"), async ({ page }) => {
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
     await page.keyboard.press("Enter");
@@ -279,10 +278,7 @@ test.describe("section navigation", () => {
   });
 });
 
-test.describe("touch", () => {
-  test.beforeEach(async ({}, testInfo) => {
-    test.skip(!isTouch(testInfo), "touch devices only");
-  });
+test.describe("touch", on("@touch"), () => {
 
   test("controls are big enough to tap", async ({ page }) => {
     const sizes = await page.evaluate(() =>
@@ -339,8 +335,7 @@ test.describe("touch", () => {
     await expect(page.getByRole("dialog", { name: "Yaqi Jing" })).toBeVisible();
   });
 
-  test("timeline: first tap previews, second tap opens", async ({ page }, testInfo) => {
-    test.skip(!hasTimeline(testInfo), "the timeline shows from 1024px");
+  test("timeline: first tap previews, second tap opens", on("@lg"), async ({ page }) => {
     const timeline = page.getByRole("navigation", { name: "Event timeline" });
     await timeline.scrollIntoViewIfNeeded();
     const dot = timeline.getByRole("button", { name: /^Artist Talk/ });
@@ -354,8 +349,7 @@ test.describe("touch", () => {
     await expect(page.getByRole("dialog", { name: /Artist Talk/ })).toBeVisible();
   });
 
-  test("timeline: tapping the open preview card opens the event", async ({ page }, testInfo) => {
-    test.skip(!hasTimeline(testInfo), "the timeline shows from 1024px");
+  test("timeline: tapping the open preview card opens the event", on("@lg"), async ({ page }) => {
     const timeline = page.getByRole("navigation", { name: "Event timeline" });
     await timeline.scrollIntoViewIfNeeded();
     const dot = timeline.getByRole("button", { name: /^Artist Talk/ });
@@ -368,10 +362,7 @@ test.describe("touch", () => {
   });
 });
 
-test.describe("mouse", () => {
-  test.beforeEach(async ({}, testInfo) => {
-    test.skip(isTouch(testInfo), "mouse devices only");
-  });
+test.describe("mouse", on("@no-touch"), () => {
 
   test("hovering a timeline dot zooms it and rings its card; a click opens it", async ({ page }) => {
     const timeline = page.getByRole("navigation", { name: "Event timeline" });
@@ -404,8 +395,7 @@ test.describe("mouse", () => {
 });
 
 test.describe("device layouts (specs/home-0003)", () => {
-  test("phones: a bottom tab bar instead of header links", async ({ page }, testInfo) => {
-    test.skip(!isPhone(testInfo), "phones only");
+  test("phones: a bottom tab bar instead of header links", on("@phone"), async ({ page }) => {
     await expect(page.getByRole("navigation", { name: "Sections" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeHidden();
     await expect(page.getByRole("button", { name: /menu/i })).toHaveCount(0);
@@ -415,22 +405,19 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(Math.round(bar.y + bar.height)).toBe(viewport.height);
   });
 
-  test("phones: the end of the page is not hidden behind the tab bar", async ({ page }, testInfo) => {
-    test.skip(!isPhone(testInfo), "phones only");
+  test("phones: the end of the page is not hidden behind the tab bar", on("@phone"), async ({ page }) => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const copyright = (await page.getByText(/All rights reserved/).boundingBox())!;
     const bar = (await page.getByRole("navigation", { name: "Sections" }).boundingBox())!;
     expect(copyright.y + copyright.height).toBeLessThanOrEqual(bar.y);
   });
 
-  test("tablets and up: header links, no tab bar", async ({ page }, testInfo) => {
-    test.skip(isPhone(testInfo), "md and up");
+  test("tablets and up: header links, no tab bar", on("@md"), async ({ page }) => {
     await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Sections" })).toBeHidden();
   });
 
-  test("small phones: dialogs are bottom sheets that a swipe down dismisses", async ({ page }, testInfo) => {
-    test.skip(widthOf(testInfo) >= 640, "below sm only");
+  test("small phones: dialogs are bottom sheets that a swipe down dismisses", on("@below-sm"), async ({ page }) => {
     const opening = waitForAnimationEnd(page, '[role="dialog"]', "sheet-in");
     await page.getByRole("button", { name: /Zhong Liu/ }).click();
     const dialog = page.getByRole("dialog", { name: "Zhong Liu" });
@@ -450,8 +437,7 @@ test.describe("device layouts (specs/home-0003)", () => {
     await expect(dialog).toBeHidden();
   });
 
-  test("tablets and up: dialogs stay centred", async ({ page }, testInfo) => {
-    test.skip(widthOf(testInfo) < 640, "sm and up");
+  test("tablets and up: dialogs stay centred", on("@sm"), async ({ page }) => {
     await page.getByRole("button", { name: /Zhong Liu/ }).click();
     await expect(page.getByRole("dialog", { name: "Zhong Liu" })).toBeVisible();
     await motionSettled(page);
@@ -461,8 +447,7 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(box.y + box.height).toBeLessThan(viewport.height);
   });
 
-  test("phones: the gallery is a card — the photograph, then its credits, no veil", async ({ page }, testInfo) => {
-    test.skip(!isPhone(testInfo), "below md only");
+  test("phones: the gallery is a card — the photograph, then its credits, no veil", on("@phone"), async ({ page }) => {
     await pauseSlideshow(page);
     await expect(page.locator("#gallery [data-veil]")).toBeHidden();
     const photo = (await page.getByRole("button", { name: /View full size/ }).boundingBox())!;
@@ -473,10 +458,9 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(box.y).toBeGreaterThanOrEqual(photo.y + photo.height - 1);
   });
 
-  test("md and up: one photograph fills the stage, credits at the top right over the veil", async ({
+  test("md and up: one photograph fills the stage, credits at the top right over the veil", on("@md"), async ({
     page,
-  }, testInfo) => {
-    test.skip(isPhone(testInfo), "md and up");
+  }) => {
     await pauseSlideshow(page);
     await expect(page.locator("#gallery img")).toHaveCount(1);
     const stage = (await page.locator("#gallery .fx-tile").boundingBox())!;
@@ -515,10 +499,9 @@ test.describe("device layouts (specs/home-0003)", () => {
     await expect.poll(widestIsCurrent).toBe(true);
   });
 
-  test("below lg: a date rail stands in for the timeline, and a chip glides to its card", async ({
+  test("below lg: a date rail stands in for the timeline, and a chip glides to its card", on("@below-lg"), async ({
     page,
-  }, testInfo) => {
-    test.skip(hasTimeline(testInfo), "below lg only");
+  }) => {
     await expect(page.getByRole("navigation", { name: "Event timeline" })).toBeHidden();
     await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
     const rail = page.getByRole("navigation", { name: "Event dates" });
@@ -539,10 +522,9 @@ test.describe("device layouts (specs/home-0003)", () => {
     );
   });
 
-  test("below lg: each chip shows the full date and the city and country, not the title", async ({
+  test("below lg: each chip shows the full date and the city and country, not the title", on("@below-lg"), async ({
     page,
-  }, testInfo) => {
-    test.skip(hasTimeline(testInfo), "below lg only");
+  }) => {
     const rail = page.getByRole("navigation", { name: "Event dates" });
     await expect(rail.getByRole("button", { name: /CCVAA Is Founded$/ })).toHaveText(/^Jun 27, 2026\s*Victoria, Canada/i);
     await expect(rail.getByRole("button", { name: /Artist Talk: Photographing Pacific Light$/ })).toHaveText(
@@ -554,8 +536,7 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(visible).not.toContain("Annual General Meeting");
   });
 
-  test("below lg: jumping back up to Events leaves no stale chip marked", async ({ page }, testInfo) => {
-    test.skip(hasTimeline(testInfo), "below lg only");
+  test("below lg: jumping back up to Events leaves no stale chip marked", on("@below-lg"), async ({ page }) => {
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     // At the end of the page, the nav marks Contact: the starting point is settled.
     await expect((await sectionNav(page)).getByRole("link", { name: "Contact" })).toHaveAttribute("aria-current", "true");
@@ -573,14 +554,12 @@ test.describe("device layouts (specs/home-0003)", () => {
     await expect(page.locator("#events li[data-event-id]")).toHaveCount(6);
   });
 
-  test("lg and up: the side timeline, no rail", async ({ page }, testInfo) => {
-    test.skip(!hasTimeline(testInfo), "lg and up");
+  test("lg and up: the side timeline, no rail", on("@lg"), async ({ page }) => {
     await expect(page.getByRole("navigation", { name: "Event dates" })).toBeHidden();
     await expect(page.getByRole("navigation", { name: "Event timeline" })).toBeVisible();
   });
 
-  test("lg and up: timeline months and years each line up in an even column", async ({ page }, testInfo) => {
-    test.skip(!hasTimeline(testInfo), "lg and up");
+  test("lg and up: timeline months and years each line up in an even column", on("@lg"), async ({ page }) => {
     const timeline = page.getByRole("navigation", { name: "Event timeline" });
     await timeline.scrollIntoViewIfNeeded();
     const measure = (selector: string) =>
@@ -629,9 +608,7 @@ test.describe("device layouts (specs/home-0003)", () => {
     ["the side timeline", "Event timeline", 1024],
     ["the date rail", "Event dates", 0],
   ] as const) {
-    test(`${name} stays pinned while the listings scroll`, async ({ page }, testInfo) => {
-      const width = widthOf(testInfo);
-      test.skip(from === 1024 ? width < 1024 : width >= 1024, `${name} is not shown here`);
+    test(`${name} stays pinned while the listings scroll`, on(from === 1024 ? "@lg" : "@below-lg"), async ({ page }) => {
       const nav = page.getByRole("navigation", { name: label });
       const topAt = async (eventId: string) => {
         await page.evaluate((eventId) => {
@@ -722,14 +699,12 @@ test.describe("moving between sections", () => {
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("");
   });
 
-  test("back to top never covers content: shown only from 1280px", async ({ page }, testInfo) => {
-    test.skip(widthOf(testInfo) >= 1280, "below xl only");
+  test("back to top never covers content: shown only from 1280px", on("@below-xl"), async ({ page }) => {
     await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
     await expect(page.getByRole("link", { name: "Back to top", exact: true })).toBeHidden();
   });
 
-  test("back to top appears deep in the page and glides home", async ({ page }, testInfo) => {
-    test.skip(widthOf(testInfo) < 1280, "xl and up");
+  test("back to top appears deep in the page and glides home", on("@xl"), async ({ page }) => {
     const button = page.getByRole("link", { name: "Back to top", exact: true });
     await expect(button).toBeHidden();
     await page.evaluate(() => document.getElementById("events")!.scrollIntoView());
@@ -838,8 +813,7 @@ test.describe("photo viewer", () => {
     await expect(strip.getByRole("button", { name: "Show work 4" })).toHaveAttribute("aria-current", "true");
   });
 
-  test("a swipe down closes it on touch screens", async ({ page }, testInfo) => {
-    test.skip(!isTouch(testInfo), "touch devices only");
+  test("a swipe down closes it on touch screens", on("@touch"), async ({ page }) => {
     await page.getByRole("button", { name: /View full size/ }).tap();
     await expect(page.getByRole("dialog")).toBeVisible();
     await swipe(page, "[role=dialog]", 0, 200);
@@ -988,8 +962,7 @@ test.describe("gallery works", () => {
     expect(last.x + last.width).toBeLessThanOrEqual(viewport.width);
   });
 
-  test("at 320px the controls still fit in one row", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "one width sweep is enough");
+  test("at 320px the controls still fit in one row", on("@desktop"), async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 700 });
     const dots = page.getByRole("list", { name: "Choose a work" });
     await dots.scrollIntoViewIfNeeded();
@@ -1091,8 +1064,7 @@ test.describe("events polish", () => {
     await expect(frame).toHaveText("Online");
   });
 
-  test("lg and up: no month or year label is printed under the Today badge", async ({ page }, testInfo) => {
-    test.skip(!hasTimeline(testInfo), "the timeline shows from 1024px");
+  test("lg and up: no month or year label is printed under the Today badge", on("@lg"), async ({ page }) => {
     const timeline = page.getByRole("navigation", { name: "Event timeline" });
     await timeline.scrollIntoViewIfNeeded();
     const badge = timeline.getByText("Today", { exact: true });
@@ -1139,8 +1111,7 @@ test.describe("gallery slideshow", () => {
     await expect(slide).toHaveAccessibleName("2 / 19");
   });
 
-  test("holds while the mouse rests on it", async ({ page }, testInfo) => {
-    test.skip(isTouch(testInfo), "mouse only");
+  test("holds while the mouse rests on it", on("@no-touch"), async ({ page }) => {
     await page.clock.install();
     await page.goto("./");
     await page.getByRole("button", { name: /View full size/ }).hover();

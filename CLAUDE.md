@@ -138,7 +138,9 @@ purpose? Change its checklist line and its test in the same pull request.
   phone; WebKit (Safari's engine) iPhone, iPad, and portrait iPad. Layout and overflow,
   full-page axe with contrast, touch input, stickiness, and section navigation are
   checked here because jsdom cannot. Device rules come from each project's width and
-  touch, not its name. Locally the Chromium projects drive the installed Chrome (run
+  touch, not its name: a test for some devices only is tagged — `on("@touch")`,
+  `on("@lg")` (`e2e/device-tags.ts`) — and other devices leave it out, rather than
+  loading the page and then calling `test.skip`. Locally the Chromium projects drive the installed Chrome (run
   `npx playwright install webkit` once); CI installs both.
 - **CI** runs lint, typecheck, unit, and browser tests as parallel jobs on every push
   and pull request. The browser suite is split into a job per device, each WebKit
