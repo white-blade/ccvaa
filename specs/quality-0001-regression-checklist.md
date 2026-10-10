@@ -20,8 +20,9 @@ every line below still holds. Most are enforced by tests; the rest need a person
    npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e
    ```
 
-   CI runs the same four checks in parallel on every pull request. Green there covers
-   every **Auto** line.
+   CI runs the same four checks in parallel on every pull request, the browser suite
+   split into a job per device. Green there covers every **Auto** line. (A pull
+   request that changes only docs runs lint and typecheck alone.)
 2. Walk the **Manual** lines on a real phone and tablet (`npm run dev`, then open the
    Network URL + `/ccvaa/` on the device).
 3. Changing a behaviour on purpose? Change its line here **and** its test in the same
