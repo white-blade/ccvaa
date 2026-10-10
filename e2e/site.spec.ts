@@ -470,6 +470,10 @@ test.describe("device layouts (specs/home-0003)", () => {
 
 test.describe("moving between sections", () => {
   test("the nav marks only the destination during a glide, never the sections passed", async ({ page }) => {
+    // On the test's clock, as for Back below: every frame of the glide is recorded,
+    // however slowly the machine paints.
+    await page.clock.install();
+    await page.goto("./");
     const nav = await sectionNav(page);
     // Start recording in the same tick as the click, so only the trip is seen.
     await page.evaluate(() => {
@@ -486,7 +490,7 @@ test.describe("moving between sections", () => {
       requestAnimationFrame(record);
     });
     await expect(nav.getByRole("link", { name: "Contact" })).toHaveAttribute("aria-current", "true");
-    await page.waitForTimeout(1300);
+    await page.clock.runFor(1500);
     const marked = await page.evaluate(() => (window as unknown as { marked: string[] }).marked);
     expect(new Set(marked)).toEqual(new Set(["Contact"]));
   });
@@ -502,31 +506,30 @@ test.describe("moving between sections", () => {
   });
 
   test("Back glides to the previous section instead of snapping", async ({ page }) => {
+    // The page's clock runs on the test's say-so. A busy CI machine can paint one
+    // frame a second, so a real-time glide (≤ 1.1s) may show only its first and
+    // last frame and look exactly like a snap. Stepping time in 50ms ticks samples
+    // the glide itself, however slow the machine is.
+    await page.clock.install();
+    await page.goto("./");
     await followNav(page, "Gallery");
+    await page.clock.runFor(1500);
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#gallery");
-    await page.waitForTimeout(1300);
     await followNav(page, "Contact");
+    await page.clock.runFor(1500);
     await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#contact");
-    await page.waitForTimeout(1300);
 
     const start = await page.evaluate(() => window.scrollY);
-    // Record every frame inside the page: sampling from the test, one round trip at
-    // a time, can miss a whole glide on a slow machine.
-    await page.evaluate(() => {
-      const seen: number[] = [];
-      (window as unknown as { seen: number[] }).seen = seen;
-      const record = () => {
-        seen.push(window.scrollY);
-        if (seen.length < 600) requestAnimationFrame(record);
-      };
-      requestAnimationFrame(record);
-    });
     await page.goBack();
+    const samples: number[] = [];
+    for (let tick = 0; tick < 30; tick++) {
+      await page.clock.runFor(50);
+      samples.push(await page.evaluate(() => window.scrollY));
+    }
     await expect.poll(async () => Math.abs(await landingGap(page, "gallery"))).toBeLessThan(3);
     const end = await page.evaluate(() => window.scrollY);
-    const samples = await page.evaluate(() => (window as unknown as { seen: number[] }).seen);
     // A glide passes through positions in between; a snap would not.
-    expect(samples.some((y) => y < start - 20 && y > end + 20)).toBe(true);
+    expect(samples.filter((y) => y < start - 20 && y > end + 20).length, samples.join(",")).toBeGreaterThan(3);
     expect(await page.evaluate(() => window.location.hash)).toBe("#gallery");
   });
 
