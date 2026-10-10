@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { dotWindow, MAX_DOTS, MAX_DOTS_NARROW } from "@/lib/dot-window";
+import { dotWindow, MAX_DOTS, MAX_DOTS_NARROW, nextDotStart } from "@/lib/dot-window";
 
 const shown = (index: number, count: number) => {
   const { start, end, scale } = dotWindow(index, count);
@@ -64,6 +64,57 @@ describe("dotWindow", () => {
         expect(narrow.end).toBeLessThanOrEqual(wide.end);
         expect(index).toBeGreaterThanOrEqual(narrow.start);
         expect(index).toBeLessThan(narrow.end);
+      }
+    }
+  });
+
+  it("starts where it is told to, clamped to the ends", () => {
+    expect(dotWindow(3, 20, MAX_DOTS, 0)).toMatchObject({ start: 0, end: 7 });
+    expect(dotWindow(19, 20, MAX_DOTS, 30)).toMatchObject({ start: 13, end: 20 });
+  });
+});
+
+describe("nextDotStart", () => {
+  const walk = (moves: number[], count = 20, max = MAX_DOTS) => {
+    let state = { index: 0, start: 0 };
+    const starts: number[] = [];
+    for (const index of moves) {
+      state = { index, start: nextDotStart(state, index, count, max) };
+      starts.push(state.start);
+    }
+    return starts;
+  };
+
+  it("holds the window still while stepping inside it, so the highlight moves", () => {
+    expect(walk([1, 2, 3, 4, 5])).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it("slides one at a time as steps reach the edge, keeping one dot ahead", () => {
+    expect(walk([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([0, 0, 0, 0, 0, 1, 2, 3]);
+  });
+
+  it("slides back as steps reach the first dot, keeping one dot behind", () => {
+    // Up to the 9th (window 3-9), then back down.
+    const forward = [1, 2, 3, 4, 5, 6, 7, 8];
+    expect(walk([...forward, 7, 6, 5, 4, 3, 2]).slice(forward.length)).toEqual([3, 3, 3, 3, 2, 1]);
+  });
+
+  it("places a jump's window one before the work", () => {
+    expect(walk([10])).toEqual([9]);
+    expect(walk([19])).toEqual([13]);
+    // Wrapping past the end is a jump too.
+    expect(walk([19, 0])).toEqual([13, 0]);
+  });
+
+  it("keeps the current work inside the window on any walk", () => {
+    const moves = [1, 2, 3, 10, 11, 12, 11, 10, 9, 8, 7, 19, 0, 1, 18, 17];
+    let state = { index: 0, start: 0 };
+    for (const max of [MAX_DOTS, MAX_DOTS_NARROW]) {
+      state = { index: 0, start: 0 };
+      for (const index of moves) {
+        state = { index, start: nextDotStart(state, index, 20, max) };
+        expect(index).toBeGreaterThanOrEqual(state.start);
+        expect(index).toBeLessThan(state.start + max);
       }
     }
   });

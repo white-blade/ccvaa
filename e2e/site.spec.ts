@@ -921,6 +921,21 @@ test.describe("gallery works", () => {
     expect(row.x + row.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   });
 
+  test("stepping moves the highlighted dot along the row, on every screen", async ({ page }) => {
+    await pauseSlideshow(page);
+    const dots = page.getByRole("list", { name: "Choose a work" }).getByRole("button");
+    const slot = () =>
+      dots.evaluateAll((buttons) => buttons.findIndex((button) => button.getAttribute("aria-current") === "true"));
+    const next = page.getByRole("button", { name: "Next work" });
+    const seen = [await slot()];
+    for (let step = 0; step < 3; step++) {
+      await next.click();
+      seen.push(await slot());
+    }
+    // Works 1-4: the coral dot travels 0, 1, 2, 3 — the window does not slide under it.
+    expect(seen).toEqual([0, 1, 2, 3]);
+  });
+
   test("first and last jump to either end; the dots window follows", async ({ page }) => {
     await pauseSlideshow(page);
     const total = galleryPhotoDetails.length;
