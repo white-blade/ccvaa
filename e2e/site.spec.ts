@@ -1,4 +1,4 @@
-import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 /**
  * Every project runs every test; some only make sense for some devices. Decided by
@@ -11,6 +11,40 @@ const widthOf = (testInfo: TestInfo) => testInfo.project.use.viewport?.width ?? 
 const isPhone = (testInfo: TestInfo) => widthOf(testInfo) < 768;
 /** The events timeline shows from `lg`. */
 const hasTimeline = (testInfo: TestInfo) => widthOf(testInfo) >= 1024;
+
+/** Subscribe before the action so short animations cannot finish before the wait begins. */
+async function waitForAnimationEnd(page: Page, selector: string, name: string) {
+  return page.evaluate(
+    ({ selector, name }) =>
+      new Promise<void>((resolve) => {
+        const onEnd = (event: AnimationEvent) => {
+          if (event.animationName !== name || !(event.target instanceof Element) || !event.target.matches(selector)) {
+            return;
+          }
+          document.removeEventListener("animationend", onEnd);
+          resolve();
+        };
+        document.addEventListener("animationend", onEnd);
+      }),
+    { selector, name },
+  );
+}
+
+/** Subscribe before the action so the assertion follows the transition's real end. */
+async function waitForTransitionEnd(locator: Locator, property: string) {
+  return locator.evaluate(
+    (element, property) =>
+      new Promise<void>((resolve) => {
+        const onEnd = (event: Event) => {
+          if (event.target !== element || (event as TransitionEvent).propertyName !== property) return;
+          element.removeEventListener("transitionend", onEnd);
+          resolve();
+        };
+        element.addEventListener("transitionend", onEnd);
+      }),
+    property,
+  );
+}
 
 /** Scroll the whole page once so every scroll-reveal and lazy image has fired. */
 async function revealAll(page: Page) {
@@ -315,6 +349,7 @@ test.describe("device layouts (specs/home-0003)", () => {
 
   test("small phones: dialogs are bottom sheets that a swipe down dismisses", async ({ page }, testInfo) => {
     test.skip(widthOf(testInfo) >= 640, "below sm only");
+    const opening = waitForAnimationEnd(page, '[role="dialog"]', "sheet-in");
     await page.getByRole("button", { name: /Zhong Liu/ }).click();
     const dialog = page.getByRole("dialog", { name: "Zhong Liu" });
     await expect(dialog).toBeVisible();
@@ -323,7 +358,7 @@ test.describe("device layouts (specs/home-0003)", () => {
       parseFloat(getComputedStyle(el).animationDuration),
     );
     expect(animationDuration).toBeGreaterThanOrEqual(0.5);
-    await page.waitForTimeout(650);
+    await opening;
     const box = (await dialog.boundingBox())!;
     const viewport = page.viewportSize()!;
     expect(Math.round(box.y + box.height)).toBe(viewport.height);
@@ -520,10 +555,12 @@ test.describe("purposes", () => {
   test("all purpose cards align to the tallest card, including when one expands", async ({ page }) => {
     const cards = page.locator("#about ol").last().locator(":scope > li");
     const tallest = page.getByRole("button", { name: "Advancement of Visual Arts" });
+    const region = page.getByRole("region", { name: "Advancement of Visual Arts" });
     await tallest.scrollIntoViewIfNeeded();
+    const opening = waitForTransitionEnd(region, "grid-template-rows");
     await tallest.click();
     await expect(tallest).toHaveAttribute("aria-expanded", "true");
-    await page.waitForTimeout(500);
+    await opening;
     await expect.poll(async () => {
       const heights = await cards.evaluateAll((items) =>
         items.map((item) => (item as HTMLElement).offsetHeight),
@@ -532,9 +569,10 @@ test.describe("purposes", () => {
     }).toBe(1);
 
     const expandedHeight = await cards.first().evaluate((item) => (item as HTMLElement).offsetHeight);
+    const closing = waitForTransitionEnd(region, "grid-template-rows");
     await tallest.click();
     await expect(tallest).toHaveAttribute("aria-expanded", "false");
-    await page.waitForTimeout(400);
+    await closing;
     await expect.poll(async () => {
       const heights = await cards.evaluateAll((items) =>
         items.map((item) => (item as HTMLElement).offsetHeight),
