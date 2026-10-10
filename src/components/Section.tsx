@@ -63,9 +63,12 @@ export function Section({
     <section
       id={id}
       aria-labelledby={titleId}
-      // Focusable so in-page navigation can land keyboard and screen-reader users here.
+      // Focusable so in-page navigation can land keyboard and screen-reader users here;
+      // the scroll margin is the header's measured height (--header-h). overflow-clip,
+      // not -hidden, trims the glows: hidden makes the section a scroll container,
+      // which silently stops the sticky timeline and date rail inside from sticking.
       tabIndex={-1}
-      className={`relative isolate scroll-mt-20 focus:outline-none overflow-hidden py-20 sm:py-28 ${styles.section}`}
+      className={`relative isolate scroll-mt-(--header-h) focus:outline-none overflow-clip py-20 sm:py-28 ${styles.section}`}
     >
       {glow ? (
         <>

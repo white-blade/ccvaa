@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import { organization, siteConfig } from "@/lib/site";
 import "./globals.css";
@@ -35,6 +35,19 @@ export const metadata: Metadata = {
     "geo.region": "CA-BC",
     "geo.placename": organization.location,
   },
+};
+
+/**
+ * `viewport-fit=cover` lets the page reach the edges of notched phones; the header,
+ * tab bar, and footer pad themselves by `env(safe-area-inset-*)` to stay clear of
+ * the notch and home indicator. The browser chrome is tinted the page's dark ink,
+ * which is what sits at both ends of the page: the hero and the footer.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#141c18",
 };
 
 export default function RootLayout({

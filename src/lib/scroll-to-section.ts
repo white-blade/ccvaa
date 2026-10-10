@@ -35,27 +35,18 @@ function targetTop(section: HTMLElement | null): number {
 }
 
 /**
- * Glides to `#id` (or the top for `#top`). Returns false when there is no such
- * section, so the caller can let the browser handle the link as usual.
+ * Eases the window to `to`, then calls `onArrive`. Any wheel, touch, or key from the
+ * visitor cancels it; reduced motion jumps straight there.
  */
-export function scrollToSection(hash: string): boolean {
-  const id = hash.replace(/^#/, "");
-  const section = id === "top" ? null : document.getElementById(id);
-  if (id !== "top" && !section) return false;
-
+function glide(to: number, onArrive: () => void) {
   cancelGlide?.();
-  if (window.location.hash !== hash) {
-    window.history.pushState(null, "", hash);
-  }
-
-  const to = targetTop(section);
   const from = window.scrollY;
   const distance = to - from;
 
   if (prefersReducedMotion() || Math.abs(distance) < 2) {
     window.scrollTo({ top: to, behavior: "instant" });
-    arrive(section);
-    return true;
+    onArrive();
+    return;
   }
 
   // Longer trips take longer, within limits that keep both ends feeling deliberate.
@@ -82,9 +73,34 @@ export function scrollToSection(hash: string): boolean {
       frame = requestAnimationFrame(step);
     } else {
       stop();
-      arrive(section);
+      onArrive();
     }
   };
   frame = requestAnimationFrame(step);
+}
+
+/**
+ * Glides to `#id` (or the top for `#top`). Returns false when there is no such
+ * section, so the caller can let the browser handle the link as usual.
+ */
+export function scrollToSection(hash: string): boolean {
+  const id = hash.replace(/^#/, "");
+  const section = id === "top" ? null : document.getElementById(id);
+  if (id !== "top" && !section) return false;
+
+  if (window.location.hash !== hash) {
+    window.history.pushState(null, "", hash);
+  }
+  glide(targetTop(section), () => arrive(section));
   return true;
+}
+
+/**
+ * Glides until `element` sits `offset` pixels below the top of the viewport — past
+ * the header and anything sticky under it — then gives it focus, so a keyboard user
+ * lands where the eye does.
+ */
+export function glideTo(element: HTMLElement, offset: number) {
+  const to = Math.max(0, element.getBoundingClientRect().top + window.scrollY - offset);
+  glide(to, () => element.focus({ preventScroll: true }));
 }

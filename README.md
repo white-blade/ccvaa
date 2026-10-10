@@ -59,8 +59,10 @@ One page, `/`, in sections the header links to:
 | `#events`  | Searchable listings beside a date-scaled timeline; each opens a detail dialog |
 | `#contact` | Email and mailing address                                                   |
 
-The header links all four sections, marks the one on screen, and folds into a menu on
-phones. The page is keyboard-operable throughout (skip link, focus rings, arrow keys
+The header links all four sections and marks the one on screen. Phones and tablets get
+their own layouts rather than a squeezed desktop: a bottom tab bar, bottom-sheet
+dialogs, and a date rail in place of the side timeline — see
+[`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md). The page is keyboard-operable throughout (skip link, focus rings, arrow keys
 on the timeline and in the photo viewer) and is checked with axe in the test suite.
 
 ## Project structure
@@ -127,8 +129,8 @@ Changing one without the other breaks every asset path. DNS is CEO-managed at Ho
 ## CI
 
 Every push and pull request runs four jobs in parallel: lint, typecheck, the Vitest
-unit suite (`src/**/*.test.ts(x)`), and the Playwright browser suite (`e2e/`) on a
-desktop, a touch tablet, and a touch phone. The deploy also runs the unit suite before
+unit suite (`src/**/*.test.ts(x)`), and the Playwright browser suite (`e2e/`) on six
+devices across Chromium and WebKit (Safari's engine). The deploy also runs the unit suite before
 building, so a failing test stops it.
 
 ## Constraints worth knowing before you build

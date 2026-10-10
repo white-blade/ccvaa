@@ -1,5 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Header } from "@/components/Header";
@@ -11,6 +10,11 @@ function desktopNav() {
 }
 
 describe("Header", () => {
+  it("has no phone menu: on phones the tab bar carries the links", () => {
+    render(<Header />);
+    expect(screen.queryByRole("button", { name: /menu/i })).toBeNull();
+  });
+
   it("links every section, Contact included, by anchor", () => {
     render(<Header />);
     const links = desktopNav().getAllByRole("link");
@@ -22,32 +26,6 @@ describe("Header", () => {
     ]);
   });
 
-  it("opens and closes the phone menu from the keyboard", async () => {
-    const user = userEvent.setup();
-    render(<Header />);
-    const toggle = screen.getByRole("button", { name: "Open menu" });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-
-    toggle.focus();
-    await user.keyboard("{Enter}");
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(toggle).toHaveAccessibleName("Close menu");
-    const menu = document.getElementById("mobile-menu")!;
-    expect(within(menu).getByRole("link", { name: /Contact/ })).toBeInTheDocument();
-
-    await user.keyboard("{Escape}");
-    expect(document.getElementById("mobile-menu")).toBeNull();
-    expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
-  });
-
-  it("closes the phone menu once a link is chosen", async () => {
-    const user = userEvent.setup();
-    render(<Header />);
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
-    await user.click(within(document.getElementById("mobile-menu")!).getByRole("link", { name: /Events/ }));
-    expect(document.getElementById("mobile-menu")).toBeNull();
-  });
-
   it("names the brand link for screen readers", () => {
     render(<Header />);
     expect(
@@ -55,30 +33,10 @@ describe("Header", () => {
     ).toHaveAttribute("href", "#top");
   });
 
-  it("has no detectable accessibility problems, menu closed or open", async () => {
-    const user = userEvent.setup();
+  it("has no detectable accessibility problems", async () => {
     const { container } = render(<Header />);
     await expectNoAxeViolations(container);
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
-    await expectNoAxeViolations(container);
   });
-
-  it("closes the phone menu on a tap outside the header, not inside it", async () => {
-    const user = userEvent.setup();
-    render(
-      <>
-        <Header />
-        <p>Page content</p>
-      </>,
-    );
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
-    fireEvent.pointerDown(document.getElementById("mobile-menu")!);
-    expect(document.getElementById("mobile-menu")).not.toBeNull();
-
-    fireEvent.pointerDown(screen.getByText("Page content"));
-    expect(document.getElementById("mobile-menu")).toBeNull();
-  });
-
   it("fills the reading-progress line as the page scrolls", () => {
     let frame: FrameRequestCallback | null = null;
     const raf = vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {

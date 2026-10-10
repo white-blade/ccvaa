@@ -74,18 +74,23 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
           {countLabel}
         </p>
 
-        <ColumnControl
-          id="gallery-columns"
-          label={galleryContent.columnsLabel}
-          options={COLUMN_OPTIONS}
-          value={columns}
-          onChange={columnStore.choose}
-          onDark
-        />
+        {/* Phones always show two across, so the control would do nothing there. */}
+        <div className="max-sm:hidden">
+          <ColumnControl
+            id="gallery-columns"
+            label={galleryContent.columnsLabel}
+            options={COLUMN_OPTIONS}
+            value={columns}
+            onChange={columnStore.choose}
+            onDark
+          />
+        </div>
       </div>
 
       {/* Dense flow lets the smaller tiles pack in around the 2×2 lead photograph. */}
-      <ul className={`mt-6 grid grid-flow-dense gap-3 sm:gap-4 ${GRID_CLASS[columns]}`}>
+      <ul
+        className={`mt-6 grid grid-flow-dense gap-3 sm:gap-4 ${GRID_CLASS[columns]}`}
+      >
         {photos.map((photo, index) => {
           const lead = index === 0 && photos.length > 2;
           return (
@@ -101,7 +106,7 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
                 // Square tiles keep the grid even and reserve their space before the
                 // file loads, so changing the column count never shifts the page. The
                 // crop is only the tile — the viewer shows the whole photograph.
-                className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-900 shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40 hover:ring-coral/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950"
+                className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-900 shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40 hover:ring-coral/50 pointer-coarse:active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950"
               >
                 <Image
                   src={photo.src}

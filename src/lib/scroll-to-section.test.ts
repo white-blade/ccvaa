@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { scrollToSection } from "@/lib/scroll-to-section";
+import { glideTo, scrollToSection } from "@/lib/scroll-to-section";
 
 /** jsdom has no layout: place the section by stubbing its box and the window. */
 function addSection(id: string, top: number) {
@@ -143,5 +143,35 @@ describe("scrollToSection", () => {
     scrollToSection("#contact");
     flushFrames();
     expect(scrollY).toBe(5000);
+  });
+});
+
+describe("glideTo", () => {
+  it("brings an element to the given offset below the top, then focuses it", () => {
+    setReducedMotion(false);
+    const card = addSection("card", 2400);
+    glideTo(card, 150);
+    flushFrames();
+    expect(scrollY).toBe(2250);
+    expect(card).toHaveFocus();
+  });
+
+  it("never asks for a negative scroll position", () => {
+    setReducedMotion(true);
+    const card = addSection("near-top", 40);
+    glideTo(card, 150);
+    expect(scrollY).toBe(0);
+  });
+
+  it("shares the glide: a section link takes over from a card glide", () => {
+    setReducedMotion(false);
+    const card = addSection("card", 3000);
+    addSection("contact", 6000);
+    glideTo(card, 100);
+    flushFrames(16, 3);
+    scrollToSection("#contact");
+    flushFrames();
+    expect(scrollY).toBe(6000);
+    expect(card).not.toHaveFocus();
   });
 });
