@@ -16,7 +16,12 @@ type TimelineTick = {
   label: string;
   /** Set on the first tick and on every January, so the year is never ambiguous. */
   year?: string;
+  /** Under the "Today" badge: its labels stand aside so the two never overprint. */
+  underToday?: boolean;
 };
+
+/** How close (as a fraction of the line) a tick may sit to today before its labels give way. */
+export const TODAY_CLEARANCE = 0.035;
 
 export type TimelineLayout = {
   /** Event id → position, in event order. */
@@ -86,13 +91,16 @@ export function timelineLayout(
   }
 
   const todayPosition = today ? at(today) : null;
+  const onLine = todayPosition !== null && todayPosition >= 0 && todayPosition <= 1 ? todayPosition : null;
 
   return {
     positions: new Map(events.map((event, index) => [event.id, spread[index]])),
-    ticks,
-    today:
-      todayPosition !== null && todayPosition >= 0 && todayPosition <= 1
-        ? todayPosition
-        : null,
+    ticks:
+      onLine === null
+        ? ticks
+        : ticks.map((tick) =>
+            Math.abs(tick.position - onLine) < TODAY_CLEARANCE ? { ...tick, underToday: true } : tick,
+          ),
+    today: onLine,
   };
 }

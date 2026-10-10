@@ -1019,6 +1019,65 @@ test.describe("gallery works", () => {
   });
 });
 
+test.describe("events polish", () => {
+  test("every event card ends with View details at its bottom right", async ({ page }) => {
+    // Measured at rest: the cards' scroll-driven glide-in shifts alternate cards
+    // mid-scroll, which is motion, not layout.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    const cards = page.locator("li[data-event-id] > button");
+    const count = await cards.count();
+    expect(count).toBeGreaterThan(1);
+    const offsets: { id: string | null; right: number; bottom: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const card = cards.nth(i);
+      await card.scrollIntoViewIfNeeded();
+      const cardBox = (await card.boundingBox())!;
+      const link = (await card.locator("[data-details-link]").boundingBox())!;
+      offsets.push({
+        id: await card.locator("..").getAttribute("data-event-id"),
+        right: cardBox.x + cardBox.width - (link.x + link.width),
+        bottom: cardBox.y + cardBox.height - (link.y + link.height),
+      });
+    }
+    // In the same place on every card — whatever its admission note — and inside
+    // the card's padding of the bottom-right corner.
+    for (const edge of ["right", "bottom"] as const) {
+      const values = offsets.map((offset) => offset[edge]);
+      expect(Math.max(...values) - Math.min(...values), `${edge}: ${JSON.stringify(offsets)}`).toBeLessThan(2);
+      expect(Math.max(...values)).toBeLessThan(56);
+    }
+  });
+
+  test("an event without a picture names its place in the picture's frame", async ({ page }) => {
+    const frame = page.locator("li[data-event-id=artist-talk-pacific-light] [data-no-image]");
+    await frame.scrollIntoViewIfNeeded();
+    await expect(frame).toBeVisible();
+    await expect(frame).toHaveText("Online");
+  });
+
+  test("lg and up: no month or year label is printed under the Today badge", async ({ page }, testInfo) => {
+    test.skip(!hasTimeline(testInfo), "the timeline shows from 1024px");
+    const timeline = page.getByRole("navigation", { name: "Event timeline" });
+    await timeline.scrollIntoViewIfNeeded();
+    const badge = timeline.getByText("Today", { exact: true });
+    test.skip((await badge.count()) === 0, "today is off the timeline");
+    const b = (await badge.boundingBox())!;
+    const overlaps = await timeline.evaluate(
+      (nav, b) =>
+        [...nav.querySelectorAll<HTMLElement>("[data-tick-month], [data-tick-year]")]
+          .filter((label) => label.textContent && getComputedStyle(label).visibility === "visible")
+          .filter((label) => {
+            const r = label.getBoundingClientRect();
+            return r.right > b.x && r.left < b.x + b.width && r.bottom > b.y && r.top < b.y + b.height;
+          })
+          .map((label) => label.textContent),
+      b,
+    );
+    expect(overlaps).toEqual([]);
+  });
+});
+
 test.describe("gallery slideshow", () => {
   test("advances on its own, every six seconds", async ({ page }) => {
     await page.clock.install();

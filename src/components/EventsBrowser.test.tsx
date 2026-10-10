@@ -114,6 +114,25 @@ describe("EventsBrowser list", () => {
     expect(screen.getByRole("dialog", { name: "A bench" })).toBeInTheDocument();
   });
 
+  it("gives an event without a picture its place, set large, in the picture's frame", () => {
+    renderOn("2026-10-09");
+    const talk = card("Artist Talk");
+    const frame = talk.querySelector("[data-no-image]")!;
+    expect(frame).toHaveTextContent("Richmond, Canada");
+    expect(frame).toHaveAttribute("aria-hidden", "true");
+    expect(card("Coastal Light").querySelector("[data-no-image]")).toBeNull();
+  });
+
+  it("puts View details last in every card, after any admission note", () => {
+    renderOn("2026-10-09");
+    for (const title of ["Coastal Light", "Artist Talk"]) {
+      const link = card(title).querySelector("[data-details-link]")!;
+      expect(link).toHaveTextContent("View details");
+      expect(link).toHaveClass("self-end");
+      expect(link.nextElementSibling).toBeNull();
+    }
+  });
+
   it("marks events that have ended as past", () => {
     renderOn("2027-01-01");
     expect(card("Coastal Light")).toHaveTextContent("Past");
