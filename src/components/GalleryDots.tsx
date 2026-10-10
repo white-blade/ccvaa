@@ -29,7 +29,7 @@ const PILL_MAX = 24;
 const twoDigits = (n: number) => String(n).padStart(2, "0");
 
 /**
- * The slideshow's dots, on a frosted track. The current work is marked by one coral
+ * The slideshow's dots, on a glass track. The current work is marked by one coral
  * pill that glides from dot to dot — its leading edge first, so it stretches toward
  * the next dot and then settles — and fills, while the slideshow runs, as it counts
  * down to the next work. A dot under the mouse or keyboard focus lifts a small
@@ -93,7 +93,7 @@ export function GalleryDots({ photos, index, wideStart, narrowStart, onSelect, c
   return (
     <div
       ref={trackRef}
-      className="relative rounded-full bg-white/[0.06] px-1 shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ring-1 ring-white/10 backdrop-blur-sm sm:px-1.5"
+      className="relative rounded-full bg-white/[0.06] px-1 shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ring-1 ring-white/10 sm:px-1.5"
     >
       {pill ? (
         // Edges move separately: the leading one goes first, the trailing one

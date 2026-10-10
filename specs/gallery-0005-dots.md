@@ -18,8 +18,11 @@ screen-reader behaviour all stay as `gallery-0004` left them.
 
 All of it lives in `GalleryDots`, split out of `GallerySlider`.
 
-- **A glass track.** The dots sit on a frosted, rounded strip with a faint inner
-  highlight, matching the round step buttons beside it. The list keeps only `li`
+- **A glass track.** The dots sit on a translucent, rounded strip with a faint inner
+  highlight, matching the round step buttons beside it. No `backdrop-blur`: the
+  section behind is a flat colour, so a blur would show nothing, and with the
+  countdown animating inside it WebKit re-blurred the backdrop every frame — slow
+  enough on CI that the slideshow moved on before tests could pause it. The list keeps only `li`
   children; the track is a wrapper around it.
 - **One gliding pill.** The current work is marked by a single coral pill instead of
   the current dot widening on its own. The pill is measured to the current dot and

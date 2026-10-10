@@ -186,6 +186,11 @@ async function pauseSlideshow(page: Page) {
   await pause.scrollIntoViewIfNeeded();
   await pause.click();
   await expect(page.getByRole("button", { name: "Play slideshow" })).toBeVisible();
+  // A slow device (WebKit on CI) can take longer than one interval to get here, so
+  // the slideshow may have moved on: start every test from the first work.
+  const first = page.getByRole("button", { name: "First work" });
+  if ((await first.getAttribute("aria-disabled")) !== "true") await first.click();
+  await expect(currentSlide(page)).toHaveAccessibleName(/^1 \/ /);
 }
 
 test.beforeEach(async ({ page }) => {

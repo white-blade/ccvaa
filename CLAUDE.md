@@ -39,7 +39,7 @@ Nav: About · Gallery · Events · Contact
   the stage with its author, medium, date, caption, and licence at the top right over
   a frosted veil; below, a card with the credits under it. Selecting it opens the
   full-size viewer (with a full view). Pictures are progressive: a blurred preview,
-  then the smallest prepared size that is sharp (`srcset`). The dots sit on a frosted
+  then the smallest prepared size that is sharp (`srcset`). The dots sit on a glass
   track; one coral pill glides to the current dot and fills with the slideshow's
   countdown, and a hovered or focused dot previews its work. See `specs/gallery-0003`,
   `gallery-0004`, `gallery-0005`.
