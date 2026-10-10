@@ -442,6 +442,51 @@ test.describe("device layouts (specs/home-0003)", () => {
     await expect(page.getByRole("navigation", { name: "Event timeline" })).toBeVisible();
   });
 
+  test("lg and up: timeline months and years each line up in an even column", async ({ page }, testInfo) => {
+    test.skip(!hasTimeline(testInfo), "lg and up");
+    const timeline = page.getByRole("navigation", { name: "Event timeline" });
+    await timeline.scrollIntoViewIfNeeded();
+    const measure = (selector: string) =>
+      timeline.locator(selector).evaluateAll((cells) =>
+        cells.map((cell) => {
+          const box = cell.getBoundingClientRect();
+          const style = getComputedStyle(cell);
+          return {
+            text: cell.textContent ?? "",
+            left: box.left,
+            width: box.width,
+            weight: Number(style.fontWeight),
+            color: style.color,
+          };
+        }),
+      );
+    const months = await measure("[data-tick-month]");
+    const years = await measure("[data-tick-year]");
+    expect(months.length).toBeGreaterThan(3);
+    expect(years.filter((year) => year.text).length).toBeGreaterThanOrEqual(2);
+
+    for (const column of [months, years]) {
+      for (const cell of column) {
+        expect(Math.abs(cell.width - column[0].width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(cell.left - column[0].left)).toBeLessThanOrEqual(1);
+      }
+    }
+    // Years sit in their own column, left of the months, set apart by weight and colour.
+    expect(years[0].left + years[0].width).toBeLessThanOrEqual(months[0].left);
+    expect(years[0].weight).toBeGreaterThan(months[0].weight);
+    expect(years[0].color).not.toBe(months[0].color);
+
+    // Monospace: the month text itself is the same width whatever the letters.
+    const inked = await timeline.locator("[data-tick-month]").evaluateAll((cells) =>
+      cells.map((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        return range.getBoundingClientRect().width;
+      }),
+    );
+    for (const width of inked) expect(Math.abs(width - inked[0])).toBeLessThanOrEqual(1);
+  });
+
   // Regression: an overflow-hidden section once made both of these scroll away.
   for (const [name, label, from] of [
     ["the side timeline", "Event timeline", 1024],

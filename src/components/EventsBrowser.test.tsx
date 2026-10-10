@@ -167,6 +167,24 @@ describe("EventsBrowser timeline", () => {
     expect(exhibitionDot).toHaveFocus();
   });
 
+  it("sets month and year labels in their own fixed-width monospace columns", () => {
+    renderOn("2026-10-09");
+    const nav = screen.getByRole("navigation", { name: "Event timeline" });
+    const months = [...nav.querySelectorAll("[data-tick-month]")];
+    const years = [...nav.querySelectorAll("[data-tick-year]")];
+    // Nov 2026 → Feb 2027: one month cell and one year cell (empty or not) per tick.
+    expect(months.map((month) => month.textContent)).toEqual(["Nov", "Dec", "Jan", "Feb"]);
+    expect(years.map((year) => year.textContent)).toEqual(["2026", "", "2027", ""]);
+    for (const month of months) {
+      expect(month).toHaveClass("w-[3ch]", "uppercase", "text-ocean-500");
+      expect(month.closest("li")).toHaveClass("font-mono");
+    }
+    for (const year of years) {
+      expect(year).toHaveClass("w-[4ch]", "font-bold", "text-coral-dark");
+      expect(year).not.toHaveClass("text-ocean-500");
+    }
+  });
+
   it("marks today on the timeline only while the season is running", () => {
     renderOn("2027-01-01");
     expect(timeline().getByText("Today")).toBeInTheDocument();

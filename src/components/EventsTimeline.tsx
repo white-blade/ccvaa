@@ -65,11 +65,11 @@ export function EventsTimeline({
   return (
     <nav aria-label={eventsContent.timelineLabel} className="relative h-full">
       {/* Month labels sit left of the line; dots on it; previews to its right. */}
-      <div className="absolute inset-y-0 left-16 w-px bg-gradient-to-b from-transparent via-ocean-200 to-transparent" />
+      <div className="absolute inset-y-0 left-18 w-px bg-gradient-to-b from-transparent via-ocean-200 to-transparent" />
       {layout.today !== null ? (
         <div
           aria-hidden="true"
-          className="absolute left-16 top-0 w-px bg-gradient-to-b from-transparent to-coral"
+          className="absolute left-18 top-0 w-px bg-gradient-to-b from-transparent to-coral"
           style={{ height: percent(layout.today) }}
         />
       ) : null}
@@ -78,16 +78,29 @@ export function EventsTimeline({
         {layout.ticks.map((tick) => (
           <li
             key={tick.iso}
-            className="absolute left-0 flex w-16 -translate-y-1/2 items-center justify-end"
+            className="absolute left-0 flex w-18 -translate-y-1/2 items-baseline justify-end gap-1.5 pr-3 font-mono leading-none"
             style={{ top: percent(tick.position) }}
           >
-            <span className="pr-3 text-right text-[0.625rem] font-semibold uppercase leading-tight tracking-wider text-ocean-500">
-              {tick.label}
-              {tick.year ? (
-                <span className="block text-ocean-700">{tick.year}</span>
-              ) : null}
+            {/* Two fixed-width monospace columns, year then month, so every label
+                lines up with the ones above and below it. The year cell is always
+                there — empty on most ticks — to hold the month column in place. */}
+            <span
+              data-tick-year
+              className="w-[4ch] text-left text-[0.6875rem] font-bold tabular-nums text-coral-dark"
+            >
+              {tick.year}
             </span>
-            <span className="absolute -right-1 h-px w-2 bg-ocean-200" />
+            <span
+              data-tick-month
+              className="w-[3ch] text-left text-[0.625rem] font-medium uppercase text-ocean-500"
+            >
+              {tick.label}
+            </span>
+            <span
+              className={`absolute top-1/2 h-px ${
+                tick.year ? "-right-1.5 w-3 bg-coral" : "-right-1 w-2 bg-ocean-200"
+              }`}
+            />
           </li>
         ))}
       </ol>
@@ -95,7 +108,7 @@ export function EventsTimeline({
       {layout.today !== null ? (
         <div
           aria-hidden="true"
-          className="absolute left-16 flex -translate-x-1/2 -translate-y-1/2 items-center"
+          className="absolute left-18 flex -translate-x-1/2 -translate-y-1/2 items-center"
           style={{ top: percent(layout.today) }}
         >
           <span className="h-2 w-2 rounded-full bg-ocean-900 ring-4 ring-cream" />
@@ -114,7 +127,7 @@ export function EventsTimeline({
           return (
             <li
               key={event.id}
-              className={`absolute left-16 -translate-y-1/2 ${
+              className={`absolute left-18 -translate-y-1/2 ${
                 active ? "z-20" : "z-10"
               }`}
               style={{ top: percent(position) }}
