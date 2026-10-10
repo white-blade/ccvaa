@@ -33,8 +33,12 @@ Nav: About · Gallery · Events · Contact
 
 - **About**: the board — a group photograph and a card per member that opens a profile
   (portrait, bio, website) — and the ten purposes as an accordion.
-- **Gallery**: every photograph in `public/photos/`, read at build time (adding one is
-  a file drop), 2–5 per row, full-size viewer.
+- **Gallery**: every photograph in `public/photos/`, read at build time, as a sliding
+  gallery — one photograph at a time, prev/next and dots, swipe on touch, a 6s
+  slideshow with a pause button. From 768 the photograph fills the stage with its
+  author, date, and caption at the top right over a frosted veil; below, a card with
+  the credits under the photograph. Selecting it opens the full-size viewer. Credits
+  live in `src/lib/gallery-photos.ts` (see `specs/gallery-0003`).
 - **Events**: listings, beside a date-scaled **timeline** (≥ 1024px) or a sticky
   **date rail** (below) whose chips show the date with its year and the city and country.
 - **Contact**: the email, set large, and the postal address.
@@ -52,13 +56,13 @@ section being read.
 **Motion**: a CSS-only entrance on first load (the photograph settles, the headline
 rises word by word), scroll-driven transitions (`animation-timeline: view()`: tinted
 sections open like a window, ghost numerals drift, the hero recedes; inside sections a
-divider draws, titles settle, gallery tiles unfold, event cards glide in, purposes
+divider draws, titles settle, the gallery stage unfolds, event cards glide in, purposes
 rise, the email writes itself, the board photo drifts), and the glide. Scroll effects
 on text move by transform or clip only — never opacity or colour — so contrast holds
 wherever the scroll stops. All of it is `motion-safe` and progressive — reduced motion, or a browser
 without scroll timelines, gets the page as is, nothing hidden.
 
-History of the design decisions: `specs/home-0001` … `home-0008`.
+History of the design decisions: `specs/home-0001` … `home-0008`, `gallery-0003`.
 
 ## Layout
 
@@ -66,7 +70,7 @@ History of the design decisions: `specs/home-0001` … `home-0008`.
 src/app/         page.tsx (the one page), layout.tsx, globals.css, icon.svg
 src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoastLogo
                  AboutSection, BoardSection, BoardMemberDialog, PurposesSection
-                 GallerySection, GalleryGrid, GalleryLightbox, ColumnControl
+                 GallerySection, GallerySlider, GalleryLightbox
                  EventsSection, EventsBrowser, EventsTimeline, EventsDateRail,
                  EventCard, EventDialog
                  ContactSection
@@ -74,9 +78,10 @@ src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoas
                  shell; a bottom sheet on phones), SectionLinks, styles.ts
                  (shared class strings: subsection heading, round buttons)
 src/lib/site.ts  ALL copy and config — edit here first
-src/lib/         events.ts, timeline.ts, gallery.ts, asset.ts,
-                 scroll-to-section.ts, use-active-section.ts (one shared store),
-                 use-dialog.ts, use-columns.ts, use-today.ts, hover-focus.ts,
+src/lib/         events.ts, timeline.ts, gallery.ts (reads public/photos/),
+                 gallery-photos.ts (each photo's alt, caption, author, date),
+                 asset.ts, scroll-to-section.ts, use-active-section.ts (one shared
+                 store), use-dialog.ts, use-autoplay.ts, use-today.ts, hover-focus.ts,
                  swipe.ts, strip.ts, text.ts
 src/test/        shared test helpers (fixtures, axe)
 e2e/             Playwright browser suite and the static server it uses
@@ -87,7 +92,8 @@ assets/          source originals, not deployed
 
 **Content changes go in `src/lib/site.ts`.** Org details, navigation, hero copy, the
 board (bios, portraits, website), the ten purposes, and contact info all live there;
-event listings live in `src/lib/events.ts`. Components read from them and stay
+event listings live in `src/lib/events.ts`; each gallery photograph's alt text,
+caption, author, and date live in `src/lib/gallery-photos.ts`, one entry per file. Components read from them and stay
 presentational. Images are pre-sized before committing (≤ 1920px, ≤ 300 KB) — Pages
 serves exactly what is committed.
 

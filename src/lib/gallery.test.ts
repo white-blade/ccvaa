@@ -5,6 +5,7 @@ import { readdir } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { readGalleryPhotos } from "@/lib/gallery";
+import { galleryPhotoDetails } from "@/lib/gallery-photos";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
@@ -46,10 +47,18 @@ describe("readGalleryPhotos", () => {
     expect(photos.map((photo) => photo.file)).toEqual(["2.avif", "9.PNG", "10.jpg"]);
   });
 
-  it("gives a photo without its own alt text a generic description", async () => {
+  it("joins each file with its details: alt text, caption, author, date", async () => {
+    vi.mocked(readdir).mockResolvedValue([entry("1.jpg")] as never);
+    const [photo] = await readGalleryPhotos();
+    const details = galleryPhotoDetails.find((each) => each.file === "1.jpg")!;
+    expect(photo).toEqual({ ...details, src: "/ccvaa/photos/1.jpg" });
+  });
+
+  it("gives a photo without an entry a generic description and no credits", async () => {
     vi.mocked(readdir).mockResolvedValue([entry("99.jpg")] as never);
     const [photo] = await readGalleryPhotos();
     expect(photo.alt).toMatch(/Coast to Coast Visual Arts Association/);
+    expect(Object.keys(photo).sort()).toEqual(["alt", "file", "src"]);
   });
 
   it("returns nothing when the folder is missing", async () => {

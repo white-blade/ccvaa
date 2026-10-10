@@ -214,22 +214,28 @@ export const galleryContent = {
   eyebrow: "The collection",
   title: "Gallery",
   description:
-    "Work and moments from our community. Choose how many to show per row, and select any photograph to view it full size.",
-  zoomLabel: "View this photograph larger",
-  /** Shown on hover over each tile. */
-  viewLabel: "View",
+    "Work and moments from our community, one photograph at a time. Select a photograph to see it whole.",
+  /** The slideshow, for screen readers: "Gallery photographs, carousel". */
+  sliderLabel: "Gallery photographs",
+  /** Seconds each photograph stays before the next one slides in. */
+  autoplaySeconds: 6,
+  pauseLabel: "Pause slideshow",
+  playLabel: "Play slideshow",
+  /** The mark on the photograph that opens the viewer; read after the alt text. */
+  zoomLabel: "View full size",
+  /** Read before the author: "Photograph by Mira Hollis". */
+  authorPrefix: "Photograph by",
+  /** Read before the date: "Taken October 19, 2024". */
+  takenPrefix: "Taken",
   closeLabel: "Close",
   previousLabel: "Previous photograph",
   nextLabel: "Next photograph",
-  /** The viewer's strip of thumbnails, and each one: "Show photograph 3". */
+  /** The slideshow's dots and the viewer's thumbnails, and each one: "Show photograph 3". */
+  dotsLabel: "Choose a photograph",
   thumbnailsLabel: "All photographs",
   showPhotoLabel: "Show photograph",
   /** Shown to mouse and keyboard users only; touch gets swipes instead. */
   keyboardHint: "← → to browse · Esc to close",
-  columnsLabel: "Per row",
-  /** Rendered as "6 photographs" / "1 photograph" beside the layout control. */
-  countNoun: "photograph",
-  countNounPlural: "photographs",
 } as const;
 
 export const eventsContent = {

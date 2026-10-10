@@ -1,11 +1,11 @@
-import { GalleryGrid } from "@/components/GalleryGrid";
+import { GallerySlider } from "@/components/GallerySlider";
 import { Section } from "@/components/Section";
 import { readGalleryPhotos } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
 
 /**
  * Server component: resolves the photo list at build time, then hands it to the
- * client grid. Renders nothing at all when there are no photos, so an empty folder
+ * client slideshow. Renders nothing at all when there are no photos, so an empty folder
  * leaves no hollow section behind.
  */
 export async function GallerySection() {
@@ -25,7 +25,7 @@ export async function GallerySection() {
       glow
     >
       <div className="mt-10">
-        <GalleryGrid photos={photos} />
+        <GallerySlider photos={photos} />
       </div>
     </Section>
   );

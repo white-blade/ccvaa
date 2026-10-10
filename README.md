@@ -62,7 +62,7 @@ One page, `/`, in sections the header links to:
 | ---------- | --------------------------------------------------------------------------- |
 | Hero       | Headline over the coast photograph                                          |
 | `#about`   | About; the board (group photo, profiles with portrait and bio); the ten purposes, each opening on its own |
-| `#gallery` | Every photograph, 2–5 per row, each opening a full-size viewer              |
+| `#gallery` | A sliding gallery: one photograph at a time with its author, date, and caption; dots, arrows, swipe, and a pausable slideshow; each opens a full-size viewer |
 | `#events`  | Listings beside a date-scaled timeline (a date rail of dates and places on smaller screens); each opens a detail dialog |
 | `#contact` | Email and mailing address                                                   |
 
@@ -95,11 +95,12 @@ src/
 │   ├── events.ts           event listings (content, not data)
 │   ├── timeline.ts         where each event sits on the timeline
 │   ├── gallery.ts          build-time read of public/photos/
+│   ├── gallery-photos.ts   each photograph's alt text, caption, author, date
 │   ├── scroll-to-section.ts  the section glide
 │   ├── use-active-section.ts which section is being read
 │   ├── use-dialog.ts       shared dialog behaviour (keys, focus, swipe)
 │   ├── swipe.ts, strip.ts, text.ts   small shared helpers
-│   └── asset.ts, use-columns.ts, use-today.ts, hover-focus.ts
+│   └── asset.ts, use-autoplay.ts, use-today.ts, hover-focus.ts
 └── test/                   test helpers (fixtures, axe)
 e2e/                        Playwright browser suite
 public/
@@ -120,10 +121,13 @@ specs/                      specs and decision records
 | Board photographs           | files in `public/board/`, named in `boardContent` |
 | Event listings              | `src/lib/events.ts`                              |
 | Gallery photographs         | add or remove files in `public/photos/`          |
+| Gallery credits and captions | `src/lib/gallery-photos.ts`, one entry per file  |
 
 **Adding a photograph takes no code change.** `src/lib/gallery.ts` reads
 `public/photos/` at build time, so dropping a file in the folder and pushing is enough
-— add a matching `PHOTO_ALT` entry to give it real alt text. Pre-size it first:
+— then add its entry to `src/lib/gallery-photos.ts` (alt text, caption, author, date
+taken); a unit test fails until every file has one. The current credits are
+**placeholders** and must be replaced with the real ones. Pre-size it first:
 WebP/AVIF/JPEG, longest edge ≤1920px, ≤300KB. `images.unoptimized` is required on
 Pages, so nothing resizes at build — whatever is committed is what visitors download.
 
@@ -199,7 +203,9 @@ recorded in order: polish, accessibility, touch, and tests
 ([`home-0004`](specs/home-0004-board-photos-bios.md)); the purposes accordion and
 section-to-section navigation
 ([`home-0005`](specs/home-0005-purposes-and-section-switching.md)); the gallery viewer,
-motion, and profile layout ([`home-0006`](specs/home-0006-gallery-viewer-motion-profile.md)).
+motion, and profile layout ([`home-0006`](specs/home-0006-gallery-viewer-motion-profile.md));
+the sliding gallery with photo credits
+([`gallery-0003`](specs/gallery-0003-sliding-gallery.md)).
 
 ## License
 

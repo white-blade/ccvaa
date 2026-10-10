@@ -50,22 +50,39 @@ a Vitest file under `src/`.
 | L8b | 1024 and up: the timeline's month labels are three-letter monospace capitals in one fixed-width column (equal widths, left edges within 1px); years sit in their own column to the left, bold `coral-dark`, set apart from the months by weight and colour | Auto — e2e › device layouts › lg and up: timeline months and years each line up…; unit:EventsBrowser; unit:timeline |
 | L9 | The side timeline and the date rail stay pinned while the listings scroll (never `overflow-hidden` above a sticky element) | Auto — e2e › device layouts › … stays pinned while the listings scroll |
 | L9b | The date rail marks the card read past, and clears a stale mark after jumping back up | Auto — e2e › device layouts › below lg: a date rail…; …jumping back up to Events… |
-| L10 | Below 640 the gallery has no per-row control | Auto — e2e › device layouts › phones: the gallery drops the per-row control |
+| L10 | *Retired in gallery-0003: the per-row control is gone.* Phones (< 768): the gallery is a card — the photograph, then author and date below it, no veil | Auto — e2e › device layouts › phones: the gallery is a card… |
+| L10b | 768 and up: one photograph fills the stage (cover), the veil is on, and the credits sit at its top right | Auto — e2e › device layouts › md and up: one photograph fills the stage… |
 | L11 | Dialogs and the photo viewer cover the fixed header | Auto — e2e › layout › dialogs cover the fixed header |
 | L12 | Back to top only from 1280px, where it cannot cover content | Auto — e2e › moving between sections › back to top never covers content…; unit:BackToTop |
 | L13 | Every board portrait renders at the same size, whatever the bio length | Auto — e2e › board profiles › every portrait gets the same frame… |
 | L14 | Nothing sits under a notch or the home indicator (safe-area insets) | **Manual** — real notched iPhone, portrait and landscape |
 | L15 | Board profiles: identity (role, name, website, arrows) under the portrait, no empty column; short bios centred | Auto — unit:BoardSection; e2e › board profiles; **Manual** — glance at the longest and shortest bio |
 
+## Gallery slideshow
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| S1 | One photograph at a time; previous/next wrap at the ends | Auto — unit:GallerySlider; e2e › device layouts › md and up… |
+| S2 | A dot per photograph jumps to it; the current dot is marked (`aria-current`) and drawn wider; dots are named "Show photograph n" | Auto — e2e › device layouts › every device: a dot jumps…; unit:GallerySlider |
+| S3 | Author and date show when present; without them nothing is empty and the alt text stands in as caption; dates never shift a day | Auto — unit:GallerySlider; unit:text; unit:gallery |
+| S4 | Every file in `public/photos/` has an entry in `gallery-photos.ts` and every entry a file; dates are real and past; no blank fields | Auto — unit:gallery-photos |
+| S5 | The slideshow advances every `galleryContent.autoplaySeconds` (6s); a step by hand restarts the count | Auto — e2e › gallery slideshow › advances on its own…; unit:GallerySlider |
+| S6 | It holds on mouse hover, keyboard focus inside, while the viewer is open, and while the tab is hidden; a visible button pauses and plays it (WCAG 2.2.2) | Auto — e2e › gallery slideshow › …; unit:GallerySlider |
+| S7 | Reduced motion: it never starts on its own (play still works if pressed) | Auto — e2e › gallery slideshow › reduced motion…; unit:GallerySlider |
+| S8 | Swipe left/right on the slideshow steps it; a vertical drag scrolls the page and does not | Auto — e2e › touch › swiping the slideshow…; unit:GallerySlider |
+| S9 | Slide changes are announced only when the visitor makes them (`aria-live` off while playing) | Auto — unit:GallerySlider |
+| S10 | The veil reads well over every photograph and the credits feel balanced | **Manual** — desktop and iPad, step through all six |
+
 ## Gallery viewer
 
 | ID | Behaviour | Guard |
 |----|-----------|-------|
-| G1 | Thumbnails show the whole set, mark the current photograph, and jump to any | Auto — e2e › photo viewer › thumbnails…; unit:GalleryGrid |
-| G2 | Neighbouring photographs are fetched ahead of a step | Auto — unit:GalleryGrid |
-| G3 | The photograph slides in from the side the visitor moved toward | Auto — unit:GalleryGrid |
+| G1 | Thumbnails show the whole set, mark the current photograph, and jump to any | Auto — e2e › photo viewer › thumbnails…; unit:GallerySlider |
+| G2 | Neighbouring photographs are fetched ahead of a step | Auto — unit:GallerySlider |
+| G3 | The photograph slides in from the side the visitor moved toward | Auto — unit:GallerySlider |
 | G4 | Swipe down closes it on touch; left/right step | Auto — e2e › photo viewer › a swipe down…; e2e › touch › …swipes…; unit:use-dialog |
-| G5 | Keyboard hint for mouse users only | Auto — unit:GalleryGrid |
+| G5 | Keyboard hint for mouse users only | Auto — unit:GallerySlider |
+| G6 | The photograph is shown whole (contained, inside the screen); author and date sit above the caption when present; focus returns to the photograph on close | Auto — e2e › photo viewer › shows the whole photograph…; unit:GallerySlider |
 
 ## Motion
 
@@ -77,8 +94,9 @@ a Vitest file under `src/`.
 | M4 | Decorative motion (ghost numerals) is not text: hidden from screen readers and contrast checks | Auto — unit:Section; A1 |
 | M5 | The entrance and transitions feel smooth on a real phone | **Manual** — real iPhone and Android |
 | M6 | Scroll effects never fade text: everything text-bearing is opaque at every scroll position | Auto — e2e › motion › scroll effects never fade text… |
-| M7 | Every round-two section effect (titles, tiles, cards, purposes, email, board photo) runs where supported and is off under reduced motion | Auto — e2e › motion › scroll-driven section effects… |
-| M8 | Hover effects still work on gallery tiles while their scroll effect runs | **Manual** — desktop, hover a tile mid-scroll |
+| M7 | Every round-two section effect (titles, gallery stage, cards, purposes, email, board photo) runs where supported and is off under reduced motion | Auto — e2e › motion › scroll-driven section effects… |
+| M8 | Hover effects still work on the gallery photograph while its scroll effect runs | **Manual** — desktop, hover the photograph mid-scroll |
+| M9 | Slide changes move the caption by transform only — text never fades — and are off under reduced motion | Auto — unit:GallerySlider (classes); e2e › accessibility › has no axe violations… |
 
 ## Touch
 
@@ -86,10 +104,10 @@ a Vitest file under `src/`.
 |----|-----------|-------|
 | T1 | Tap targets are at least 40px tall | Auto — e2e › touch › controls are big enough to tap |
 | T2 | *Retired in home-0008: the events search was removed, and with it the only text field.* | — |
-| T3 | Nothing depends on hover: gallery labels show on touch screens | Auto — e2e › touch › gallery labels show without hover |
+| T3 | Nothing depends on hover: the gallery's "View full size" mark and credits show on touch screens | Auto — e2e › touch › gallery labels show without hover |
 | T4 | A tap never strands a hover highlight | Auto — unit:hover-focus; unit:EventsBrowser (touch) |
 | T5 | Timeline on touch: first tap previews, a second tap (or a tap on the preview) opens | Auto — e2e › touch › timeline: first tap…; …tapping the open preview card… |
-| T6 | Swipe left/right steps the photo viewer and board profiles; vertical swipes and pinch are left alone | Auto — e2e › touch › …swipes…; unit:use-dialog |
+| T6 | Swipe left/right steps the gallery slideshow, the photo viewer, and board profiles; vertical swipes and pinch are left alone | Auto — e2e › touch › …swipes…; unit:use-dialog |
 | T7 | Press feedback on cards, tiles, chips, and tabs; no grey iOS tap flash | **Manual** — real phone |
 | T8 | Pinch-zoom works in the photo viewer | **Manual** — real phone |
 
@@ -114,7 +132,7 @@ a Vitest file under `src/`.
 | A1 | No axe violations on the full page, colour contrast included, on every device | Auto — e2e › accessibility › has no axe violations… |
 | A2 | Each component is axe-clean in isolation | Auto — unit tests calling `expectNoAxeViolations` |
 | A3 | Skip link is the first Tab stop and lands on the content | Auto — e2e › accessibility › keyboard… |
-| A4 | Dialogs: focus in on open, back to the opener on close, Tab trapped, Escape closes, arrows step | Auto — unit:GalleryGrid, unit:BoardSection, unit:EventsBrowser |
+| A4 | Dialogs: focus in on open, back to the opener on close, Tab trapped, Escape closes, arrows step | Auto — unit:GallerySlider, unit:BoardSection, unit:EventsBrowser |
 | A5 | Timeline dots step with the arrow keys | Auto — unit:EventsBrowser |
 | A4b | Stacked dialogs (an event's picture viewer over the event): keys go to the top one only; Escape closes the viewer and leaves the event open | Auto — unit:use-dialog; unit:EventsBrowser; e2e › event pictures |
 | A6 | Purposes: each opens on its own; closed descriptions are inert; Expand/Collapse all | Auto — unit:PurposesSection; e2e › purposes |

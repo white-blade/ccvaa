@@ -132,6 +132,17 @@ async function swipe(page: Page, selector: string, dx: number, dy = 0) {
   );
 }
 
+/** The gallery slide on screen, named "3 / 6". */
+const currentSlide = (page: Page) => page.locator("#gallery [aria-roledescription=slide]");
+
+/** Stop the gallery slideshow, so a test reads the slide it expects. */
+async function pauseSlideshow(page: Page) {
+  const pause = page.getByRole("button", { name: "Pause slideshow" });
+  await pause.scrollIntoViewIfNeeded();
+  await pause.click();
+  await expect(page.getByRole("button", { name: "Play slideshow" })).toBeVisible();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("./");
 });
@@ -232,7 +243,7 @@ test.describe("touch", () => {
     const sizes = await page.evaluate(() =>
       [
         ...document.querySelectorAll<HTMLElement>(
-          "#gallery [role=group] button, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
+          "#gallery button, main a[href^='#'], nav[aria-label=Sections] a, nav[aria-label='Event dates'] button",
         ),
       ]
         .filter((el) => el.offsetParent !== null)
@@ -244,13 +255,28 @@ test.describe("touch", () => {
   });
 
   test("gallery labels show without hover", async ({ page }) => {
-    const label = page.locator("#gallery li").first().getByText(/^View\s*⤢$/);
-    await label.scrollIntoViewIfNeeded();
-    await expect.poll(() => label.evaluate((el) => getComputedStyle(el.parentElement!).opacity)).toBe("1");
+    // The mark that says the photograph opens full size, and its credits.
+    const mark = page.locator("#gallery").getByText("View full size");
+    await mark.scrollIntoViewIfNeeded();
+    await expect(mark).toBeVisible();
+    expect(await mark.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await expect(page.locator("#gallery [data-credits]")).toBeVisible();
+  });
+
+  test("swiping the slideshow changes the photograph; a scroll does not", async ({ page }) => {
+    await pauseSlideshow(page);
+    const slide = currentSlide(page);
+    await expect(slide).toHaveAccessibleName("1 / 6");
+    await swipe(page, "#gallery .fx-tile", -150);
+    await expect(slide).toHaveAccessibleName("2 / 6");
+    await swipe(page, "#gallery .fx-tile", 150);
+    await expect(slide).toHaveAccessibleName("1 / 6");
+    await swipe(page, "#gallery .fx-tile", 10, 200);
+    await expect(slide).toHaveAccessibleName("1 / 6");
   });
 
   test("the photo viewer opens on tap and swipes between photographs", async ({ page }) => {
-    const tiles = page.getByRole("button", { name: /View this photograph larger/ });
+    const tiles = page.getByRole("button", { name: /View full size/ });
     await tiles.first().tap();
     const dialog = page.getByRole("dialog");
     const first = await dialog.getAttribute("aria-label");
@@ -373,10 +399,56 @@ test.describe("device layouts (specs/home-0003)", () => {
     expect(box.y + box.height).toBeLessThan(viewport.height);
   });
 
-  test("phones: the gallery drops the per-row control", async ({ page }, testInfo) => {
-    test.skip(widthOf(testInfo) >= 640, "below sm only");
-    await expect(page.getByRole("group", { name: "Per row" })).toBeHidden();
-    await expect(page.getByText(/\d+ photographs/)).toBeVisible();
+  test("phones: the gallery is a card — the photograph, then its credits, no veil", async ({ page }, testInfo) => {
+    test.skip(!isPhone(testInfo), "below md only");
+    await pauseSlideshow(page);
+    await expect(page.locator("#gallery [data-veil]")).toBeHidden();
+    const photo = (await page.getByRole("button", { name: /View full size/ }).boundingBox())!;
+    const credits = page.locator("#gallery [data-credits]");
+    await expect(credits.getByText("Mira Hollis")).toBeVisible();
+    await expect(credits.getByText("October 19, 2024")).toBeVisible();
+    const box = (await credits.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(photo.y + photo.height - 1);
+  });
+
+  test("md and up: one photograph fills the stage, credits at the top right over the veil", async ({
+    page,
+  }, testInfo) => {
+    test.skip(isPhone(testInfo), "md and up");
+    await pauseSlideshow(page);
+    await expect(page.locator("#gallery img")).toHaveCount(1);
+    const stage = (await page.locator("#gallery .fx-tile").boundingBox())!;
+    const photo = (await page.getByRole("button", { name: /View full size/ }).boundingBox())!;
+    expect(Math.round(photo.width)).toBe(Math.round(stage.width));
+    expect(await page.locator("#gallery img").evaluate((img) => getComputedStyle(img).objectFit)).toBe("cover");
+
+    await expect(page.locator("#gallery [data-veil]")).toBeVisible();
+    const credits = page.locator("#gallery [data-credits]");
+    await expect(credits.getByText("Mira Hollis")).toBeVisible();
+    await expect(credits.getByText("October 19, 2024")).toBeVisible();
+    const box = (await credits.boundingBox())!;
+    expect(box.x).toBeGreaterThan(stage.x + stage.width / 2);
+    expect(box.y - stage.y).toBeLessThan(5);
+  });
+
+  test("every device: a dot jumps to its photograph and is the one marked", async ({ page }) => {
+    await pauseSlideshow(page);
+    const dots = page.getByRole("list", { name: "Choose a photograph" }).getByRole("button");
+    await expect(dots).toHaveCount(6);
+    await dots.nth(3).click();
+    await expect(currentSlide(page)).toHaveAccessibleName("4 / 6");
+    await expect(dots.nth(3)).toHaveAttribute("aria-current", "true");
+    await expect(page.locator("#gallery [aria-current=true]")).toHaveCount(1);
+    // Highlighted, not just announced: once the change settles, the current dot is
+    // drawn wider than the rest.
+    const widest = () =>
+      dots.evaluateAll((buttons) => {
+        const widths = buttons.map((button) => button.firstElementChild!.getBoundingClientRect().width);
+        return widths.filter((width) => width === Math.max(...widths)).length === 1
+          ? widths.indexOf(Math.max(...widths))
+          : -1;
+      });
+    await expect.poll(widest).toBe(3);
   });
 
   test("below lg: a date rail stands in for the timeline, and a chip glides to its card", async ({
@@ -691,7 +763,7 @@ test.describe("board profiles", () => {
 
 test.describe("photo viewer", () => {
   test("thumbnails show the set and jump to any photograph", async ({ page }) => {
-    await page.getByRole("button", { name: /View this photograph larger/ }).first().click();
+    await page.getByRole("button", { name: /View full size/ }).click();
     const strip = page.getByRole("list", { name: "All photographs" });
     await expect(strip.getByRole("button")).toHaveCount(await page.locator("#gallery li").count());
     const dialog = page.getByRole("dialog");
@@ -703,10 +775,83 @@ test.describe("photo viewer", () => {
 
   test("a swipe down closes it on touch screens", async ({ page }, testInfo) => {
     test.skip(!isTouch(testInfo), "touch devices only");
-    await page.getByRole("button", { name: /View this photograph larger/ }).first().tap();
+    await page.getByRole("button", { name: /View full size/ }).tap();
     await expect(page.getByRole("dialog")).toBeVisible();
     await swipe(page, "[role=dialog]", 0, 200);
     await expect(page.getByRole("dialog")).toBeHidden();
+  });
+
+  test("shows the whole photograph, with its author and date above the caption", async ({ page }) => {
+    await pauseSlideshow(page);
+    // From the keyboard: WebKit does not focus a clicked button, so a click would
+    // leave no opener to return to.
+    const opener = page.getByRole("button", { name: /View full size/ });
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    const viewer = page.getByRole("dialog", { name: /^A wooden dock/ });
+    await expect(viewer).toBeVisible();
+    const image = viewer.getByRole("img", { name: /^A wooden dock/ });
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    expect(await image.evaluate((img) => getComputedStyle(img).objectFit)).toBe("contain");
+    const box = (await image.boundingBox())!;
+    const viewport = page.viewportSize()!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+
+    const credit = viewer.getByText("Mira Hollis");
+    const caption = viewer.getByText(/^First frost on the lake/);
+    await expect(credit).toBeVisible();
+    await expect(viewer.getByText("October 19, 2024")).toBeVisible();
+    expect((await credit.boundingBox())!.y).toBeLessThan((await caption.boundingBox())!.y);
+
+    await page.keyboard.press("Escape");
+    await expect(viewer).toBeHidden();
+    await expect(opener).toBeFocused();
+  });
+});
+
+test.describe("gallery slideshow", () => {
+  test("advances on its own, every six seconds", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("./");
+    const slide = currentSlide(page);
+    await expect(slide).toHaveAccessibleName("1 / 6");
+    await page.clock.runFor(6_100);
+    await expect(slide).toHaveAccessibleName("2 / 6");
+    await expect(page.getByRole("button", { name: "Show photograph 2" })).toHaveAttribute("aria-current", "true");
+  });
+
+  test("the pause button stops it, and play starts it again", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("./");
+    const slide = currentSlide(page);
+    await pauseSlideshow(page);
+    await page.mouse.move(0, 0); // and away, so hovering does not hold it instead
+    await page.clock.runFor(20_000);
+    await expect(slide).toHaveAccessibleName("1 / 6");
+    await page.getByRole("button", { name: "Play slideshow" }).click();
+    await page.mouse.move(0, 0);
+    await page.locator("body").evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.clock.runFor(6_100);
+    await expect(slide).toHaveAccessibleName("2 / 6");
+  });
+
+  test("holds while the mouse rests on it", async ({ page }, testInfo) => {
+    test.skip(isTouch(testInfo), "mouse only");
+    await page.clock.install();
+    await page.goto("./");
+    await page.getByRole("button", { name: /View full size/ }).hover();
+    await page.clock.runFor(20_000);
+    await expect(currentSlide(page)).toHaveAccessibleName("1 / 6");
+  });
+
+  test("reduced motion: never plays on its own", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.clock.install();
+    await page.goto("./");
+    await expect(page.getByRole("button", { name: "Play slideshow" })).toBeVisible();
+    await page.clock.runFor(20_000);
+    await expect(currentSlide(page)).toHaveAccessibleName("1 / 6");
   });
 });
 

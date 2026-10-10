@@ -8,6 +8,7 @@ import { roundButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { galleryContent } from "@/lib/site";
 import { centreInStrip } from "@/lib/strip";
+import { formatIsoDate } from "@/lib/text";
 import { useDialog } from "@/lib/use-dialog";
 
 type GalleryLightboxProps = {
@@ -30,9 +31,10 @@ const ENTER_CLASS = {
 } as const;
 
 /**
- * Full-screen viewer for the gallery grid. Escape, arrow keys, swipes (left/right to
- * step, down to close), the focus trap, the scroll lock, and returning focus to the
- * tile all come from `useDialog`. Portalled to <body> so it covers the fixed header
+ * Full-screen viewer for the gallery slideshow and for event pictures. The photograph
+ * is always contained, never cropped: this is where it is seen whole. Escape, arrow
+ * keys, swipes (left/right to step, down to close), the focus trap, the scroll lock,
+ * and returning focus to the opener all come from `useDialog`. Portalled to <body> so it covers the fixed header
  * — see `Modal`.
  *
  * Browsing is meant to feel continuous: the photograph slides in from the side the
@@ -63,6 +65,7 @@ export function GalleryLightbox({
   const position = `${index + 1} / ${photos.length}`;
   const hasMany = photos.length > 1;
   const loaded = loadedSrc === photo.src;
+  const takenOn = photo.takenAt ? formatIsoDate(photo.takenAt) : null;
 
   // Fetch the neighbours now, so stepping either way shows a photograph at once.
   useEffect(() => {
@@ -136,13 +139,37 @@ export function GalleryLightbox({
         </div>
       </div>
 
-      {/* The dialog's own aria-label already carries this text. */}
-      <p
-        aria-hidden="true"
-        className="mx-auto mt-4 line-clamp-2 max-w-3xl text-center text-sm leading-relaxed text-ocean-200"
-      >
-        {photo.alt}
-      </p>
+      <div className="mx-auto mt-4 max-w-3xl text-center">
+        {photo.author || takenOn ? (
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">
+            {photo.author ? (
+              <>
+                <span className="sr-only">{galleryContent.authorPrefix} </span>
+                {photo.author}
+              </>
+            ) : null}
+            {photo.author && takenOn ? (
+              <span aria-hidden="true" className="mx-2 text-ocean-200">
+                ·
+              </span>
+            ) : null}
+            {takenOn ? (
+              <>
+                <span className="sr-only">{galleryContent.takenPrefix} </span>
+                <time dateTime={photo.takenAt}>{takenOn}</time>
+              </>
+            ) : null}
+          </p>
+        ) : null}
+        {/* Without a caption of its own the alt text stands in, and the dialog's
+          aria-label already carries that. */}
+        <p
+          aria-hidden={photo.description ? undefined : "true"}
+          className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ocean-200"
+        >
+          {photo.description ?? photo.alt}
+        </p>
+      </div>
 
       {hasMany && (
         <div className="mx-auto mt-4 flex w-full max-w-3xl items-center gap-3">
