@@ -615,8 +615,9 @@ describe("GallerySlider: first and last", () => {
 
   it("orders the controls first, previous, dots, next, last", () => {
     render(<GallerySlider photos={many} />);
-    const row = screen.getByRole("list", { name: "Choose a work" }).parentElement!;
-    const names = [...row.querySelectorAll(":scope > button, :scope > ol")].map(
+    // The list sits on its track, a direct child of the row.
+    const row = screen.getByRole("list", { name: "Choose a work" }).parentElement!.parentElement!;
+    const names = [...row.querySelectorAll(":scope > button, :scope > * > ol")].map(
       (el) => el.getAttribute("aria-label"),
     );
     expect(names).toEqual(["First work", "Previous work", "Choose a work", "Next work", "Last work"]);
@@ -626,6 +627,30 @@ describe("GallerySlider: first and last", () => {
     render(<GallerySlider photos={many.slice(0, 1)} />);
     expect(screen.queryByRole("button", { name: "First work" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Last work" })).toBeNull();
+  });
+});
+
+describe("GallerySlider: dot previews", () => {
+  const peek = () => document.querySelector("[data-dot-peek]");
+
+  it("lifts a preview of the work above a dot under the mouse, and drops it on leaving", () => {
+    render(<GallerySlider photos={photos} />);
+    const third = screen.getByRole("button", { name: "Show work 3" });
+    fireEvent.pointerEnter(third, { pointerType: "mouse" });
+    expect(peek()).toHaveAttribute("aria-hidden", "true");
+    expect(peek()).toHaveTextContent(/^03/);
+    expect(peek()!.querySelector("img")).toHaveAttribute("src", photos[2].src);
+
+    fireEvent.pointerLeave(third, { pointerType: "mouse" });
+    expect(peek()).toBeNull();
+  });
+
+  it("shows none for a touch, or for the work already on the stage", () => {
+    render(<GallerySlider photos={photos} />);
+    fireEvent.pointerEnter(screen.getByRole("button", { name: "Show work 2" }), { pointerType: "touch" });
+    expect(peek()).toBeNull();
+    fireEvent.pointerEnter(screen.getByRole("button", { name: "Show work 1" }), { pointerType: "mouse" });
+    expect(peek()).toBeNull();
   });
 });
 
@@ -647,6 +672,19 @@ describe("GallerySlider: the slideshow's countdown and drift", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Pause slideshow" }));
     expect(line()).toBeNull();
+  });
+
+  it("counts down inside the pill that marks the current dot, and the pill turns solid on pause", () => {
+    vi.useFakeTimers();
+    preferReducedMotion(false);
+    render(<GallerySlider photos={photos} />);
+    const pill = () => document.querySelector("[data-dot-pill]")!;
+    expect(pill()).toHaveAttribute("aria-hidden", "true");
+    expect(pill().querySelector("[data-slide-progress]")).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause slideshow" }));
+    expect(pill().querySelector("[data-slide-progress]")).toBeNull();
+    expect(pill().querySelector(".bg-coral")).not.toBeNull();
   });
 
   it("drifts the current work slowly closer, only where motion is welcome", () => {

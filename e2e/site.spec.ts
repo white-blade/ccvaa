@@ -387,6 +387,20 @@ test.describe("mouse", () => {
     await dot.click({ position: { x: 8, y: (await dot.boundingBox())!.height / 2 } });
     await expect(page.getByRole("dialog", { name: /Artist Talk/ })).toBeVisible();
   });
+
+  test("hovering a gallery dot lifts a preview of its work above it", async ({ page }) => {
+    await pauseSlideshow(page);
+    const dot = page.getByRole("button", { name: "Show work 3" });
+    await dot.hover();
+    const preview = page.locator("#gallery [data-dot-peek]");
+    await expect(preview).toBeVisible();
+    await expect(preview).toContainText("03");
+    const [shown, under] = [(await preview.boundingBox())!, (await dot.boundingBox())!];
+    expect(shown.y + shown.height, "above the dot").toBeLessThanOrEqual(under.y);
+    expect(Math.abs(shown.x + shown.width / 2 - (under.x + under.width / 2)), "centred on it").toBeLessThan(2);
+    await page.mouse.move(0, 0);
+    await expect(preview).toHaveCount(0);
+  });
 });
 
 test.describe("device layouts (specs/home-0003)", () => {
@@ -987,16 +1001,37 @@ test.describe("gallery works", () => {
     expect(Math.abs(first.y - last.y)).toBeLessThan(2);
   });
 
-  test("a thin line fills as the slideshow counts down to the next work", async ({ page }) => {
+  test("the current dot's pill fills as the slideshow counts down to the next work", async ({ page }) => {
     await page.clock.install();
     await page.goto("./");
     await page.getByRole("region", { name: "Gallery of works" }).scrollIntoViewIfNeeded();
     await page.mouse.move(0, 0);
-    const line = page.locator("#gallery [data-slide-progress]");
+    const line = page.locator("#gallery [data-dot-pill] [data-slide-progress]");
     await expect(line).toHaveCount(1);
     expect(await line.evaluate((el) => getComputedStyle(el).animationName)).toBe("slide-progress");
     await pauseSlideshow(page);
     await expect(line).toHaveCount(0);
+  });
+
+  test("one pill marks the current dot, and glides to the next on every screen", async ({ page }) => {
+    await pauseSlideshow(page);
+    const pill = page.locator("#gallery [data-dot-pill]");
+    const centre = async (target: Locator) => {
+      const box = (await target.boundingBox())!;
+      return box.x + box.width / 2;
+    };
+    const onDot = async (work: number) => {
+      const dot = page.getByRole("button", { name: `Show work ${work}` });
+      await expect(dot).toHaveAttribute("aria-current", "true");
+      await expect.poll(async () => Math.abs((await centre(pill)) - (await centre(dot)))).toBeLessThan(1);
+    };
+    await onDot(1);
+    // By keyboard, for the reason in "the dots stay a fixed number".
+    await page.getByRole("button", { name: "Next work" }).focus();
+    for (const work of [2, 3]) {
+      await page.keyboard.press("Enter");
+      await onDot(work);
+    }
   });
 
   test("the credit links the licence and the source, and can be clicked over the veil", async ({ page }) => {

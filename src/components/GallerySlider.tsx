@@ -11,12 +11,13 @@ import {
 } from "react";
 
 import { GalleryCredit } from "@/components/GalleryCredit";
+import { GalleryDots } from "@/components/GalleryDots";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
 import { GalleryPicture } from "@/components/GalleryPicture";
 import { StepIcon } from "@/components/StepIcon";
 import { roundButtonClass, roundGlassButtonClass } from "@/components/styles";
 import type { GalleryPhoto } from "@/lib/gallery";
-import { dotWindow, MAX_DOTS, MAX_DOTS_NARROW, nextDotStart, type DotScale } from "@/lib/dot-window";
+import { MAX_DOTS, MAX_DOTS_NARROW, nextDotStart } from "@/lib/dot-window";
 import { galleryContent } from "@/lib/site";
 import { singleTouch, swipeBetween, touchEnd, type Point } from "@/lib/swipe";
 import { formatIsoDate } from "@/lib/text";
@@ -34,10 +35,6 @@ const ENTER_CLASS = {
 } as const;
 
 const twoDigits = (n: number) => String(n).padStart(2, "0");
-
-/** Dot sizes for the wide window (from sm) and the narrow one (below sm). Literal, for Tailwind. */
-const DOT_SCALE_WIDE: Record<DotScale, string> = { small: "sm:scale-50", medium: "sm:scale-75", full: "" };
-const DOT_SCALE_NARROW: Record<DotScale, string> = { small: "max-sm:scale-50", medium: "max-sm:scale-75", full: "" };
 
 /**
  * The gallery as a slideshow: one photograph at a time, stepped by the arrows, the
@@ -142,14 +139,6 @@ export function GallerySlider({ photos }: GallerySliderProps) {
   };
 
   const takenOn = photo.takenAt ? formatIsoDate(photo.takenAt) : null;
-  const dots = dotWindow(index, count, MAX_DOTS, nav.wide);
-  const narrowDots = dotWindow(index, count, MAX_DOTS_NARROW, nav.narrow);
-  const inNarrow = (dot: number) => dot >= narrowDots.start && dot < narrowDots.end;
-  const inWide = (dot: number) => dot >= dots.start && dot < dots.end;
-  // The two windows move independently, so render every dot either one shows and
-  // hide each, per breakpoint, outside its own window.
-  const firstDot = Math.min(dots.start, narrowDots.start);
-  const lastDot = Math.max(dots.end, narrowDots.end);
 
   return (
     <>
@@ -267,18 +256,6 @@ export function GallerySlider({ photos }: GallerySliderProps) {
             </div>
           </div>
 
-          {/* Fills as the slideshow counts down to the next work. Only while it runs:
-            a hold restarts the count, so the line starts again with it. */}
-          {autoplay.running ? (
-            <span
-              key={index}
-              aria-hidden="true"
-              data-slide-progress
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-0.5 origin-left bg-coral/80 motion-safe:animate-[slide-progress_linear_both] motion-reduce:hidden"
-              style={{ animationDuration: `${galleryContent.autoplaySeconds}s` }}
-            />
-          ) : null}
-
           {hasMany ? (
             <button
               type="button"
@@ -320,40 +297,14 @@ export function GallerySlider({ photos }: GallerySliderProps) {
               <StepIcon to="previous" />
             </button>
 
-            <ol
-              aria-label={galleryContent.dotsLabel}
-              className="flex items-center justify-center"
-            >
-              {photos.slice(firstDot, lastDot).map((each, offset) => {
-                const dotIndex = firstDot + offset;
-                const current = dotIndex === index;
-                return (
-                  <li
-                    key={each.file}
-                    data-dot-scale={inWide(dotIndex) ? dots.scale(dotIndex) : "hidden"}
-                    data-dot-narrow={inNarrow(dotIndex) ? narrowDots.scale(dotIndex) : "hidden"}
-                    className={`${inWide(dotIndex) ? "" : "sm:hidden"} ${inNarrow(dotIndex) ? "" : "max-sm:hidden"}`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => select(dotIndex)}
-                      aria-label={`${galleryContent.showPhotoLabel} ${dotIndex + 1}`}
-                      aria-current={current ? "true" : undefined}
-                      className="group flex h-10 w-5 items-center justify-center rounded-full sm:w-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral pointer-fine:h-8"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={`block h-2 rounded-full transition-all duration-300 ${inWide(dotIndex) ? DOT_SCALE_WIDE[dots.scale(dotIndex)] : ""} ${inNarrow(dotIndex) ? DOT_SCALE_NARROW[narrowDots.scale(dotIndex)] : ""} ${
-                          current
-                            ? "w-5 bg-coral"
-                            : "w-2 bg-white/50 group-hover:bg-white/80 group-focus-visible:bg-white/80"
-                        }`}
-                      />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+            <GalleryDots
+              photos={photos}
+              index={index}
+              wideStart={nav.wide}
+              narrowStart={nav.narrow}
+              onSelect={select}
+              countdown={autoplay.running ? galleryContent.autoplaySeconds : null}
+            />
 
             <button
               type="button"
