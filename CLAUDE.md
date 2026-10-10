@@ -22,60 +22,106 @@ Next.js 16 has breaking changes from earlier versions. Read the relevant guide u
 notices. Notably: `proxy.ts` replaces `middleware.ts` — but neither applies here, since
 static export supports no middleware at all.
 
+## The page
+
+One page, `/`, no other routes:
+
+```
+Hero → #about (board, purposes) → #gallery → #events → #contact → footer
+Nav: About · Gallery · Events · Contact
+```
+
+- **About**: the board — a group photograph and a card per member that opens a profile
+  (portrait, bio, website) — and the ten purposes as an accordion.
+- **Gallery**: every photograph in `public/photos/`, read at build time (adding one is
+  a file drop), 2–5 per row, full-size viewer.
+- **Events**: listings with search, beside a date-scaled **timeline** (≥ 1024px) or a
+  sticky **date rail** (below).
+- **Contact**: the email, set large, and the postal address.
+
+**Devices** are told apart by CSS media features — width for layout, `pointer-coarse:`
+for touch — never by user agent. Phones (< 768) get a bottom tab bar instead of header
+links, and below 640 dialogs are bottom sheets. See
+[`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md).
+
+**Navigation** between sections goes through one document listener (`SectionLinks`):
+an eased, interruptible glide; focus and an arrival flourish on landing; the nav marks
+only the destination while gliding; Back/Forward glide too; the address follows the
+section being read.
+
+**Motion**: a CSS-only entrance on first load (the photograph settles, the headline
+rises word by word), scroll-driven transitions (`animation-timeline: view()`: tinted
+sections open like a window, ghost numerals drift, the hero recedes; inside sections a
+divider draws, titles settle, gallery tiles unfold, event cards glide in, purposes
+rise, the email writes itself, the board photo drifts), and the glide. Scroll effects
+on text move by transform or clip only — never opacity or colour — so contrast holds
+wherever the scroll stops. All of it is `motion-safe` and progressive — reduced motion, or a browser
+without scroll timelines, gets the page as is, nothing hidden.
+
+History of the design decisions: `specs/home-0001` … `home-0006`.
+
 ## Layout
 
 ```
 src/app/         page.tsx (the one page), layout.tsx, globals.css, icon.svg
-src/components/  Header, Hero, AboutSection, BoardSection, PurposesSection,
-                 GallerySection/Grid/Lightbox,
-                 EventsSection/Browser/Timeline/DateRail/Card/Dialog, TabBar,
-                 ContactSection, Footer, BrandMark, CoastToCoastLogo, ColumnControl
-                 shared: Section (numbered section shell), Disclosure, Reveal,
-                 Modal (dialog shell; a bottom sheet on phones), SectionLinks
+src/components/  Header, TabBar, BackToTop, Hero, Footer, BrandMark, CoastToCoastLogo
+                 AboutSection, BoardSection, BoardMemberDialog, PurposesSection
+                 GallerySection, GalleryGrid, GalleryLightbox, ColumnControl
+                 EventsSection, EventsBrowser, EventsTimeline, EventsDateRail,
+                 EventCard, EventDialog
+                 ContactSection
+                 shared: Section (numbered section shell), Reveal, Modal (dialog
+                 shell; a bottom sheet on phones), SectionLinks, subsection.ts
 src/lib/site.ts  ALL copy and config — edit here first
 src/lib/         events.ts, event-search.ts, timeline.ts, gallery.ts, asset.ts,
-                 use-dialog.ts, use-columns.ts, use-today.ts, use-active-section.ts,
-                 hover-focus.ts
-src/test/        shared test fixtures
-specs/           architecture specs / decision records
+                 scroll-to-section.ts, use-active-section.ts, use-dialog.ts,
+                 use-columns.ts, use-today.ts, hover-focus.ts
+src/test/        shared test helpers (fixtures, axe)
+e2e/             Playwright browser suite and the static server it uses
+public/          photos/ (gallery), events/, board/, images/
+specs/           specs and decision records — start with quality-0001
 assets/          source originals, not deployed
 ```
 
-One page, `/`: hero, `#about`, `#gallery`, `#events` (listings beside a timeline),
-`#contact`. There are no other routes and no membership — see
-[`specs/home-0001-single-page.md`](specs/home-0001-single-page.md). Gallery photos come from `public/photos/`, read at build time — adding
-one is a file drop, not a code change.
-
 **Content changes go in `src/lib/site.ts`.** Org details, navigation, hero copy, the
-board roster, the ten purposes, and contact info all live there. Components read from it
-and should stay presentational.
+board (bios, portraits, website), the ten purposes, and contact info all live there;
+event listings live in `src/lib/events.ts`. Components read from them and stay
+presentational. Images are pre-sized before committing (≤ 1920px, ≤ 300 KB) — Pages
+serves exactly what is committed.
 
 ## Commands
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build      # static export to out/
+npm run dev          # http://localhost:3000/ccvaa/
+npm run build        # static export to out/
 npm run lint
 npm run typecheck
-npm test           # Vitest, once; `npm run test:watch` to keep it running
-npm run build && npm run test:e2e   # Playwright against out/: desktop, tablet, phone
+npm test             # Vitest, once; `npm run test:watch` to keep it running
+npm run test:e2e     # Playwright against out/ — build first
 ```
 
-Tests live beside the code as `*.test.ts(x)` and run in jsdom, pinned to
-`America/Vancouver` so date bugs west of Greenwich show up. Logic worth testing goes
-in `src/lib/` as plain functions (see `timeline.ts`, `event-search.ts`); components
-stay presentational. Deploys run `npm test` before building.
+## Tests and the regression checklist
 
-`e2e/` holds the browser suite (Playwright). It serves `out/` under `/ccvaa` as Pages
-does and runs every test in parallel on six devices — Chromium desktop, touch tablet,
-and touch phone, and WebKit (Safari's engine) iPhone, iPad, and portrait iPad —
-layout overflow, full-page axe with contrast, touch input, and section navigation are
-checked there because jsdom cannot. Locally the Chromium projects drive the
-installed Chrome (`npx playwright install webkit` once for WebKit); CI installs both. CI runs lint, typecheck, unit, and browser tests as parallel jobs.
+**[`specs/quality-0001-regression-checklist.md`](specs/quality-0001-regression-checklist.md)
+is the bar for "done".** It lists every behaviour the site promises — layout per
+device, touch, section navigation, accessibility, content — and the test that guards
+each. A big change is finished only when every line still holds. Change a behaviour on
+purpose? Change its checklist line and its test in the same pull request.
 
-Preview a production build: `npm run build && npx serve out` (or
-`python3 -m http.server 4000 --directory out`).
+- **Unit** (Vitest, `src/**/*.test.ts(x)`): jsdom, pinned to `America/Vancouver` so
+  date bugs west of Greenwich show up; pure-logic files run in Node. Files run in
+  parallel. Logic worth testing goes in `src/lib/` as plain functions. Component tests
+  call `expectNoAxeViolations` from `src/test/axe.ts`.
+- **Browser** (Playwright, `e2e/`): serves `out/` under `/ccvaa` as Pages does and runs
+  every test in parallel on six devices — Chromium desktop, touch tablet, and touch
+  phone; WebKit (Safari's engine) iPhone, iPad, and portrait iPad. Layout and overflow,
+  full-page axe with contrast, touch input, stickiness, and section navigation are
+  checked here because jsdom cannot. Device rules come from each project's width and
+  touch, not its name. Locally the Chromium projects drive the installed Chrome (run
+  `npx playwright install webkit` once); CI installs both.
+- **CI** runs lint, typecheck, unit, and browser tests as parallel jobs on every push
+  and pull request. Deploys also run the unit suite before building.
 
 ## Deploy
 
@@ -92,23 +138,28 @@ the other breaks every asset path.
 
 - Branch for changes; don't commit to `main` directly. Don't push unless asked.
 - Never commit secrets. There are none to commit — keep it that way.
+- **No personal email addresses, anywhere on the page.** The organization's
+  `info@ccvaa.ca` is the only address the site shows; board members and everyone
+  else are reached through it. This holds for bios and any future content too. A
+  member's own public website may be linked. Tests fail on any other address
+  (`src/lib/site.test.ts`, and the browser suite on the built page).
 - Match surrounding style: Tailwind utility classes, `@/` import alias, comments only
   where intent isn't obvious from the code.
-- Devices are told apart by CSS media features — width breakpoints for layout,
-  `pointer-coarse:` for touch — never by user agent (static HTML, no server). Phones
-  (< md) get the bottom `TabBar`, < sm bottom-sheet dialogs, < lg the `EventsDateRail`;
-  see [`specs/home-0003-device-optimized.md`](specs/home-0003-device-optimized.md).
-  Fixed and sticky elements read the header's measured height from `--header-h` and
+- New sections go through `Section`; its number comes from the section's place in
+  `navigation`, so add the nav entry too. In-page links are plain `href="#id"` —
+  `SectionLinks` gives them the glide; don't wire scrolling per link.
+- Fixed and sticky elements read the header's measured height from `--header-h` and
   pad for notches with `env(safe-area-inset-*)`.
 - Never put `overflow-hidden` on an ancestor of something sticky: it makes a scroll
   container and the sticky element stops sticking. Use `overflow-clip`.
-- New sections go through `Section`; its number comes from the section's place in
-  `navigation`, so add the nav entry too.
+- Dialogs go through `Modal` (or portal like `GalleryLightbox`): sections are stacking
+  contexts, so a dialog rendered inside one sits under the fixed header.
+- Floating controls must not cover content: check them at 320, 768, and 1024px.
 - Accessibility is a requirement, not a polish pass: every control reachable and
-  operable by keyboard with a visible `focus-visible` ring, hover effects mirrored on
-  focus (`hoverFocusHandlers`, which also keeps touch from stranding a highlight),
-  nothing that only works on hover (touch has none), tap targets of 40px or more,
-  motion behind `motion-safe`, and small text on light
-  backgrounds in `coral-dark` or `ocean-500`+ (the lighter shades fail 4.5:1).
-  Component tests call `expectNoAxeViolations` from `src/test/axe.ts`.
-- Run `lint`, `typecheck`, `test`, and `build` before calling work done.
+  operable by keyboard with a visible `focus-visible` ring; hover effects mirrored on
+  focus (`hoverFocusHandlers`, which also keeps a tap from stranding a highlight);
+  nothing that only works on hover (touch has none); tap targets of 40px or more;
+  motion behind `motion-safe`; visible text included in accessible names; small text
+  on light backgrounds in `coral-dark` or `ocean-500`+ (lighter shades fail 4.5:1).
+- Before calling work done: `lint`, `typecheck`, `test`, `build`, `test:e2e`, and the
+  manual lines of the regression checklist when the change touches layout or input.

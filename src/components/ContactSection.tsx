@@ -31,7 +31,7 @@ export function ContactSection() {
           href={`mailto:${organization.email}`}
           className="group mt-3 inline-flex max-w-full items-center gap-4 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-4 focus-visible:ring-offset-ocean-50 sm:gap-6"
         >
-          <span className="relative min-w-0 break-words font-display text-4xl font-semibold tracking-tight text-ocean-900 sm:text-6xl lg:text-7xl">
+          <span className="fx-write relative min-w-0 break-words font-display text-4xl font-semibold tracking-tight text-ocean-900 sm:text-6xl lg:text-7xl">
             {organization.email}
             {/* The underline draws in from the left on hover and focus. */}
             <span

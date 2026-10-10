@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { glideTo, scrollToSection } from "@/lib/scroll-to-section";
+import { glideTo, scrollToSection, SECTION_GLIDE_EVENT } from "@/lib/scroll-to-section";
 
 /** jsdom has no layout: place the section by stubbing its box and the window. */
 function addSection(id: string, top: number) {
@@ -114,11 +114,51 @@ describe("scrollToSection", () => {
     expect(window.location.hash).toBe("#events");
   });
 
-  it("goes to the very top for #top", () => {
+  it("goes to the very top for #top, leaving a bare URL rather than #top", () => {
     setReducedMotion(true);
+    window.history.replaceState(null, "", "/#events");
     scrollY = 1234;
     expect(scrollToSection("#top")).toBe(true);
     expect(scrollY).toBe(0);
+    expect(window.location.hash).toBe("");
+  });
+
+  it("announces the destination when a glide starts and when it settles", () => {
+    setReducedMotion(false);
+    addSection("events", 2000);
+    const seen: unknown[] = [];
+    const listen = (event: Event) => seen.push((event as CustomEvent).detail);
+    window.addEventListener(SECTION_GLIDE_EVENT, listen);
+
+    scrollToSection("#events");
+    expect(seen).toEqual([{ target: "events", gliding: true }]);
+    flushFrames();
+    expect(seen).toEqual([
+      { target: "events", gliding: true },
+      { target: "events", gliding: false },
+    ]);
+    window.removeEventListener(SECTION_GLIDE_EVENT, listen);
+  });
+
+  it("announces the end of a glide the visitor cancels, too", () => {
+    setReducedMotion(false);
+    addSection("events", 4000);
+    const seen: unknown[] = [];
+    const listen = (event: Event) => seen.push((event as CustomEvent).detail);
+    window.addEventListener(SECTION_GLIDE_EVENT, listen);
+    scrollToSection("#events");
+    flushFrames(16, 3);
+    window.dispatchEvent(new Event("wheel"));
+    expect(seen.at(-1)).toEqual({ target: "events", gliding: false });
+    window.removeEventListener(SECTION_GLIDE_EVENT, listen);
+  });
+
+  it("adds no history entry for Back/Forward glides", () => {
+    setReducedMotion(true);
+    addSection("gallery", 500);
+    const before = window.history.length;
+    scrollToSection("#gallery", { history: "none" });
+    expect(window.history.length).toBe(before);
   });
 
   it("gives way the moment the visitor scrolls themselves", () => {

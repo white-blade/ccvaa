@@ -1,0 +1,135 @@
+# quality-0001 — Regression checklist
+
+| Field | Value |
+|-------|--------|
+| **Type** | `standard` |
+| **Status** | `active` — applies to every change |
+| **Source** | CEO (2026-10-09) |
+
+## Purpose
+
+The behaviours the site promises, in one list, each tied to what guards it. A big
+change — a new section, a layout rework, a dependency upgrade — is done only when
+every line below still holds. Most are enforced by tests; the rest need a person.
+
+## How to use it
+
+1. Before merging, run everything:
+
+   ```bash
+   npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e
+   ```
+
+   CI runs the same four checks in parallel on every pull request. Green there covers
+   every **Auto** line.
+2. Walk the **Manual** lines on a real phone and tablet (`npm run dev`, then open the
+   Network URL + `/ccvaa/` on the device).
+3. Changing a behaviour on purpose? Change its line here **and** its test in the same
+   pull request. Adding one? Add a line and a test. A line with no guard is a wish.
+
+**Guard** names a test: `e2e › <describe> › <title>` is in `e2e/site.spec.ts` and
+runs on all six devices — Chromium desktop (1440), touch tablet (1180), touch phone
+(Pixel 7), and WebKit iPhone 15, iPad Pro 11 landscape and portrait. `unit:<file>` is
+a Vitest file under `src/`.
+
+## Devices and layout
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| L1 | No sideways scrolling at any width from 320 to 1920px | Auto — e2e › layout › never scrolls sideways |
+| L2 | Phones (< 768): section links in a bottom tab bar, flush with the bottom edge; no header links, no menu button | Auto — e2e › device layouts › phones: a bottom tab bar… |
+| L3 | Tablets and up (≥ 768): header links, no tab bar | Auto — e2e › device layouts › tablets and up: header links, no tab bar |
+| L4 | Nothing at the end of the page hides behind the tab bar | Auto — e2e › device layouts › phones: the end of the page is not hidden… |
+| L5 | Below 640: dialogs are bottom sheets, full width, flush with the bottom; a swipe down on the handle dismisses | Auto — e2e › device layouts › small phones: dialogs are bottom sheets…; unit:Modal |
+| L6 | 640 and up: dialogs are centred | Auto — e2e › device layouts › tablets and up: dialogs stay centred |
+| L7 | Below 1024: the date rail replaces the side timeline; a chip glides its card to just below the rail | Auto — e2e › device layouts › below lg: a date rail…; unit:EventsDateRail |
+| L8 | 1024 and up: the side timeline, no rail | Auto — e2e › device layouts › lg and up… |
+| L9 | The side timeline and the date rail stay pinned while the listings scroll (never `overflow-hidden` above a sticky element) | Auto — e2e › device layouts › … stays pinned while the listings scroll |
+| L9b | The date rail marks the card read past, and clears a stale mark after jumping back up | Auto — e2e › device layouts › below lg: a date rail…; …jumping back up to Events… |
+| L10 | Below 640 the gallery has no per-row control | Auto — e2e › device layouts › phones: the gallery drops the per-row control |
+| L11 | Dialogs and the photo viewer cover the fixed header | Auto — e2e › layout › dialogs cover the fixed header |
+| L12 | Back to top only from 1280px, where it cannot cover content | Auto — e2e › moving between sections › back to top never covers content…; unit:BackToTop |
+| L13 | Every board portrait renders at the same size, whatever the bio length | Auto — e2e › board profiles › every portrait gets the same frame… |
+| L14 | Nothing sits under a notch or the home indicator (safe-area insets) | **Manual** — real notched iPhone, portrait and landscape |
+| L15 | Board profiles: identity (role, name, website, arrows) under the portrait, no empty column; short bios centred | Auto — unit:BoardSection; e2e › board profiles; **Manual** — glance at the longest and shortest bio |
+
+## Gallery viewer
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| G1 | Thumbnails show the whole set, mark the current photograph, and jump to any | Auto — e2e › photo viewer › thumbnails…; unit:GalleryGrid |
+| G2 | Neighbouring photographs are fetched ahead of a step | Auto — unit:GalleryGrid |
+| G3 | The photograph slides in from the side the visitor moved toward | Auto — unit:GalleryGrid |
+| G4 | Swipe down closes it on touch; left/right step | Auto — e2e › photo viewer › a swipe down…; e2e › touch › …swipes…; unit:use-dialog |
+| G5 | Keyboard hint for mouse users only | Auto — unit:GalleryGrid |
+
+## Motion
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| M1 | The first-load entrance ends with the hero fully in place (heading opaque, veil transparent) | Auto — e2e › motion › the first-load entrance ends… |
+| M2 | Scroll-driven effects run where `animation-timeline` is supported, never under reduced motion | Auto — e2e › motion › scroll-driven section effects… |
+| M3 | Reduced motion: no entrance animation at all | Auto — e2e › motion › reduced motion: no entrance…; unit:Hero |
+| M4 | Decorative motion (ghost numerals) is not text: hidden from screen readers and contrast checks | Auto — unit:Section; A1 |
+| M5 | The entrance and transitions feel smooth on a real phone | **Manual** — real iPhone and Android |
+| M6 | Scroll effects never fade text: everything text-bearing is opaque at every scroll position | Auto — e2e › motion › scroll effects never fade text… |
+| M7 | Every round-two section effect (titles, tiles, cards, purposes, email, board photo) runs where supported and is off under reduced motion | Auto — e2e › motion › scroll-driven section effects… |
+| M8 | Hover effects still work on gallery tiles while their scroll effect runs | **Manual** — desktop, hover a tile mid-scroll |
+
+## Touch
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| T1 | Tap targets are at least 40px tall | Auto — e2e › touch › controls are big enough to tap |
+| T2 | The search field is 16px, so iOS does not zoom into it | Auto — e2e › touch › the search field is 16px… |
+| T3 | Nothing depends on hover: gallery labels show on touch screens | Auto — e2e › touch › gallery labels show without hover |
+| T4 | A tap never strands a hover highlight | Auto — unit:hover-focus; unit:EventsBrowser (touch) |
+| T5 | Timeline on touch: first tap previews, a second tap (or a tap on the preview) opens | Auto — e2e › touch › timeline: first tap…; …tapping the open preview card… |
+| T6 | Swipe left/right steps the photo viewer and board profiles; vertical swipes and pinch are left alone | Auto — e2e › touch › …swipes…; unit:use-dialog |
+| T7 | Press feedback on cards, tiles, chips, and tabs; no grey iOS tap flash | **Manual** — real phone |
+| T8 | Pinch-zoom works in the photo viewer | **Manual** — real phone |
+
+## Navigation between sections
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| N1 | Every in-page link glides (eased, interruptible) and lands the section just under the header | Auto — e2e › section navigation › … glides there, lands under the header…; unit:scroll-to-section |
+| N2 | On arrival focus moves to the section and the heading plays its flourish | Auto — same e2e tests; unit:scroll-to-section |
+| N3 | The nav marks the section on screen — header on tablets and up, tab bar on phones | Auto — e2e › section navigation › the navigation marks the section on screen |
+| N4 | During a glide only the destination is marked | Auto — e2e › moving between sections › the nav marks only the destination…; unit:use-active-section |
+| N5 | At the end of the page the last section is marked; at the very top nothing is | Auto — e2e › …the last section is marked at the end…; unit:use-active-section |
+| N6 | Back/Forward glide between section entries | Auto — e2e › moving between sections › Back glides…; unit:SectionLinks |
+| N7 | The address follows the section being read; the bare URL over the hero | Auto — e2e › moving between sections › the address follows… |
+| N8 | Modified clicks (new tab/window) and unknown anchors are left to the browser | Auto — unit:SectionLinks |
+| N9 | Reduced motion: no glide, no reveal, no flourish — and nothing hidden | Auto — e2e › accessibility › reduced motion… |
+
+## Accessibility and keyboard
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| A1 | No axe violations on the full page, colour contrast included, on every device | Auto — e2e › accessibility › has no axe violations… |
+| A2 | Each component is axe-clean in isolation | Auto — unit tests calling `expectNoAxeViolations` |
+| A3 | Skip link is the first Tab stop and lands on the content | Auto — e2e › accessibility › keyboard… |
+| A4 | Dialogs: focus in on open, back to the opener on close, Tab trapped, Escape closes, arrows step | Auto — unit:GalleryGrid, unit:BoardSection, unit:EventsBrowser |
+| A5 | Timeline dots step with the arrow keys | Auto — unit:EventsBrowser |
+| A6 | Purposes: each opens on its own; closed descriptions are inert; Expand/Collapse all | Auto — unit:PurposesSection; e2e › purposes |
+| A7 | Visible text and accessible names agree (timeline dots, date chips) | Auto — A1 (axe `label-content-name-mismatch`) |
+| A8 | A real screen reader reads the page sensibly | **Manual** — VoiceOver (Cmd+F5) |
+
+## Content
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| C1 | Event listings: chronological, unique ids, valid dates, every picture exists and is described | Auto — unit:events |
+| C2 | Board photographs exist, are ≤ 300 KB, and are described; bios hold no "lorem ipsum" or "TODO" | Auto — unit:site |
+| C3 | Gallery reads `public/photos/` at build, image files only, numeric order | Auto — unit:gallery |
+| C4 | Dates are never shifted a day by the time zone (tests run in America/Vancouver) | Auto — unit:events |
+| C5 | **No personal email addresses anywhere on the page** — `info@ccvaa.ca` is the only address shown; board members are reached through it | Auto — unit:site › email policy; e2e › content policy |
+
+## Pipeline
+
+| ID | Behaviour | Guard |
+|----|-----------|-------|
+| P1 | Lint, typecheck, unit, and browser tests run in parallel on every pull request | Auto — `.github/workflows/ci.yml` |
+| P2 | A failing unit test stops a deploy | Auto — `.github/workflows/deploy-pages.yml` |
+| P3 | Static export only: no route handlers, middleware, or server data | Auto — `npm run build` fails otherwise |

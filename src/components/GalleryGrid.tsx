@@ -45,18 +45,31 @@ type GalleryGridProps = {
 export function GalleryGrid({ photos }: GalleryGridProps) {
   const columns = useColumns();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  /** Which way the visitor last moved, so the next photograph slides in from there. */
+  const [direction, setDirection] = useState<-1 | 0 | 1>(0);
 
+  const open = useCallback((index: number) => {
+    setDirection(0);
+    setOpenIndex(index);
+  }, []);
   const closeViewer = useCallback(() => setOpenIndex(null), []);
 
   const step = useCallback(
-    (delta: number) =>
+    (delta: -1 | 1) => {
+      setDirection(delta);
       setOpenIndex((current) =>
         current === null
           ? current
           : (current + delta + photos.length) % photos.length,
-      ),
+      );
+    },
     [photos.length],
   );
+
+  const select = (index: number) => {
+    setDirection(openIndex === null || index === openIndex ? 0 : index > openIndex ? 1 : -1);
+    setOpenIndex(index);
+  };
 
   const goNext = useCallback(() => step(1), [step]);
   const goPrevious = useCallback(() => step(-1), [step]);
@@ -101,12 +114,12 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
             >
               <button
                 type="button"
-                onClick={() => setOpenIndex(index)}
+                onClick={() => open(index)}
                 aria-haspopup="dialog"
                 // Square tiles keep the grid even and reserve their space before the
                 // file loads, so changing the column count never shifts the page. The
                 // crop is only the tile — the viewer shows the whole photograph.
-                className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-900 shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40 hover:ring-coral/50 pointer-coarse:active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950"
+                className="fx-tile group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-ocean-900 shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40 hover:ring-coral/50 pointer-coarse:active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ocean-950"
               >
                 <Image
                   src={photo.src}
@@ -119,7 +132,7 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
                       ? `(min-width: 1024px) ${Math.round(144 / columns)}rem, 100vw`
                       : `(min-width: 1024px) ${Math.round(72 / columns)}rem, 50vw`
                   }
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                  className="fx-tile-image object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
                 />
                 <span
                   aria-hidden="true"
@@ -149,9 +162,11 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
         <GalleryLightbox
           photos={photos}
           index={openIndex}
+          direction={direction}
           onClose={closeViewer}
           onNext={goNext}
           onPrevious={goPrevious}
+          onSelect={select}
         />
       )}
     </>

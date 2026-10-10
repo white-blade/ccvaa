@@ -71,8 +71,16 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.eventId ?? null;
           if (entry.isIntersecting) {
-            setInViewId((entry.target as HTMLElement).dataset.eventId ?? null);
+            setInViewId(id);
+          } else if (entry.boundingClientRect.top > window.innerHeight / 2) {
+            // The card being read left the band downward — the visitor went back
+            // up above it (or jumped away up the page) and no card took its place:
+            // mark nothing rather than a stale card. Leaving upward means it was
+            // read past, so it stays marked (as when a chip glides the last card
+            // to the top of a tall screen).
+            setInViewId((current) => (current === id ? null : current));
           }
         }
       },
@@ -162,7 +170,7 @@ export function EventsBrowser({ events }: EventsBrowserProps) {
             onSelect={showCard}
           />
           {matches.length > 0 ? (
-            <ul ref={listRef} className="space-y-6">
+            <ul ref={listRef} className="fx-cards space-y-6">
               {matches.map((event) => (
                 <li key={event.id} data-event-id={event.id}>
                   <EventCard

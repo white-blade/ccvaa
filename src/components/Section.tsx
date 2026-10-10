@@ -18,7 +18,15 @@ type SectionProps = {
 
 const TONES: Record<
   Tone,
-  { section: string; eyebrow: string; title: string; description: string; glows: [string, string] }
+  {
+    section: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    glows: [string, string];
+    /** Outline colour for the ghost numeral (see .section-ghost). */
+    ghostInk: string;
+  }
 > = {
   light: {
     section: "bg-cream text-ocean-900",
@@ -26,6 +34,7 @@ const TONES: Record<
     title: "text-ocean-900",
     description: "text-ocean-700",
     glows: ["bg-coral/15", "bg-ocean-200/50"],
+    ghostInk: "[--ghost-ink:var(--color-ocean-900)]",
   },
   mist: {
     section: "bg-ocean-50 text-ocean-900",
@@ -33,6 +42,7 @@ const TONES: Record<
     title: "text-ocean-900",
     description: "text-ocean-700",
     glows: ["bg-coral/20", "bg-white/70"],
+    ghostInk: "[--ghost-ink:var(--color-ocean-900)]",
   },
   dark: {
     section: "bg-ocean-950 text-white",
@@ -40,6 +50,7 @@ const TONES: Record<
     title: "text-white",
     description: "text-ocean-100",
     glows: ["bg-coral/20", "bg-ocean-600/30"],
+    ghostInk: "[--ghost-ink:var(--color-cream)]",
   },
 };
 
@@ -68,7 +79,11 @@ export function Section({
       // not -hidden, trims the glows: hidden makes the section a scroll container,
       // which silently stops the sticky timeline and date rail inside from sticking.
       tabIndex={-1}
-      className={`relative isolate scroll-mt-(--header-h) focus:outline-none overflow-clip py-20 sm:py-28 ${styles.section}`}
+      // section-aperture: tinted sections open from an inset window as they scroll in
+      // (globals.css); on the cream page a cream section would show no edge.
+      className={`relative isolate scroll-mt-(--header-h) focus:outline-none overflow-clip py-20 sm:py-28 ${styles.section} fx-divider ${
+        tone === "light" ? "" : "section-aperture"
+      }`}
     >
       {glow ? (
         <>
@@ -84,6 +99,16 @@ export function Section({
       ) : null}
 
       <div className="mx-auto max-w-6xl px-6">
+        {/* The section's number, huge and outlined, drifting behind the heading
+            at its own pace as the page scrolls (globals.css). Pure decoration, so it
+            is drawn by CSS from data-ghost rather than written as text: neither
+            screen readers nor contrast checks should treat it as content. */}
+        <span
+          aria-hidden="true"
+          data-ghost={sectionNumber(id)}
+          className={`section-ghost ${styles.ghostInk} pointer-events-none absolute right-3 top-4 -z-10 select-none font-display text-[6rem] font-semibold italic leading-none sm:right-10 sm:top-10 sm:text-[14rem] lg:text-[18rem]`}
+        />
+
         <Reveal className="max-w-3xl">
           <p
             className={`flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.25em] sm:text-sm ${styles.eyebrow}`}
@@ -96,7 +121,7 @@ export function Section({
           </p>
           <h2
             id={titleId}
-            className={`mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl ${styles.title}`}
+            className={`fx-title mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl ${styles.title}`}
           >
             <span className="section-title-ink">{title}</span>
           </h2>
